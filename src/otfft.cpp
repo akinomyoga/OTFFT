@@ -144,7 +144,9 @@ namespace OTFFT { /////////////////////////////////////////////////////////////
             U[N-p]  = complex_t(1 + s,  c)/2;
         }
         else
+#ifdef _OPENMP
         #pragma omp parallel for schedule(static)
+#endif
         for (int p = 0; p <= Ne; p++) {
             const double theta = p * theta0;
             const double c =  cos(theta);
@@ -183,9 +185,13 @@ namespace OTFFT { /////////////////////////////////////////////////////////////
             for (int k = 1; k < Nh; k++) setpz(y[N-k], cnjpz(getpz(y[k])));
         }
         else
+#ifdef _OPENMP
         #pragma omp parallel
+#endif
         {
+#ifdef _OPENMP
             #pragma omp for schedule(static)
+#endif
             for (int k = 1; k <= Nq; k++) {
                 const xmm a = getpz(z[k]);
                 const xmm b = cnjpz(getpz(z[Nh-k]));
@@ -193,7 +199,9 @@ namespace OTFFT { /////////////////////////////////////////////////////////////
                 setpz(y[k],          subpz(a, c));
                 setpz(y[Nh-k], cnjpz(addpz(b, c)));
             }
+#ifdef _OPENMP
             #pragma omp for schedule(static)
+#endif
             for (int k = 1; k < Nh; k++) setpz(y[N-k], cnjpz(getpz(y[k])));
         }
     }
@@ -221,9 +229,13 @@ namespace OTFFT { /////////////////////////////////////////////////////////////
             for (int k = 1; k < Nh; k++) setpz(y[N-k], cnjpz(getpz(y[k])));
         }
         else
+#ifdef _OPENMP
         #pragma omp parallel
+#endif
         {
+#ifdef _OPENMP
             #pragma omp for schedule(static)
+#endif
             for (int k = 1; k <= Nq; k++) {
                 const xmm a = getpz(z[k]);
                 const xmm b = cnjpz(getpz(z[Nh-k]));
@@ -231,7 +243,9 @@ namespace OTFFT { /////////////////////////////////////////////////////////////
                 setpz(y[k],    mulpd(rN,       subpz(a, c)));
                 setpz(y[Nh-k], mulpd(rN, cnjpz(addpz(b, c))));
             }
+#ifdef _OPENMP
             #pragma omp for schedule(static)
+#endif
             for (int k = 1; k < Nh; k++) setpz(y[N-k], cnjpz(getpz(y[k])));
         }
     }
@@ -259,7 +273,9 @@ namespace OTFFT { /////////////////////////////////////////////////////////////
             for (int p = 0; p < Nh; p++) setpz(y+2*p, getpz(z[p]));
         }
         else {
+#ifdef _OPENMP
             #pragma omp parallel for schedule(static)
+#endif
             for (int k = 1; k < Nh; k++) {
                 const xmm a = cnjpz(getpz(x[k]));
                 const xmm b = subpz(a, getpz(x[Nh-k]));
@@ -267,7 +283,9 @@ namespace OTFFT { /////////////////////////////////////////////////////////////
                 setpz(z[k], mulpd(x2, cnjpz(subpz(a, c))));
             }
             fft.inv0(z, x);
+#ifdef _OPENMP
             #pragma omp parallel for schedule(static)
+#endif
             for (int p = 0; p < Nh; p++) setpz(y+2*p, getpz(z[p]));
         }
     }
@@ -290,7 +308,9 @@ namespace OTFFT { /////////////////////////////////////////////////////////////
             for (int p = 0; p < Nh; p++) setpz(y+2*p, getpz(z[p]));
         }
         else {
+#ifdef _OPENMP
             #pragma omp parallel for schedule(static)
+#endif
             for (int k = 1; k < Nh; k++) {
                 const xmm a = cnjpz(getpz(x[k]));
                 const xmm b = subpz(a, getpz(x[Nh-k]));
@@ -298,7 +318,9 @@ namespace OTFFT { /////////////////////////////////////////////////////////////
                 setpz(z[k], cnjpz(subpz(a, c)));
             }
             fft.invn(z, x);
+#ifdef _OPENMP
             #pragma omp parallel for schedule(static)
+#endif
             for (int p = 0; p < Nh; p++) setpz(y+2*p, getpz(z[p]));
         }
     }
@@ -332,7 +354,9 @@ namespace OTFFT { /////////////////////////////////////////////////////////////
             V[N-p]  = complex_t(s, c);
         }
         else
+#ifdef _OPENMP
         #pragma omp parallel for schedule(static)
+#endif
         for (int p = 0; p <= Nh; p++) {
             const double theta = p * theta0;
             const double c = cos(theta);
@@ -353,7 +377,9 @@ namespace OTFFT { /////////////////////////////////////////////////////////////
             }
         }
         else {
+#ifdef _OPENMP
             #pragma omp parallel for schedule(static)
+#endif
             for (int p = 0; p < Nh; p++) {
                 y[p]     = x[2*p+0];
                 y[N-p-1] = x[2*p+1];
@@ -370,7 +396,9 @@ namespace OTFFT { /////////////////////////////////////////////////////////////
             }
         }
         else {
+#ifdef _OPENMP
             #pragma omp parallel for schedule(static)
+#endif
             for (int k = 0; k < N; k += 2) {
                 const xmm a = mulpd(getpz(V[k+0]), getpz(z[k+0]));
                 const xmm b = mulpd(getpz(V[k+1]), getpz(z[k+1]));
@@ -390,7 +418,9 @@ namespace OTFFT { /////////////////////////////////////////////////////////////
             }
         }
         else {
+#ifdef _OPENMP
             #pragma omp parallel for schedule(static)
+#endif
             for (int p = 0; p < Nh; p++) {
                 y[p]     = x[2*p+0];
                 y[N-p-1] = x[2*p+1];
@@ -405,7 +435,9 @@ namespace OTFFT { /////////////////////////////////////////////////////////////
             }
         }
         else {
+#ifdef _OPENMP
             #pragma omp parallel for schedule(static)
+#endif
             for (int k = 0; k < N; k += 2) {
                 const xmm a = mulpd(getpz(V[k+0]), getpz(z[k+0]));
                 const xmm b = mulpd(getpz(V[k+1]), getpz(z[k+1]));
@@ -427,7 +459,9 @@ namespace OTFFT { /////////////////////////////////////////////////////////////
             for (int k = 1; k < N; k++) z[k] = V[k]*complex_t(x[k], -x[N-k]);
         }
         else {
+#ifdef _OPENMP
             #pragma omp parallel for schedule(static)
+#endif
             for (int k = 1; k < N; k++) z[k] = V[k]*complex_t(x[k], -x[N-k]);
         }
         rfft.inv(z, y);
@@ -438,7 +472,9 @@ namespace OTFFT { /////////////////////////////////////////////////////////////
             }
         }
         else {
+#ifdef _OPENMP
             #pragma omp parallel for schedule(static)
+#endif
             for (int p = 0; p < Nh; p++) {
                 x[2*p+0] = y[p];
                 x[2*p+1] = y[N-p-1];
@@ -455,7 +491,9 @@ namespace OTFFT { /////////////////////////////////////////////////////////////
             for (int k = 1; k < N; k++) z[k] = V[k]*complex_t(x[k], -x[N-k]);
         }
         else {
+#ifdef _OPENMP
             #pragma omp parallel for schedule(static)
+#endif
             for (int k = 1; k < N; k++) z[k] = V[k]*complex_t(x[k], -x[N-k]);
         }
         rfft.invn(z, y);
@@ -466,7 +504,9 @@ namespace OTFFT { /////////////////////////////////////////////////////////////
             }
         }
         else {
+#ifdef _OPENMP
             #pragma omp parallel for schedule(static)
+#endif
             for (int p = 0; p < Nh; p++) {
                 x[2*p+0] = y[p];
                 x[2*p+1] = y[N-p-1];
@@ -500,7 +540,9 @@ namespace OTFFT { /////////////////////////////////////////////////////////////
             W[N2-p] = complex_t(c, -s);
         }
         else
+#ifdef _OPENMP
         #pragma omp parallel for schedule(static)
+#endif
         for (int p = 1; p < N; p++) {
             const double theta = p * theta0;
             const double c =  cos(theta);
@@ -526,11 +568,17 @@ namespace OTFFT { /////////////////////////////////////////////////////////////
             }
         }
         else
+#ifdef _OPENMP
         #pragma omp parallel
+#endif
         {
+#ifdef _OPENMP
             #pragma omp for schedule(static)
+#endif
             for (int p = 1; p < L; p++) a[p] = b[p] = 0;
+#ifdef _OPENMP
             #pragma omp for schedule(static)
+#endif
             for (int p = 1; p < N; p++) {
                 const int64_t q = p;
                 const int pp = static_cast<int>(q*q % N2);
@@ -548,11 +596,15 @@ namespace OTFFT { /////////////////////////////////////////////////////////////
                 setpz(x[p], mulpz(getpz(a[p]), cnjpz(getpz(x[p]))));
         }
         else {
+#ifdef _OPENMP
             #pragma omp parallel for schedule(static)
+#endif
             for (int k = 0; k < L; k++)
                 setpz(a[k], mulpz(getpz(a[k]), getpz(b[k])));
             fft.invn(a);
+#ifdef _OPENMP
             #pragma omp parallel for schedule(static)
+#endif
             for (int p = 0; p < N; p++)
                 setpz(x[p], mulpz(getpz(a[p]), cnjpz(getpz(x[p]))));
         }
@@ -575,11 +627,17 @@ namespace OTFFT { /////////////////////////////////////////////////////////////
             }
         }
         else
+#ifdef _OPENMP
         #pragma omp parallel
+#endif
         {
+#ifdef _OPENMP
             #pragma omp for schedule(static)
+#endif
             for (int p = 1; p < L; p++) a[p] = b[p] = 0;
+#ifdef _OPENMP
             #pragma omp for schedule(static)
+#endif
             for (int p = 1; p < N; p++) {
                 const int64_t q = p;
                 const int pp = static_cast<int>(q*q % N2);
@@ -597,11 +655,15 @@ namespace OTFFT { /////////////////////////////////////////////////////////////
                 setpz(x[p], mulpd(rN, mulpz(getpz(a[p]), cnjpz(getpz(x[p])))));
         }
         else {
+#ifdef _OPENMP
             #pragma omp parallel for schedule(static)
+#endif
             for (int k = 0; k < L; k++)
                 setpz(a[k], mulpz(getpz(a[k]), getpz(b[k])));
             fft.invn(a);
+#ifdef _OPENMP
             #pragma omp parallel for schedule(static)
+#endif
             for (int p = 0; p < N; p++)
                 setpz(x[p], mulpd(rN, mulpz(getpz(a[p]), cnjpz(getpz(x[p])))));
         }
@@ -627,11 +689,17 @@ namespace OTFFT { /////////////////////////////////////////////////////////////
             }
         }
         else
+#ifdef _OPENMP
         #pragma omp parallel
+#endif
         {
+#ifdef _OPENMP
             #pragma omp for schedule(static)
+#endif
             for (int p = 1; p < L; p++) a[p] = b[p] = 0;
+#ifdef _OPENMP
             #pragma omp for schedule(static)
+#endif
             for (int p = 1; p < N; p++) {
                 const int64_t q = p;
                 const int pp = static_cast<int>(q*q % N2);
@@ -649,11 +717,15 @@ namespace OTFFT { /////////////////////////////////////////////////////////////
                 setpz(x[p], mulpz(getpz(a[p]), cnjpz(getpz(x[p]))));
         }
         else {
+#ifdef _OPENMP
             #pragma omp parallel for schedule(static)
+#endif
             for (int k = 0; k < L; k++)
                 setpz(a[k], mulpz(getpz(a[k]), getpz(b[k])));
             fft.invn(a);
+#ifdef _OPENMP
             #pragma omp parallel for schedule(static)
+#endif
             for (int p = 0; p < N; p++)
                 setpz(x[p], mulpz(getpz(a[p]), cnjpz(getpz(x[p]))));
         }
@@ -676,11 +748,17 @@ namespace OTFFT { /////////////////////////////////////////////////////////////
             }
         }
         else
+#ifdef _OPENMP
         #pragma omp parallel
+#endif
         {
+#ifdef _OPENMP
             #pragma omp for schedule(static)
+#endif
             for (int p = 1; p < L; p++) a[p] = b[p] = 0;
+#ifdef _OPENMP
             #pragma omp for schedule(static)
+#endif
             for (int p = 1; p < N; p++) {
                 const int64_t q = p;
                 const int pp = static_cast<int>(q*q % N2);
@@ -698,11 +776,15 @@ namespace OTFFT { /////////////////////////////////////////////////////////////
                 setpz(x[p], mulpd(rN, mulpz(getpz(a[p]), cnjpz(getpz(x[p])))));
         }
         else {
+#ifdef _OPENMP
             #pragma omp parallel for schedule(static)
+#endif
             for (int k = 0; k < L; k++)
                 setpz(a[k], mulpz(getpz(a[k]), getpz(b[k])));
             fft.invn(a);
+#ifdef _OPENMP
             #pragma omp parallel for schedule(static)
+#endif
             for (int p = 0; p < N; p++)
                 setpz(x[p], mulpd(rN, mulpz(getpz(a[p]), cnjpz(getpz(x[p])))));
         }

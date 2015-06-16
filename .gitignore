@@ -1,1 +1,8 @@
 /out
+
+# ooura
+/check/fft.tgz
+/check/fft
+/check/fftsg.c
+
+/check/*.exe

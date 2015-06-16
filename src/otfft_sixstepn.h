@@ -78,9 +78,13 @@ template <int log_N> struct fwdnffte
             }
         }
         else if (N < OMP_THRESHOLD2) //////////////////////////////////////////
+#ifdef _OPENMP
         #pragma omp parallel
+#endif
         {
+#ifdef _OPENMP
             #pragma omp for schedule(static)
+#endif
             for (int k = 0; k < n; k += 2) {
                 const int k_kn = k + k*n;
                 std::swap(x[k_kn+1], x[k_kn+n]);
@@ -93,12 +97,16 @@ template <int log_N> struct fwdnffte
                     std::swap(x[p_kn+1+n], x[k_pn+1+n]);
                 }
             }
+#ifdef _OPENMP
             #pragma omp for schedule(static)
+#endif
             for (int p = 0; p < n; p++) {
                 const int pn = p*n;
                 fft1.fwd0(x + pn, y + pn);
             }
+#ifdef _OPENMP
             #pragma omp for schedule(static)
+#endif
             for (int p = 0; p < n; p += 2) {
                 const int pp = p*p;
                 const complex_t w = W[pp+p];
@@ -125,12 +133,16 @@ template <int log_N> struct fwdnffte
                     setpz3<n>(x_p_kn+1, d);
                 }
             }
+#ifdef _OPENMP
             #pragma omp for schedule(static)
+#endif
             for (int k = 0; k < n; k++) {
                 const int kn = k*n;
                 fft1.fwd0(x + kn, y + kn);
             }
+#ifdef _OPENMP
             #pragma omp for schedule(static) nowait
+#endif
             for (int k = 0; k < n; k += 2) {
                 const int k_kn = k + k*n;
                 std::swap(x[k_kn+1], x[k_kn+n]);
@@ -145,9 +157,13 @@ template <int log_N> struct fwdnffte
             }
         }
         else //////////////////////////////////////////////////////////////////
+#ifdef _OPENMP
         #pragma omp parallel
+#endif
         {
+#ifdef _OPENMP
             #pragma omp for schedule(guided)
+#endif
             for (int k = 0; k < n; k += 2) {
                 const int k_kn = k + k*n;
                 std::swap(x[k_kn+1], x[k_kn+n]);
@@ -160,12 +176,16 @@ template <int log_N> struct fwdnffte
                     std::swap(x[p_kn+1+n], x[k_pn+1+n]);
                 }
             }
+#ifdef _OPENMP
             #pragma omp for schedule(guided)
+#endif
             for (int p = 0; p < n; p++) {
                 const int pn = p*n;
                 fft1.fwd0(x + pn, y + pn);
             }
+#ifdef _OPENMP
             #pragma omp for schedule(guided)
+#endif
             for (int p = 0; p < n; p += 2) {
                 const int pp = p*p;
                 const complex_t w = W[pp+p];
@@ -192,12 +212,16 @@ template <int log_N> struct fwdnffte
                     setpz3<n>(x_p_kn+1, d);
                 }
             }
+#ifdef _OPENMP
             #pragma omp for schedule(guided)
+#endif
             for (int k = 0; k < n; k++) {
                 const int kn = k*n;
                 fft1.fwd0(x + kn, y + kn);
             }
+#ifdef _OPENMP
             #pragma omp for schedule(guided) nowait
+#endif
             for (int k = 0; k < n; k += 2) {
                 const int k_kn = k + k*n;
                 std::swap(x[k_kn+1], x[k_kn+n]);
@@ -287,9 +311,13 @@ template <int log_N> struct invnffte
             }
         }
         else if (N < OMP_THRESHOLD2) //////////////////////////////////////////
+#ifdef _OPENMP
         #pragma omp parallel
+#endif
         {
+#ifdef _OPENMP
             #pragma omp for schedule(static)
+#endif
             for (int k = 0; k < n; k += 2) {
                 const int k_kn = k + k*n;
                 std::swap(x[k_kn+1], x[k_kn+n]);
@@ -302,12 +330,16 @@ template <int log_N> struct invnffte
                     std::swap(x[p_kn+1+n], x[k_pn+1+n]);
                 }
             }
+#ifdef _OPENMP
             #pragma omp for schedule(static)
+#endif
             for (int p = 0; p < n; p++) {
                 const int pn = p*n;
                 fft1.inv0(x + pn, y + pn);
             }
+#ifdef _OPENMP
             #pragma omp for schedule(static)
+#endif
             for (int p = 0; p < n; p += 2) {
                 const int N_pp = N-p*p;
                 const complex_t w = W[N_pp-p];
@@ -334,12 +366,16 @@ template <int log_N> struct invnffte
                     setpz3<n>(x_p_kn+1, d);
                 }
             }
+#ifdef _OPENMP
             #pragma omp for schedule(static)
+#endif
             for (int k = 0; k < n; k++) {
                 const int kn = k*n;
                 fft1.inv0(x + kn, y + kn);
             }
+#ifdef _OPENMP
             #pragma omp for schedule(static) nowait
+#endif
             for (int k = 0; k < n; k += 2) {
                 const int k_kn = k + k*n;
                 std::swap(x[k_kn+1], x[k_kn+n]);
@@ -354,9 +390,13 @@ template <int log_N> struct invnffte
             }
         }
         else //////////////////////////////////////////////////////////////////
+#ifdef _OPENMP
         #pragma omp parallel
+#endif
         {
+#ifdef _OPENMP
             #pragma omp for schedule(guided)
+#endif
             for (int k = 0; k < n; k += 2) {
                 const int k_kn = k + k*n;
                 std::swap(x[k_kn+1], x[k_kn+n]);
@@ -369,12 +409,16 @@ template <int log_N> struct invnffte
                     std::swap(x[p_kn+1+n], x[k_pn+1+n]);
                 }
             }
+#ifdef _OPENMP
             #pragma omp for schedule(guided)
+#endif
             for (int p = 0; p < n; p++) {
                 const int pn = p*n;
                 fft1.inv0(x + pn, y + pn);
             }
+#ifdef _OPENMP
             #pragma omp for schedule(guided)
+#endif
             for (int p = 0; p < n; p += 2) {
                 const int N_pp = N-p*p;
                 const complex_t w = W[N_pp-p];
@@ -401,12 +445,16 @@ template <int log_N> struct invnffte
                     setpz3<n>(x_p_kn+1, d);
                 }
             }
+#ifdef _OPENMP
             #pragma omp for schedule(guided)
+#endif
             for (int k = 0; k < n; k++) {
                 const int kn = k*n;
                 fft1.inv0(x + kn, y + kn);
             }
+#ifdef _OPENMP
             #pragma omp for schedule(guided) nowait
+#endif
             for (int k = 0; k < n; k += 2) {
                 const int k_kn = k + k*n;
                 std::swap(x[k_kn+1], x[k_kn+n]);
@@ -479,9 +527,13 @@ template <int log_N> struct fwdnffto
             }
         }
         else if (N < OMP_THRESHOLD2) //////////////////////////////////////////
+#ifdef _OPENMP
         #pragma omp parallel
+#endif
         {
+#ifdef _OPENMP
             #pragma omp for schedule(static)
+#endif
             for (int p = 0; p < m; p += 2) {
                 for (int k = 0; k < n; k += 2) {
                     const int k_pn = k + p*n;
@@ -492,12 +544,16 @@ template <int log_N> struct fwdnffto
                     y[k_pn+1+n] = x[p_km+1+m];
                 }
             }
+#ifdef _OPENMP
             #pragma omp for schedule(static)
+#endif
             for (int p = 0; p < m; p++) {
                 const int pn = p*n;
                 fft1.fwd0(y + pn, x + pn);
             }
+#ifdef _OPENMP
             #pragma omp for schedule(static)
+#endif
             for (int k = 0; k < n; k += 2) {
                 for (int p = 0; p < m; p += 2) {
                     const int kp = k*p;
@@ -509,12 +565,16 @@ template <int log_N> struct fwdnffto
                     setpz2(x_p_km+m, mulpz2(w2, getpz3<n>(y_k_pn+1)));
                 }
             }
+#ifdef _OPENMP
             #pragma omp for schedule(static)
+#endif
             for (int k = 0; k < n; k++) {
                 const int km = k*m;
                 fft2.fwd0o(x + km, y + km);
             }
+#ifdef _OPENMP
             #pragma omp for schedule(static) nowait
+#endif
             for (int p = 0; p < m; p += 2) {
                 for (int k = 0; k < n; k += 2) {
                     const int k_pn = k + p*n;
@@ -527,9 +587,13 @@ template <int log_N> struct fwdnffto
             }
         }
         else //////////////////////////////////////////////////////////////////
+#ifdef _OPENMP
         #pragma omp parallel
+#endif
         {
+#ifdef _OPENMP
             #pragma omp for schedule(guided)
+#endif
             for (int p = 0; p < m; p += 2) {
                 for (int k = 0; k < n; k += 2) {
                     const int k_pn = k + p*n;
@@ -540,12 +604,16 @@ template <int log_N> struct fwdnffto
                     y[k_pn+1+n] = x[p_km+1+m];
                 }
             }
+#ifdef _OPENMP
             #pragma omp for schedule(guided)
+#endif
             for (int p = 0; p < m; p++) {
                 const int pn = p*n;
                 fft1.fwd0(y + pn, x + pn);
             }
+#ifdef _OPENMP
             #pragma omp for schedule(guided)
+#endif
             for (int k = 0; k < n; k += 2) {
                 for (int p = 0; p < m; p += 2) {
                     const int kp = k*p;
@@ -557,12 +625,16 @@ template <int log_N> struct fwdnffto
                     setpz2(x_p_km+m, mulpz2(w2, getpz3<n>(y_k_pn+1)));
                 }
             }
+#ifdef _OPENMP
             #pragma omp for schedule(guided)
+#endif
             for (int k = 0; k < n; k++) {
                 const int km = k*m;
                 fft2.fwd0o(x + km, y + km);
             }
+#ifdef _OPENMP
             #pragma omp for schedule(guided) nowait
+#endif
             for (int p = 0; p < m; p += 2) {
                 for (int k = 0; k < n; k += 2) {
                     const int k_pn = k + p*n;
@@ -633,9 +705,13 @@ template <int log_N> struct invnffto
             }
         }
         else if (N < OMP_THRESHOLD2) //////////////////////////////////////////
+#ifdef _OPENMP
         #pragma omp parallel
+#endif
         {
+#ifdef _OPENMP
             #pragma omp for schedule(static)
+#endif
             for (int p = 0; p < m; p += 2) {
                 for (int k = 0; k < n; k += 2) {
                     const int k_pn = k + p*n;
@@ -646,12 +722,16 @@ template <int log_N> struct invnffto
                     y[k_pn+1+n] = x[p_km+1+m];
                 }
             }
+#ifdef _OPENMP
             #pragma omp for schedule(static)
+#endif
             for (int p = 0; p < m; p++) {
                 const int pn = p*n;
                 fft1.inv0(y + pn, x + pn);
             }
+#ifdef _OPENMP
             #pragma omp for schedule(static)
+#endif
             for (int k = 0; k < n; k += 2) {
                 for (int p = 0; p < m; p += 2) {
                     const int N_kp = N-k*p;
@@ -663,12 +743,16 @@ template <int log_N> struct invnffto
                     setpz2(x_p_km+m, mulpz2(w2, getpz3<n>(y_k_pn+1)));
                 }
             }
+#ifdef _OPENMP
             #pragma omp for schedule(static)
+#endif
             for (int k = 0; k < n; k++) {
                 const int km = k*m;
                 fft2.inv0o(x + km, y + km);
             }
+#ifdef _OPENMP
             #pragma omp for schedule(static) nowait
+#endif
             for (int p = 0; p < m; p += 2) {
                 for (int k = 0; k < n; k += 2) {
                     const int k_pn = k + p*n;
@@ -681,9 +765,13 @@ template <int log_N> struct invnffto
             }
         }
         else //////////////////////////////////////////////////////////////////
+#ifdef _OPENMP
         #pragma omp parallel
+#endif
         {
+#ifdef _OPENMP
             #pragma omp for schedule(guided)
+#endif
             for (int p = 0; p < m; p += 2) {
                 for (int k = 0; k < n; k += 2) {
                     const int k_pn = k + p*n;
@@ -694,12 +782,16 @@ template <int log_N> struct invnffto
                     y[k_pn+1+n] = x[p_km+1+m];
                 }
             }
+#ifdef _OPENMP
             #pragma omp for schedule(guided)
+#endif
             for (int p = 0; p < m; p++) {
                 const int pn = p*n;
                 fft1.inv0(y + pn, x + pn);
             }
+#ifdef _OPENMP
             #pragma omp for schedule(guided)
+#endif
             for (int k = 0; k < n; k += 2) {
                 for (int p = 0; p < m; p += 2) {
                     const int N_kp = N-k*p;
@@ -711,12 +803,16 @@ template <int log_N> struct invnffto
                     setpz2(x_p_km+m, mulpz2(w2, getpz3<n>(y_k_pn+1)));
                 }
             }
+#ifdef _OPENMP
             #pragma omp for schedule(guided)
+#endif
             for (int k = 0; k < n; k++) {
                 const int km = k*m;
                 fft2.inv0o(x + km, y + km);
             }
+#ifdef _OPENMP
             #pragma omp for schedule(guided) nowait
+#endif
             for (int p = 0; p < m; p += 2) {
                 for (int k = 0; k < n; k += 2) {
                     const int k_pn = k + p*n;

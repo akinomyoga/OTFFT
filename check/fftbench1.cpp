@@ -6,11 +6,11 @@
 #include <cmath>
 #include <algorithm>
 #include <limits>
+#include <otfft/otfft.h>
+#include <otfft/stopwatch.h>
 #include "cpp_fftw3.h"
 #include "ooura1.h"
 #include "simple_fft.h"
-#include "otfft/otfft.h"
-#include "otfft/stopwatch.h"
 using OTFFT::complex_t;
 using OTFFT::simd_malloc;
 using OTFFT::simd_free;
@@ -59,7 +59,9 @@ int main() try
     static const int N_max  = 1 << n_max;
     static const int Nn_max = N_max * n_max;
 
+#ifdef USE_FFTW_THREADS
     fftw_init_threads();
+#endif
     setbuf(stdout, NULL);
     printf("------+-----------+-----------------+-----------------+-----------------\n");
     printf("length|FFTW3[usec]|   OOURA   [usec]| SimpleFFT [usec]|   OTFFT   [usec]\n");

@@ -418,7 +418,9 @@ template <int s> struct fwd0but<8,s,0>
             }
         }
         else {
+#ifdef _OPENMP
             #pragma omp for schedule(static)
+#endif
             for (int q = 0; q < s; q += 2) {
                 complex_vector xq = x + q;
                 const ymm a = getpz2(xq+s*0);
@@ -527,7 +529,9 @@ template <int s> struct fwd0but<8,s,1>
             }
         }
         else {
+#ifdef _OPENMP
             #pragma omp for schedule(static)
+#endif
             for (int q = 0; q < s; q += 2) {
                 complex_vector xq = x + q;
                 complex_vector yq = y + q;
@@ -636,7 +640,9 @@ template <int s> struct inv0but<8,s,0>
             }
         }
         else {
+#ifdef _OPENMP
             #pragma omp for schedule(static)
+#endif
             for (int q = 0; q < s; q += 2) {
                 complex_vector xq = x + q;
                 const ymm a = getpz2(xq+s*0);
@@ -745,7 +751,9 @@ template <int s> struct inv0but<8,s,1>
             }
         }
         else {
+#ifdef _OPENMP
             #pragma omp for schedule(static)
+#endif
             for (int q = 0; q < s; q += 2) {
                 complex_vector xq = x + q;
                 complex_vector yq = y + q;
@@ -872,10 +880,14 @@ template <int N, int eo> struct fwd0but<N,1,eo>
             }
         }
         else
+#ifdef _OPENMP
         #pragma omp parallel
+#endif
         {
             fwd0but<N/8,8,!eo>()(y, x, W);
+#ifdef _OPENMP
             #pragma omp for schedule(static) nowait
+#endif
             for (int p = 0; p < N/8; p += 2) {
                 complex_vector x_p  = x + p;
                 complex_vector y_8p = y + 8*p;
@@ -1008,10 +1020,14 @@ template <int N, int eo> struct inv0but<N,1,eo>
             }
         }
         else
+#ifdef _OPENMP
         #pragma omp parallel
+#endif
         {
             inv0but<N/8,8,!eo>()(y, x, W);
+#ifdef _OPENMP
             #pragma omp for schedule(static) nowait
+#endif
             for (int p = 0; p < N/8; p += 2) {
                 complex_vector x_p  = x + p;
                 complex_vector y_8p = y + 8*p;
@@ -1152,7 +1168,9 @@ template <int n, int s, int eo> struct fwd0but
             }
         }
         else {
+#ifdef _OPENMP
             #pragma omp for schedule(static)
+#endif
             for (int p = 0; p < n/8; p++) {
                 const int sp = s*p;
                 const int s8p = 8*sp;
@@ -1295,7 +1313,9 @@ template <int n, int s, int eo> struct inv0but
             }
         }
         else {
+#ifdef _OPENMP
             #pragma omp for schedule(static)
+#endif
             for (int p = 0; p < n/8; p++) {
                 const int sp = s*p;
                 const int s8p = 8*sp;

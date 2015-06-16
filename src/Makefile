@@ -1,3 +1,6 @@
+# -*- makefile-gmake -*-
+# otfft/src/Makefile
+
 #CXX = g++-mp-4.9# for Mac with macports and Xcode
 #CXX = x86_64-w64-mingw32-g++
 
@@ -26,6 +29,11 @@ CXXFLAGS += -fpeel-loops
 #CXXFLAGS += -funsafe-loop-optimizations
 #CXXFLAGS += -fargument-noalias
 #CXXFLAGS += -fargument-noalias-global
+
+ifeq ($(CXX),icpc)
+CXX = icpc
+CXXFLAGS = -O3 -openmp -march=native -xHost
+endif
 
 HEADERS1 = \
 	otfft/otfft_misc.h \
@@ -63,7 +71,7 @@ clean:
 $(OUTDIR) $(OUTINC) $(OUTLIB) $(INSDIR) $(INSDIR)/include/otfft $(INSDIR)/lib:
 	mkdir -p $@
 
-$(OUTDIR)/ffttune: ffttune.cpp $(HEADERS1) stopwatch.h | $(OUTDIR)
+$(OUTDIR)/ffttune: ffttune.cpp $(HEADERS1) otfft/stopwatch.h | $(OUTDIR)
 	@echo NOTE: This compilation may take several minutes.
 	$(CXX) $(CXXFLAGS) $< -o $@
 $(OUTDIR)/ffttune.log: $(OUTDIR)/ffttune | $(OUTINC)

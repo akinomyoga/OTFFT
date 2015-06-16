@@ -28,21 +28,37 @@ CXXFLAGS += -fpeel-loops
 #CXXFLAGS += -fargument-noalias
 #CXXFLAGS += -fargument-noalias-global
 
-#CXXFLAGS2 = $(CXXFLAGS) -I/alt/include
-#LDLIBS = -L/alt/lib -lfftw3_threads -lfftw3 -lpthread
-#LDLIBS = -L/alt/lib -lfftw3_omp -lfftw3 -lpthread
-#CXXFLAGS2 = $(CXXFLAGS) -I/alt-mingw/include
-#LDLIBS = -L/alt-mingw/lib -lfftw3_threads -lfftw3 -lpthread
-LDLIBS = -lfftw3_threads -lfftw3 -lpthread
+ifeq ($(CXX),icpc)
+CXX = icpc
+CXXFLAGS = -openmp -O3 -march=native -xHost
+endif
+
+CXXFLAGS += -I ../src
+
+FFTW_THREADS:=
+ifeq ($(FFTW_THREADS),yes)
+  LDLIBS := -lfftw3_threads
+  CXXFLAGS += -D USE_FFTW_THREADS
+endif
+
+bench_LDFLAGS := -L $(HOME)/local/lib
+
+#bench_CXXFLAGS = -I/alt/include
+#LDLIBS += -L/alt/lib -lfftw3_threads -lfftw3 -lpthread
+#LDLIBS += -L/alt/lib -lfftw3_omp -lfftw3 -lpthread
+#bench_CXXFLAGS = -I/alt-mingw/include
+#LDLIBS += -L/alt-mingw/lib -lfftw3_threads -lfftw3 -lpthread
+#LDLIBS += -lfftw3_threads -lfftw3 -lpthread
+LDLIBS += -lfftw3 -lpthread
+
 
 HEADERS1 = cpp_fftw3.h ooura1.h simple_fft.h
 HEADERS2 = cpp_fftw3.h ooura2.h simple_fft.h
 
-CXXFLAGS += -I ../src
 
-#LDFLAGS_libotfft:=otfft/otfft.o
-#LDFLAGS_libotfft:=-L out -lotfft -Wl,-R,'$ORIGIN/out'
-LDFLAGS_libotfft:=-L ../out -lotfft -Wl,-R,$(PWD)/../out
+#LDFLAGS:=otfft/otfft.o
+#LDFLAGS:=-L out -lotfft -Wl,-R,'$ORIGIN/out'
+LDFLAGS:=-L ../out -lotfft -Wl,-R,$(PWD)/../out
 
 all:
 .PHONY: clean  benchmark check
@@ -52,20 +68,25 @@ clean:
 
 check: fftcheck rfftcheck dctcheck bstcheck
 fftcheck.exe: fftcheck.cpp simple_fft.h
-	$(CXX) $(CXXFLAGS) $< $(LDFLAGS_libotfft) -o $@
+	$(CXX) $(CXXFLAGS) $< $(LDFLAGS) -o $@
 rfftcheck.exe: rfftcheck.cpp simple_fft.h
-	$(CXX) $(CXXFLAGS) $< $(LDFLAGS_libotfft) -o $@
+	$(CXX) $(CXXFLAGS) $< $(LDFLAGS) -o $@
 dctcheck.exe: dctcheck.cpp
-	$(CXX) $(CXXFLAGS) $< $(LDFLAGS_libotfft) -o $@
+	$(CXX) $(CXXFLAGS) $< $(LDFLAGS) -o $@
 bstcheck.exe: bstcheck.cpp
-	$(CXX) $(CXXFLAGS) $< $(LDFLAGS_libotfft) -o $@
-fftcheck rfftcheck dctcheck bstcheck: fftcheck.exe
-	./$<
+	$(CXX) $(CXXFLAGS) $< $(LDFLAGS) -o $@
+%check: %check.exe
+	./$< && touch $@
 
 benchmark: fftbench1 fftbench2
 
-fftbench1: fftbench1.cpp otfft/stopwatch.h $(HEADERS1) | otfft_all
-	$(CXX) $(CXXFLAGS2) -I ext -I . $< $(LDFLAGS_libotfft) $(LDLIBS) -o $@
-
-fftbench2: fftbench2.cpp otfft/stopwatch.h $(HEADERS2) | otfft_all
-	$(CXX) $(CXXFLAGS2) -I ext -I . $< $(LDFLAGS_libotfft) $(LDLIBS) -o $@
+fft.tgz:
+	wget 'http://www.kurims.kyoto-u.ac.jp/~ooura/fft.tgz'
+fftsg.c: fft.tgz
+	tar xOf fft.tgz fft/$@ > $@
+fftbench1.exe: fftbench1.cpp fftsg.c ../src/otfft/stopwatch.h $(HEADERS1)
+	$(CXX) $(CXXFLAGS) $(bench_CXXFLAGS) -I ext -I . $< $(LDFLAGS) $(bench_LDFLAGS) $(LDLIBS) -o $@
+fftbench2.exe: fftbench2.cpp fftsg.c ../src/otfft/stopwatch.h $(HEADERS2)
+	$(CXX) $(CXXFLAGS) $(bench_CXXFLAGS) -I ext -I . $< $(LDFLAGS) $(bench_LDFLAGS) $(LDLIBS) -o $@
+fftbench%: fftbench%.exe
+	./$< | tee $@.txt && touch $@

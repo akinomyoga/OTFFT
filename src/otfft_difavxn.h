@@ -168,9 +168,13 @@ template <int N, int eo> struct fwdnbut<N,1,eo>
             fwd0but<N/4,4,!eo>()(y, x, W);
         }
         else
+#ifdef _OPENMP
         #pragma omp parallel
+#endif
         {
+#ifdef _OPENMP
             #pragma omp for schedule(static)
+#endif
             for (int p = 0; p < N/4; p += 2) {
                 complex_vector x_p  = x + p;
                 complex_vector y_4p = y + 4*p;
@@ -230,9 +234,13 @@ template <int N, int eo> struct invnbut<N,1,eo>
             inv0but<N/4,4,!eo>()(y, x, W);
         }
         else
+#ifdef _OPENMP
         #pragma omp parallel
+#endif
         {
+#ifdef _OPENMP
             #pragma omp for schedule(static)
+#endif
             for (int p = 0; p < N/4; p += 2) {
                 complex_vector x_p  = x + p;
                 complex_vector y_4p = y + 4*p;

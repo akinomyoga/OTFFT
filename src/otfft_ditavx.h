@@ -75,7 +75,9 @@ template <int s> struct fwd0but<2,s,0>
             }
         }
         else {
+#ifdef _OPENMP
             #pragma omp for schedule(static)
+#endif
             for (int q = 0; q < s; q += 2) {
                 complex_vector xq = x + q;
                 const ymm a = getpz2(xq+0);
@@ -104,7 +106,9 @@ template <int s> struct fwd0but<2,s,1>
             }
         }
         else {
+#ifdef _OPENMP
             #pragma omp for schedule(static)
+#endif
             for (int q = 0; q < s; q += 2) {
                 complex_vector xq = x + q;
                 complex_vector yq = y + q;
@@ -237,7 +241,9 @@ template <int s> struct fwd0but<4,s,0>
             }
         }
         else {
+#ifdef _OPENMP
             #pragma omp for schedule(static)
+#endif
             for (int q = 0; q < s; q += 2) {
                 complex_vector xq = x + q;
                 const ymm a = getpz2(xq+s*0);
@@ -282,7 +288,9 @@ template <int s> struct fwd0but<4,s,1>
             }
         }
         else {
+#ifdef _OPENMP
             #pragma omp for schedule(static)
+#endif
             for (int q = 0; q < s; q += 2) {
                 complex_vector xq = x + q;
                 complex_vector yq = y + q;
@@ -327,7 +335,9 @@ template <int s> struct inv0but<4,s,0>
             }
         }
         else {
+#ifdef _OPENMP
             #pragma omp for schedule(static)
+#endif
             for (int q = 0; q < s; q += 2) {
                 complex_vector xq = x + q;
                 const ymm a = getpz2(xq+s*0);
@@ -372,7 +382,9 @@ template <int s> struct inv0but<4,s,1>
             }
         }
         else {
+#ifdef _OPENMP
             #pragma omp for schedule(static)
+#endif
             for (int q = 0; q < s; q += 2) {
                 complex_vector xq = x + q;
                 complex_vector yq = y + q;
@@ -428,10 +440,14 @@ template <int N, int eo> struct fwd0but<N,1,eo>
             }
         }
         else
+#ifdef _OPENMP
         #pragma omp parallel
+#endif
         {
             fwd0but<N/4,4,!eo>()(y, x, W);
+#ifdef _OPENMP
             #pragma omp for schedule(static) nowait
+#endif
             for (int p = 0; p < N/4; p += 2) {
                 complex_vector x_p  = x + p;
                 complex_vector y_4p = y + 4*p;
@@ -489,10 +505,14 @@ template <int N, int eo> struct inv0but<N,1,eo>
             }
         }
         else
+#ifdef _OPENMP
         #pragma omp parallel
+#endif
         {
             inv0but<N/4,4,!eo>()(y, x, W);
+#ifdef _OPENMP
             #pragma omp for schedule(static) nowait
+#endif
             for (int p = 0; p < N/4; p += 2) {
                 complex_vector x_p  = x + p;
                 complex_vector y_4p = y + 4*p;
@@ -557,7 +577,9 @@ template <int n, int s, int eo> struct fwd0but
             }
         }
         else {
+#ifdef _OPENMP
             #pragma omp for schedule(static)
+#endif
             for (int p = 0; p < n/4; p++) {
                 const int sp = s*p;
                 const int s4p = 4*sp;
@@ -624,7 +646,9 @@ template <int n, int s, int eo> struct inv0but
             }
         }
         else {
+#ifdef _OPENMP
             #pragma omp for schedule(static)
+#endif
             for (int p = 0; p < n/4; p++) {
                 const int sp = s*p;
                 const int s4p = 4*sp;

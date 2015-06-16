@@ -227,7 +227,9 @@ static void init_W(int N, complex_vector W)
         W[N-p]  = complex_t( c, -s);
     }
     else
+#ifdef _OPENMP
     #pragma omp parallel for schedule(static)
+#endif
     for (int p = 0; p <= Ne; p++) {
         const double theta = p * theta0;
         const double c =  cos(theta);

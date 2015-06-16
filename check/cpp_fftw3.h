@@ -10,8 +10,8 @@
 #include <omp.h>
 #include "otfft/otfft_misc.h"
 
-#define FFTW_FLAG FFTW_ESTIMATE
-//#define FFTW_FLAG FFTW_MEASURE
+//#define FFTW_FLAG FFTW_ESTIMATE
+#define FFTW_FLAG FFTW_MEASURE
 //#define FFTW_FLAG FFTW_PATIENT
 //#define FFTW_FLAG FFTW_EXHAUSTIVE
 
@@ -42,7 +42,9 @@ public:
         else
             for (int k = 0; k < N; k += 2) setpz2(z+k, getpz2(x+k));
 #endif
+#ifdef USE_FFTW_THREADS
         if (N >= FFTW_MT_THRESHOLD) fftw_plan_with_nthreads(omp_get_max_threads());
+#endif
         p = fftw_plan_dft_1d(N,
             reinterpret_cast<fftw_complex*>(x),
             reinterpret_cast<fftw_complex*>(y),
@@ -93,7 +95,9 @@ public:
         else
             for (int k = 0; k < N; k += 2) setpz2(z+k, getpz2(x+k));
 #endif
+#ifdef USE_FFTW_THREADS
         if (N >= FFTW_MT_THRESHOLD) fftw_plan_with_nthreads(omp_get_max_threads());
+#endif
         p = fftw_plan_dft_1d(N,
             reinterpret_cast<fftw_complex*>(x),
             reinterpret_cast<fftw_complex*>(y),

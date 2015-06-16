@@ -57,7 +57,9 @@ template <int s> struct fwd0but<2,s>
             }
         }
         else {
+#ifdef _OPENMP
             #pragma omp for schedule(static) nowait
+#endif
             for (int q = 0; q < N; q += 2) {
                 complex_vector xq = x + q;
                 const xmm a = getpz(xq[0]);
@@ -143,7 +145,9 @@ template <int s> struct fwd0but<4,s>
             }
         }
         else {
+#ifdef _OPENMP
             #pragma omp for schedule(static) nowait
+#endif
             for (int q = 0; q < N; q += 4) {
                 complex_t* const xq = x + q;
                 const xmm a = getpz(xq[0]);
@@ -187,7 +191,9 @@ template <int s> struct inv0but<4,s>
             }
         }
         else {
+#ifdef _OPENMP
             #pragma omp for schedule(static) nowait
+#endif
             for (int q = 0; q < N; q += 4) {
                 complex_t* const xq = x + q;
                 const xmm a = getpz(xq[0]);
@@ -240,9 +246,13 @@ template <int N> struct fwd0but<N,1>
             fwd0but<n/4,4>()(x, W);
         }
         else
+#ifdef _OPENMP
         #pragma omp parallel
+#endif
         {
+#ifdef _OPENMP
             #pragma omp for schedule(static)
+#endif
             for (int p = 0; p < n1; p += 2) {
                 const ymm w1p = cmplx2(W[1*p], W[1*p+1]);
                 const ymm w2p = mulpz2(w1p, w1p);
@@ -296,9 +306,13 @@ template <int N> struct inv0but<N,1>
             inv0but<n/4,4>()(x, W);
         }
         else
+#ifdef _OPENMP
         #pragma omp parallel
+#endif
         {
+#ifdef _OPENMP
             #pragma omp for schedule(static)
+#endif
             for (int p = 0; p < n1; p += 2) {
                 const ymm w1p = cmplx2(W[N-1*p], W[N-1*p-1]);
                 const ymm w2p = mulpz2(w1p, w1p);
@@ -357,7 +371,9 @@ template <int n, int s> struct fwd0but
             }
         }
         else {
+#ifdef _OPENMP
             #pragma omp for schedule(static)
+#endif
             for (int q = 0; q < N; q += n) {
                 complex_t* const xq = x + q;
                 for (int p = 0; p < n1; p += 2) {
@@ -418,7 +434,9 @@ template <int n, int s> struct inv0but
             }
         }
         else {
+#ifdef _OPENMP
             #pragma omp for schedule(static)
+#endif
             for (int q = 0; q < N; q += n) {
                 complex_t* const xq = x + q;
                 for (int p = 0; p < n1; p += 2) {
@@ -490,7 +508,9 @@ struct FFT
             }
         }
         else {
+#ifdef _OPENMP
             #pragma omp parallel for schedule(static)
+#endif
             for (int p = 0; p < N; p++) {
                 const int q = bitrev[p];
                 if (p > q) std::swap(x[p], x[q]);

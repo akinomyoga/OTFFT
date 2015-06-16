@@ -12,7 +12,7 @@
 #include "otfft_difavx8.h"
 #include "otfft_ditavx8.h"
 #include "otfft_sixstep.h"
-#include "stopwatch.h"
+#include "otfft/stopwatch.h"
 using namespace OTFFT_MISC;
 
 #define TRIES  5

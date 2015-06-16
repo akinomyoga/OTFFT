@@ -106,9 +106,13 @@ template <int N> struct fwdnbut<N,1>
             fwd0but<n/4,4>()(x, W);
         }
         else
+#ifdef _OPENMP
         #pragma omp parallel
+#endif
         {
+#ifdef _OPENMP
             #pragma omp for schedule(static)
+#endif
             for (int p = 0; p < n1; p += 2) {
                 const ymm w1p = cmplx2(W[1*p], W[1*p+1]);
                 const ymm w2p = mulpz2(w1p, w1p);
@@ -163,9 +167,13 @@ template <int N> struct invnbut<N,1>
             inv0but<n/4,4>()(x, W);
         }
         else
+#ifdef _OPENMP
         #pragma omp parallel
+#endif
         {
+#ifdef _OPENMP
             #pragma omp for schedule(static)
+#endif
             for (int p = 0; p < n1; p += 2) {
                 const ymm w1p = cmplx2(W[N-1*p], W[N-1*p-1]);
                 const ymm w2p = mulpz2(w1p, w1p);
