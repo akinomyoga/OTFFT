@@ -1,0 +1,484 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=EUC-JP">
+<META NAME="Generator" CONTENT="jLaTeX2HTML v2008 JA patch-2.1beta1.13">
+<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+<META NAME="description" CONTENT="5 OTFFT の使い方">
+<META NAME="keywords" CONTENT="stockham">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<LINK REL="STYLESHEET" HREF="stockham.css" TYPE="text/css">
+<LINK REL="next" HREF="node6.html">
+<LINK REL="previous" HREF="node4.html">
+<LINK REL="up" HREF="stockham.html">
+<LINK REL="next" HREF="node6.html">
+<TITLE>5 OTFFT の使い方</TITLE>
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+<script type="text/javascript" src="ga.js"></script>
+</HEAD>
+<BODY>
+
+<A NAME="tex2html61"
+  HREF="node6.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next" SRC="next.png"></A> 
+<A NAME="tex2html59"
+  HREF="stockham.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up" SRC="up.png"></A> 
+<A NAME="tex2html53"
+  HREF="node4.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous" SRC="prev.png"></A>   <BR>
+<B> Next:</B> <A NAME="tex2html62"
+  HREF="node6.html">あとがき</A>
+<B>Up:</B> <A NAME="tex2html60"
+  HREF="stockham.html">stockham</A>
+<B> Previous:</B> <A NAME="tex2html54"
+  HREF="node4.html">4 FFTW3 より速い FFT</A>
+<IMG SRC="http://www.sannet.ne.jp/counter/c0.gif" ALT="0"><IMG SRC="http://www.sannet.ne.jp/counter/c2.gif" ALT="2"><IMG SRC="http://www.sannet.ne.jp/counter/c8.gif" ALT="8"><IMG SRC="http://www.sannet.ne.jp/counter/c9.gif" ALT="9"><IMG SRC="http://www.sannet.ne.jp/counter/c8.gif" ALT="8">
+<!--End of Navigation Panel-->
+
+<H1><A NAME="SECTION00050000000000000000"></A><A NAME="otfft-usage"></A>
+5 OTFFT の使い方
+</H1>
+<P>
+　さて、いったい何人の方が使ってくださるか分かりませんが、一応私の提案する
+OTFFT の使い方について説明しておきましょう。
+</P>
+<H3>【使用上の注意】</H3>
+<P>
+　GCC で -march=native -mtune=native オプション付きでコンパイルする場合、
+OTFFT はコンパイルする環境に最適化されます。
+つまり、AVX が有効な環境でコンパイルすれば、AVX を使うようになります。
+このバイナリを AVX をサポートしない環境で動かせば、
+当然、例外を起こして落ちます。そのため、コンパイルしたバイナリを、
+広く一般に配布するような利用形態には、OTFFT は向きません。OTFFT は、
+数値計算のプログラムをソースからコンパイルするような利用形態を想定しています。
+</P>
+<H3>【必要なファイル】</H3>
+<P>
+　<A HREF="node7.html#download">ダウンロードのページA</A>
+から otfft-4.0.tar.gz(もしくは otfft-4.0.zip)
+をダウンロードし展開すると、いくつかのファイルができますが、
+OTFFT を使うのに必要なファイルはその中の otfft フォルダとその中身です。
+このうち、
+</P>
+<PRE>
+    otfft_setup.h
+    otfft_fwd.h
+    otfft_fwd0.h
+    otfft_inv.h
+    otfft_invn.h
+</PRE>
+<P>
+は自動生成されるファイルで、自分の環境で最大の効果を発揮したければ
+ffttune を使って生成し直してやる必要があります。
+GCC の場合、otfft フォルダで以下のように実行し、
+ffttune コマンドを作ります。
+</P>
+<PRE>
+    make ffttune
+</PRE>
+<P>
+Visual Studio の場合、otfft フォルダで以下のように実行します。
+</P>
+<PRE>
+    nmake ffttune
+</PRE>
+<P>
+C++ の template によるメタプログラミング技法を用いているので、
+コンパイルにはかなりの時間がかかります。次に
+</P>
+<PRE>
+    ./ffttune
+</PRE>
+<P>
+あるいは Windows の場合、
+</P>
+<PRE>
+    ffttune
+</PRE>
+<P>
+と ffttune コマンドを実行します。
+すると先に示したファイルの自動生成が始まります。
+しばらく時間がかかるのでお待ちください。
+</P>
+<P>
+　OTFFT は内部で幾つかのアルゴリズムを使い分けていますが、
+どのアルゴリズムがどのサイズで一番速いか、実際に計測して決定します。
+しかし、パソコンは FFT だけを黙々と実行しているわけではなく、
+裏で色々なプロセスが動いています。計測には常に突発的なゆれが混入します。
+そのため、１回の計測で最適な組み合わせが求まるとは限りません。
+納得いかない場合は何度か ffttune を実行し直してください。
+</P>
+<P>
+　自動生成が終わったら、次は otfft.o あるいは otfft.obj ファイルを生成します。
+GCC の場合は、otfft フォルダで次のコマンドを実行します。
+</P>
+<PRE>
+    make otfft.o
+</PRE>
+<P>
+Visual Studio の場合は、otfft フォルダで次のコマンドを実行します。
+</P>
+<PRE>
+    nmake otfft.obj
+</PRE>
+<P>
+　C++ の template によるメタプログラミング技法を用いているので、
+コンパイルには非常に長い時間がかかります。辛抱強くお待ちください。
+</P>
+<P>
+　これで準備は終わりです。
+バージョン 3.2 までは OTFFT は全てヘッダファイルで実装されていたため、
+ご自分のバイナリで利用する場合でも、いちいちコンパイルし直されていました。
+そのため、上記のように非常に長いコンパイル時間が必要でした。
+バージョン 4.0 から OTFFT 自身のコンパイルは事前に済ませておくようにしました。
+ですから、ご自分のバイナリで利用する場合はリンクするだけです。
+</P>
+
+<H3>【ご自分のバイナリのコンパイル方法】</H3>
+<P>
+　otfft.o あるいは otfft.obj の生成が終われば、
+あとは otfft/otfft.h をインクルードし、
+コンパイラのインクルードパスに otfft フォルダのあるフォルダを加えて、
+otfft.o あるいは otfft.obj ファイルを目的のバイナリにリンクしてやれば
+OTFFT は使えます。
+</P>
+<P>
+　g++ でコンパイルするには -march=native -mtune=native -fopenmp
+オプションを付けてください。
+</P>
+<P>
+　Visual C++ の場合、
+AVX を使うには、/arch:AVX /DUSE_AVX を指定してください。
+AVX2 も使う場合は /arch:AVX2 /DUSE_AVX2 も指定してください。
+OpenMP も使うには /openmp を指定してください。
+お分かりとは思いますが、otfft.o あるいは otfft.obj のコンパイル時点で、
+これらのオプションを付けておかないと有効にはなりません。
+必要なら OTFFT の Makefile に記載してください。
+Visual Studio 用のデフォルトの Makefile は、
+AVX と OpenMP を使うよう指定されています。
+</P>
+
+<H3>【複素離散フーリエ変換】</H3>
+<P>
+　サイズ <code>N</code> の複素離散フーリエ変換を実行するには、
+</P>
+<PRE>
+    #include "otfft/otfft.h"
+    using OTFFT::complex_t;
+    using OTFFT::simd_malloc;
+    using OTFFT::simd_free;
+
+    void f(int N)
+    {
+        complex_t* x = (complex_t*) simd_malloc(N*sizeof(complex_t));
+        // 何かする...
+        OTFFT::FFT fft(N); // FFT オブジェクトの作成
+        fft.fwd(x);        // 複素離散フーリエ変換を実行。x が入力かつ出力
+        // 何かする...
+        simd_free(x);
+    }
+</PRE>
+<P>
+のようにします。<code>N</code> は最大 \(2^{24}\) までで、
+2のべき乗である必要があります。
+</P>
+<P>
+<code>complex_t</code> は
+</P>
+<PRE>
+    struct complex_t
+    {
+        double Re, Im;
+
+        complex_t() : Re(0), Im(0) {}
+        complex_t(const double&amp; x) : Re(x), Im(0) {}
+        complex_t(const double&amp; x, const double&amp; y) : Re(x), Im(y) {}
+        complex_t(const std::complex&lt;double&gt;&amp; z) : Re(z.real()), Im(z.imag()) {}
+        operator std::complex&lt;double&gt;() { return std::complex&lt;double&gt;(Re, Im); }
+
+        // その他のメンバ関数...
+    };
+</PRE>
+<P>
+のように定義されています。
+</P>
+<P>
+　フーリエ変換(<code>fwd</code>)には係数 <code>1/N</code> が掛かっています。
+もしそれが不都合なら係数の掛かっていない(<code>fwd0</code>)もあります。
+以下のようなメンバ関数が用意されています。
+</P>
+<PRE>
+    fwd0(x) 離散フーリエ変換(正規化無し)
+    fwd(x)  離散フーリエ変換(1/N による正規化付き)
+    fwdn(x) 離散フーリエ変換(1/N による正規化付き)
+
+    inv0(x) 逆離散フーリエ変換(正規化無し)
+    inv(x)  逆離散フーリエ変換(正規化無し)
+    invn(x) 逆離散フーリエ変換(1/N による正規化付き)
+</PRE>
+<P>
+FFT のサイズを変更したい場合は、
+</P>
+<PRE>
+    fft.setup(2 * N);
+</PRE>
+<P>
+のようにします。
+</P>
+<P>
+　OTFFT は Stockham のアルゴリズムを使っていますので、
+実行には入力系列と同じサイズの作業領域が必要です。
+普通は内部でその領域を確保しますが、
+マルチスレッドのプログラムを組む場合など、それだと都合が悪い場合があります。
+そんな時は外部から作業領域を渡すバージョンもあります。次のように使います。
+</P>
+<PRE>
+    #include "otfft/otfft.h"
+    using OTFFT::complex_t;
+    using OTFFT::simd_malloc;
+    using OTFFT::simd_free;
+
+    void f(int N)
+    {
+        complex_t* x = (complex_t*) simd_malloc(N*sizeof(complex_t));
+        complex_t* y = (complex_t*) simd_malloc(N*sizeof(complex_t));
+        // 何かする...
+        OTFFT::FFT0 fft(N);
+        fft.fwd(x, y); // x が入力かつ出力、y が作業領域
+        // 何かする...
+        fft.inv(x, y); // x が入力かつ出力、y が作業領域
+        // 何かする...
+        simd_free(y);
+        simd_free(x);
+    }
+</PRE>
+<P>
+　<code>OTFFT::FFT</code> だったところが <code>OTFFT::FFT0</code>
+になっていることに注意してください。
+</P>
+
+<H3>【実離散フーリエ変換】</H3>
+<P>
+　バージョン 3.0 から実離散フーリエ変換、離散コサイン変換(DCT-II)、
+Bluestein's FFT(任意サイズの FFT) もサポートするようになりました。
+サイズ <code>N</code> の実離散フーリエ変換を実行するには以下のようにします。
+</P>
+<PRE>
+    #include "otfft/otfft.h"
+    using OTFFT::complex_t;
+    using OTFFT::simd_malloc;
+    using OTFFT::simd_free;
+
+    void f(int N)
+    {
+        double*    x = (double*)    simd_malloc(N*sizeof(double));
+        complex_t* y = (complex_t*) simd_malloc(N*sizeof(complex_t));
+        // 何かする...
+        OTFFT::RFFT rfft(N);
+        rfft.fwd(x, y); // 実離散フーリエ変換を実行。x が入力、y が出力
+        // 何かする...
+        simd_free(y);
+        simd_free(x);
+    }
+</PRE>
+<P>
+　実離散フーリエ変換には以下のようなメンバ関数が用意されています。
+</P>
+<PRE>
+    fwd0(x, y) 実離散フーリエ変換(正規化無し)           x:入力、y:出力
+    fwd(x, y)  実離散フーリエ変換(1/N による正規化付き) x:入力、y:出力
+    fwdn(x, y) 実離散フーリエ変換(1/N による正規化付き) x:入力、y:出力
+
+    inv0(y, x) 逆実離散フーリエ変換(正規化無し)           y:入力、x:出力
+    inv(y, x)  逆実離散フーリエ変換(正規化無し)           y:入力、x:出力
+    invn(y, x) 逆実離散フーリエ変換(1/N による正規化付き) y:入力、x:出力
+</PRE>
+<P>
+　逆実離散フーリエ変換は複素系列 <code>y</code> を受け取って、
+実系列 <code>x</code> を返します。<code>y</code> が斜対称、
+すなわち <code>y[N-k] == conj(y[k])</code> でないと正しい結果を返しません。
+また、逆実離散フーリエ変換は入力 <code>y</code> を破壊します。
+保存しておきたい場合は、コピーを取っておく必要があります。
+指定できるサイズは２のべき乗で \(2^{25}\) 以下です。
+内部的には <code>N/2</code> のサイズの複素 FFT で実装されています。
+</P>
+<P>
+　実離散フーリエ変換は、作業領域として出力系列を使います。
+そして逆実離散フーリエ変換は、作業領域として入力系列を使います。
+マルチスレッドでプログラムする場合も、
+それぞれのスレッド専用の入力と出力を与えてやれば OK です。
+</P>
+
+<H3>【離散コサイン変換(DCT-II)】</H3>
+<P>
+　サイズ <code>N</code>
+の離散コサイン変換(DCT-II)を実行するには以下のようにします。
+</P>
+<PRE>
+    #include "otfft/otfft.h"
+    using OTFFT::complex_t;
+    using OTFFT::simd_malloc;
+    using OTFFT::simd_free;
+
+    void f(int N)
+    {
+        double* x = (double*) simd_malloc(N*sizeof(double));
+        // 何かする...
+        OTFFT::DCT dct(N);
+        dct.fwd(x); // DCT-II を実行する。x が入力かつ出力
+        // 何かする...
+        simd_free(x);
+    }
+</PRE>
+<P>
+　離散コサイン変換には以下のようなメンバ関数が用意されています。
+</P>
+<PRE>
+    fwd0(x) 離散コサイン変換(正規化無し)
+    fwd(x)  離散コサイン変換(1/N による正規化付き)
+    fwdn(x) 離散コサイン変換(1/N による正規化付き)
+
+    inv0(x) 逆離散コサイン変換(正規化無し)
+    inv(x)  逆離散コサイン変換(正規化無し)
+    invn(x) 逆離散コサイン変換(1/N による正規化付き)
+</PRE>
+<P>
+　離散コサイン変換は DCT-II を採用しています。ただし、直交化はしていません。
+指定できるサイズは２のべき乗で \(2^{25}\) 以下です。
+内部的には <code>N/2</code> のサイズの複素 FFT で実装されています。
+マルチスレッドで使う場合の作業領域を外部から与えるバージョンもあります。
+以下のように使います。
+</P>
+<PRE>
+    #include "otfft/otfft.h"
+    using OTFFT::complex_t;
+    using OTFFT::simd_malloc;
+    using OTFFT::simd_free;
+
+    void f(int N)
+    {
+        double*    x = (double*)    simd_malloc(N*sizeof(double));
+        double*    y = (double*)    simd_malloc(N*sizeof(double));
+        complex_t* z = (complex_t*) simd_malloc(N*sizeof(complex_t));
+        // 何かする...
+        OTFFT::DCT0 dct(N);
+        dct.fwd(x, y, z); // DCT-II を実行する。x が入力かつ出力、y,z が作業領域
+        // 何かする...
+        simd_free(z);
+        simd_free(y);
+        simd_free(x);
+    }
+</PRE>
+<P>
+　<code>OTFFT::DCT</code> だったところが <code>OTFFT::DCT0</code>
+になっていることに注意してください。
+</P>
+
+<H3>【Bluestein's FFT】</H3>
+<P>
+　Bluestein's FFT(任意サイズ <code>N</code> の FFT)
+を実行するには以下のようにします。
+</P>
+<PRE>
+    #include "otfft/otfft.h"
+    using OTFFT::complex_t;
+    using OTFFT::simd_malloc;
+    using OTFFT::simd_free;
+
+    void f(int N)
+    {
+        complex_t* x = (complex_t*) simd_malloc(N*sizeof(complex_t));
+        // 何かする...
+        OTFFT::Bluestein bst(N); // N は任意の自然数。ただし、2^23 より小さい。
+        bst.fwd(x); // Bluestein's FFT を実行する。x が入力かつ出力
+        // 何かする...
+        simd_free(x);
+    }
+</PRE>
+<P>
+　Bluestein's FFT では、
+離散フーリエ変換のサイズを２のべき乗に限る必要はありません。
+例えば大きな素数のサイズでも計算量は \(O(N\log N)\) になります。
+指定出来るサイズの上限は \(2^{23}\) です。だたし、
+マルチスレッド用のメンバ関数は用意されていません。
+どうしてもマルチスレッドで使いたい場合は、
+動作確認はしていませんが、スレッドの数だけ Bluestein オブジェクトを生成し、
+各スレッドでそれらを使い分ければ大丈夫と思います。当然、
+メモリをゴージャスに使ってしまいます。
+</P>
+<P>
+　Bluestein's FFT には以下のようなメンバ関数が用意されています。
+</P>
+<PRE>
+    fwd0(x) 離散フーリエ変換(正規化無し)
+    fwd(x)  離散フーリエ変換(1/N による正規化付き)
+    fwdn(x) 離散フーリエ変換(1/N による正規化付き)
+
+    inv0(x) 逆離散フーリエ変換(正規化無し)
+    inv(x)  逆離散フーリエ変換(正規化無し)
+    invn(x) 逆離散フーリエ変換(1/N による正規化付き)
+</PRE>
+
+<H3>【ベンチマーク】</H3>
+<P>
+　最後に、OTFFT にはベンチマークプログラムが付属しています。しかし、
+このベンチマークには FFTW3 と大浦さんのプログラムを用いているため、
+単独では動作しません。まずは FFTW3 をインストールし、
+<A HREF="http://www.kurims.kyoto-u.ac.jp/~ooura/fft-j.html">
+大浦さんのページ
+</A>
+から大浦さんの FFT ライブラリをダウンロードしてください。
+そしてその中の fftsg.c というファイルを
+fftbench1.cpp と同じフォルダに入れてください。
+その上で以下のように fftbench1 コマンドと fftbench2 コマンドを make します。
+</P>
+<PRE>
+    make fftbench1 fftbench2
+</PRE>
+<P>
+Visual Studio の場合 nmake します。
+</P>
+<PRE>
+    nmake fftbench1 fftbench2
+</PRE>
+<P>
+fftbench1 が計測時間に FFT オブジェクトの初期化を含まないベンチマーク、
+fftbench2 が初期化を含むベンチマークです。以下のように実行してください。
+</P>
+<PRE>
+    ./fftbench1
+    ./fftbench2
+</PRE>
+<P>
+あるいは Windows の場合、
+</P>
+<PRE>
+    fftbench1
+    fftbench2
+</PRE>
+<P>
+とします。
+</P>
+<HR>
+<A NAME="tex2html61"
+  HREF="node6.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next" SRC="next.png"></A> 
+<A NAME="tex2html59"
+  HREF="stockham.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up" SRC="up.png"></A> 
+<A NAME="tex2html53"
+  HREF="node4.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous" SRC="prev.png"></A>   <BR>
+<B> Next:</B> <A NAME="tex2html62"
+  HREF="node6.html">あとがき</A>
+<B>Up:</B> <A NAME="tex2html60"
+  HREF="stockham.html">stockham</A>
+<B> Previous:</B> <A NAME="tex2html54"
+  HREF="node4.html">4 FFTW3 より速い FFT</A>
+<!--End of Navigation Panel-->
+</BODY>
+</HTML>

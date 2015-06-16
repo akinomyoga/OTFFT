@@ -1,0 +1,349 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+
+<!--Converted with jLaTeX2HTML 2008 (1.71) JA patch-2.1beta1.13
+patched version by:  Kenshi Muto, Debian Project.
+* modified by:  Shige TAKENO
+LaTeX2HTML 2008 (1.71),
+original version by:  Nikos Drakos, CBLU, University of Leeds
+* revised and updated by:  Marcus Hennecke, Ross Moore, Herb Swan
+* with significant contributions from:
+  Jens Lippmann, Marek Rouchal, Martin Wilck and others -->
+<HTML>
+<HEAD>
+
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=EUC-JP">
+<META NAME="Generator" CONTENT="jLaTeX2HTML v2008 JA patch-2.1beta1.13">
+<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+<META NAME="description" CONTENT="3 4基底の Stockham FFT">
+<META NAME="keywords" CONTENT="stockham">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<LINK REL="STYLESHEET" HREF="stockham.css" TYPE="text/css">
+<LINK REL="next" HREF="node4.html">
+<LINK REL="previous" HREF="node2.html">
+<LINK REL="up" HREF="stockham.html">
+<LINK REL="next" HREF="node4.html">
+<TITLE>3 4基底の Stockham FFT</TITLE>
+
+<script type="text/javascript" src="ga.js"></script>
+</HEAD>
+
+<BODY >
+
+<A NAME="tex2html41"
+  HREF="node4.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next" SRC="next.png"></A> 
+<A NAME="tex2html39"
+  HREF="stockham.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up" SRC="up.png"></A> 
+<A NAME="tex2html33"
+  HREF="node2.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous" SRC="prev.png"></A>   <BR>
+<B> Next:</B> <A NAME="tex2html42"
+  HREF="node4.html">4 FFTW3 より速い FFT</A>
+<B>Up:</B> <A NAME="tex2html40"
+  HREF="stockham.html">stockham</A>
+<B> Previous:</B> <A NAME="tex2html34"
+  HREF="node2.html">2 Stockham のアルゴリズムの完成</A>
+<BR> <P>
+<IMG SRC="http://www.sannet.ne.jp/counter/c0.gif" ALT="0"><IMG SRC="http://www.sannet.ne.jp/counter/c1.gif" ALT="1"><IMG SRC="http://www.sannet.ne.jp/counter/c3.gif" ALT="3"><IMG SRC="http://www.sannet.ne.jp/counter/c8.gif" ALT="8"><IMG SRC="http://www.sannet.ne.jp/counter/c0.gif" ALT="0">
+<!--End of Navigation Panel-->
+
+<H1><A NAME="SECTION00030000000000000000"></A><A NAME="stockham4"></A>
+<BR>
+3 4基底の Stockham FFT
+</H1>
+　さて、みなさんは4基底の Cooley-Tukey のアルゴリズムをご存知でしょうか。
+FFT における小さなサイズのフーリエ変換への分解をサイズ2で行うのではなく、
+サイズ4で行うのが4基底のアルゴリズムです。2基底のアルゴリズムより計算量が
+少なくなることが知られています。
+<BR>
+<P>
+　ところで、Cooley-Tukey で4基底のアルゴリズムを考えるのは簡単ですが、
+あの Stockham の漸化式から4基底を考えるのは多少骨が折れます。実際、
+とあるサイトでは Stockham の漸化式から強引に4基底のアルゴリズムを導いて
+いるせいで余分なステップを踏むアルゴリズムが紹介されていました。
+<BR>
+<P>
+　しかし、Stockham のアルゴリズムが Cooley-Tukey のアルゴリズムの簡単な
+変形であることを知っていれば、4基底の Cooley-Tukey のアルゴリズムから、
+4基底の Stockham のアルゴリズムを簡単に導くことができます。
+<BR>
+<P>
+　ではまず、4基底の Cooley-Tukey(DIF) のアルゴリズムを示しましょう。今回は
+逆変換も Cooley-Tukey のアルゴリズムから簡単に導けることを示すため、
+<code>ifft()</code> を <code>fft0()</code> で兼用したりせず、Cooley-Tukey のフーリエ
+逆変換も同時に示します。
+
+<P>
+<BR>
+<A NAME="list:cooley-tukey4"></A>
+<DIV ALIGN="CENTER">
+リスト8:4基底の Cooley-Tukey(DIF) アルゴリズム
+
+</DIV>
+<BR>
+<PRE>#include &lt;complex&gt;
+#include &lt;cmath&gt;
+
+typedef std::complex&lt;double&gt; complex_t;
+
+void fft0(int n, int q, complex_t* x, complex_t* y)
+{
+    static const complex_t j = complex_t(0, 1);
+    const int n0 = 0;
+    const int n1 = n/4;
+    const int n2 = n/2;
+    const int n3 = n1 + n2;
+    const double theta0 = 2*M_PI/n;
+
+    if (n == 1) {}
+    else if (n == 2) {
+        const complex_t a = x[q + 0];
+        const complex_t b = x[q + 1];
+        x[q + 0] = a + b;
+        x[q + 1] = a - b;
+    }
+    else if (n &gt; 2) {
+        for (int p = 0; p &lt; n1; p++) {
+            const complex_t w1p = complex_t(cos(p*theta0), -sin(p*theta0));
+            const complex_t w2p = w1p*w1p;
+            const complex_t w3p = w1p*w2p;
+            const complex_t a = x[q + p + n0];
+            const complex_t b = x[q + p + n1];
+            const complex_t c = x[q + p + n2];
+            const complex_t d = x[q + p + n3];
+            const complex_t  apc =    a + c;
+            const complex_t  amc =    a - c;
+            const complex_t  bpd =    b + d;
+            const complex_t jbmd = j*(b - d);
+            y[q + p + n0] =      apc +  bpd;
+            y[q + p + n1] = w1p*(amc - jbmd);
+            y[q + p + n2] = w2p*(apc -  bpd);
+            y[q + p + n3] = w3p*(amc + jbmd);
+        }
+        fft0(n/4, q + n0, y, x);
+        fft0(n/4, q + n1, y, x);
+        fft0(n/4, q + n2, y, x);
+        fft0(n/4, q + n3, y, x);
+        for (int p = 0; p &lt; n1; p++) {
+            x[q + 4*p + 0] = y[q + p + n0];
+            x[q + 4*p + 1] = y[q + p + n1];
+            x[q + 4*p + 2] = y[q + p + n2];
+            x[q + 4*p + 3] = y[q + p + n3];
+        }
+    }
+}
+
+void ifft0(int n, int q, complex_t* x, complex_t* y)
+{
+    static const complex_t j = complex_t(0, 1);
+    const int n0 = 0;
+    const int n1 = n/4;
+    const int n2 = n/2;
+    const int n3 = n1 + n2;
+    const double theta0 = 2*M_PI/n;
+
+    if (n == 1) {}
+    else if (n == 2) {
+        const complex_t a = x[q + 0];
+        const complex_t b = x[q + 1];
+        x[q + 0] = a + b;
+        x[q + 1] = a - b;
+    }
+    else if (n &gt; 2) {
+        for (int p = 0; p &lt; n1; p++) {
+            const complex_t w1p = complex_t(cos(p*theta0), sin(p*theta0));
+            const complex_t w2p = w1p*w1p;
+            const complex_t w3p = w1p*w2p;
+            const complex_t a = x[q + p + n0];
+            const complex_t b = x[q + p + n1];
+            const complex_t c = x[q + p + n2];
+            const complex_t d = x[q + p + n3];
+            const complex_t  apc =    a + c;
+            const complex_t  amc =    a - c;
+            const complex_t  bpd =    b + d;
+            const complex_t jbmd = j*(b - d);
+            y[q + p + n0] =      apc +  bpd;
+            y[q + p + n1] = w1p*(amc + jbmd);
+            y[q + p + n2] = w2p*(apc -  bpd);
+            y[q + p + n3] = w3p*(amc - jbmd);
+        }
+        ifft0(n/4, q + n0, y, x);
+        ifft0(n/4, q + n1, y, x);
+        ifft0(n/4, q + n2, y, x);
+        ifft0(n/4, q + n3, y, x);
+        for (int p = 0; p &lt; n1; p++) {
+            x[q + 4*p + 0] = y[q + p + n0];
+            x[q + 4*p + 1] = y[q + p + n1];
+            x[q + 4*p + 2] = y[q + p + n2];
+            x[q + 4*p + 3] = y[q + p + n3];
+        }
+    }
+}
+
+void fft(int n, complex_t* x)
+{
+    complex_t* y = new complex_t[n];
+    fft0(n, 0, x, y);
+    delete[] y;
+    for (int k = 0; k &lt; n; k++) x[k] /= n;
+}
+
+void ifft(int n, complex_t* x)
+{
+    complex_t* y = new complex_t[n];
+    ifft0(n, 0, x, y);
+    delete[] y;
+}
+</PRE>
+<BR>
+
+<P>
+　出力を自然な順序で並べるために、4の倍数成分、4で割ると1余る成分、
+4で割ると2余る成分、4で割ると3余る成分を合成するようにしてあります。
+これを基に、セクション<A HREF="node1.html#stockham-intro">1</A>,<A HREF="node2.html#stockham-speedup">2</A>の要領で
+変形してやると4基底の Stockham(DIF) のアルゴリズムは以下のようになります。
+
+<P>
+<BR>
+<A NAME="list:stockham4"></A>
+<DIV ALIGN="CENTER">
+リスト9:4基底の Stockham(DIF) アルゴリズム
+
+</DIV>
+<BR>
+<PRE>#include &lt;complex&gt;
+#include &lt;cmath&gt;
+
+typedef std::complex&lt;double&gt; complex_t;
+
+void fft0(int n, int s, bool eo, complex_t* x, complex_t* y)
+{
+    static const complex_t j = complex_t(0, 1);
+    const int n0 = 0;
+    const int n1 = n/4;
+    const int n2 = n/2;
+    const int n3 = n1 + n2;
+    const double theta0 = 2*M_PI/n;
+
+    if (n == 1) { if (eo) for (int q = 0; q &lt; s; q++) y[q] = x[q]; }
+    else if (n == 2) {
+        for (int q = 0; q &lt; s; q++) {
+            const complex_t a = x[q + 0];
+            const complex_t b = x[q + s];
+            y[q + 0] = a + b;
+            y[q + s] = a - b;
+        }
+        fft0(1, 2*s, !eo, y, x);
+    }
+    else if (n &gt; 2) {
+        for (int p = 0; p &lt; n1; p++) {
+            const complex_t w1p = complex_t(cos(p*theta0), -sin(p*theta0));
+            const complex_t w2p = w1p*w1p;
+            const complex_t w3p = w1p*w2p;
+            for (int q = 0; q &lt; s; q++) {
+                const complex_t a = x[q + s*(p + n0)];
+                const complex_t b = x[q + s*(p + n1)];
+                const complex_t c = x[q + s*(p + n2)];
+                const complex_t d = x[q + s*(p + n3)];
+                const complex_t  apc =    a + c;
+                const complex_t  amc =    a - c;
+                const complex_t  bpd =    b + d;
+                const complex_t jbmd = j*(b - d);
+                y[q + s*(4*p + 0)] =      apc +  bpd;
+                y[q + s*(4*p + 1)] = w1p*(amc - jbmd);
+                y[q + s*(4*p + 2)] = w2p*(apc -  bpd);
+                y[q + s*(4*p + 3)] = w3p*(amc + jbmd);
+            }
+        }
+        fft0(n/4, 4*s, !eo, y, x);
+    }
+}
+
+void ifft0(int n, int s, bool eo, complex_t* x, complex_t* y)
+{
+    static const complex_t j = complex_t(0, 1);
+    const int n0 = 0;
+    const int n1 = n/4;
+    const int n2 = n/2;
+    const int n3 = n1 + n2;
+    const double theta0 = 2*M_PI/n;
+
+    if (n == 1) { if (eo) for (int q = 0; q &lt; s; q++) y[q] = x[q]; }
+    else if (n == 2) {
+        for (int q = 0; q &lt; s; q++) {
+            const complex_t a = x[q + 0];
+            const complex_t b = x[q + s];
+            y[q + 0] = a + b;
+            y[q + s] = a - b;
+        }
+        ifft0(1, 2*s, !eo, y, x);
+    }
+    else if (n &gt; 2) {
+        for (int p = 0; p &lt; n1; p++) {
+            const complex_t w1p = complex_t(cos(p*theta0), sin(p*theta0));
+            const complex_t w2p = w1p*w1p;
+            const complex_t w3p = w1p*w2p;
+            for (int q = 0; q &lt; s; q++) {
+                const complex_t a = x[q + s*(p + n0)];
+                const complex_t b = x[q + s*(p + n1)];
+                const complex_t c = x[q + s*(p + n2)];
+                const complex_t d = x[q + s*(p + n3)];
+                const complex_t  apc =    a + c;
+                const complex_t  amc =    a - c;
+                const complex_t  bpd =    b + d;
+                const complex_t jbmd = j*(b - d);
+                y[q + s*(4*p + 0)] =      apc +  bpd;
+                y[q + s*(4*p + 1)] = w1p*(amc + jbmd);
+                y[q + s*(4*p + 2)] = w2p*(apc -  bpd);
+                y[q + s*(4*p + 3)] = w3p*(amc - jbmd);
+            }
+        }
+        ifft0(n/4, 4*s, !eo, y, x);
+    }
+}
+
+void fft(int n, complex_t* x)
+{
+    complex_t* y = new complex_t[n];
+    fft0(n, 1, 0, x, y);
+    delete[] y;
+    for (int k = 0; k &lt; n; k++) x[k] /= n;
+}
+
+void ifft(int n, complex_t* x)
+{
+    complex_t* y = new complex_t[n];
+    ifft0(n, 1, 0, x, y);
+    delete[] y;
+}
+</PRE>
+<BR>
+
+<P>
+　次章、セクション<A HREF="node4.html#otfft">4</A>では、Stockham のアルゴリズムを使った、FFTW
+より速い FFT ライブラリを示します。マジ？
+<HR>
+<A NAME="tex2html41"
+  HREF="node4.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next" SRC="next.png"></A> 
+<A NAME="tex2html39"
+  HREF="stockham.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up" SRC="up.png"></A> 
+<A NAME="tex2html33"
+  HREF="node2.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous" SRC="prev.png"></A>   <BR>
+<B> Next:</B> <A NAME="tex2html42"
+  HREF="node4.html">4 FFTW より速い FFT</A>
+<B>Up:</B> <A NAME="tex2html40"
+  HREF="stockham.html">stockham</A>
+<B> Previous:</B> <A NAME="tex2html34"
+  HREF="node2.html">2 Stockham のアルゴリズムの完成</A>
+
+<!--End of Navigation Panel-->
+
+</BODY>
+</HTML>

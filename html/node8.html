@@ -1,0 +1,286 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+
+<!--Converted with jLaTeX2HTML 2008 (1.71) JA patch-2.1beta1.13
+patched version by:  Kenshi Muto, Debian Project.
+* modified by:  Shige TAKENO
+LaTeX2HTML 2008 (1.71),
+original version by:  Nikos Drakos, CBLU, University of Leeds
+* revised and updated by:  Marcus Hennecke, Ross Moore, Herb Swan
+* with significant contributions from:
+  Jens Lippmann, Marek Rouchal, Martin Wilck and others -->
+<HTML>
+<HEAD>
+
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=EUC-JP">
+<META NAME="Generator" CONTENT="jLaTeX2HTML v2008 JA patch-2.1beta1.13">
+<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+<META NAME="description" CONTENT="B. Stockham アルゴリズムの種類">
+<META NAME="keywords" CONTENT="stockham">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<LINK REL="STYLESHEET" HREF="stockham.css" TYPE="text/css">
+<LINK REL="previous" HREF="node7.html">
+<LINK REL="up" HREF="stockham.html">
+<TITLE>B. Stockham のアルゴリズムの種類</TITLE>
+
+<script type="text/javascript" src="ga.js"></script>
+</HEAD>
+
+<BODY >
+
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next" SRC="next_g.png"> 
+<A NAME="tex2html88"
+  HREF="stockham.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up" SRC="up.png"></A> 
+<A NAME="tex2html84"
+  HREF="node7.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous" SRC="prev.png"></A>   <BR>
+<B>Up:</B> <A NAME="tex2html89"
+  HREF="stockham.html">stockham</A>
+<B> Previous:</B> <A NAME="tex2html85"
+  HREF="node7.html">A. ダウンロード</A>
+<BR> <P>
+<IMG SRC="http://www.sannet.ne.jp/counter/c0.gif" ALT="0"><IMG SRC="http://www.sannet.ne.jp/counter/c1.gif" ALT="1"><IMG SRC="http://www.sannet.ne.jp/counter/c1.gif" ALT="1"><IMG SRC="http://www.sannet.ne.jp/counter/c1.gif" ALT="1"><IMG SRC="http://www.sannet.ne.jp/counter/c3.gif" ALT="3">
+<!--End of Navigation Panel-->
+
+<H1><A NAME="SECTION00080000000000000000"></A><A NAME="kindsofstockham"></A>
+<BR>
+B. Stockham のアルゴリズムの種類
+</H1>
+　ここでは、私が Web を検索して見つけた Stockham のアルゴリズムの種類について
+整理しておきます。まず、このサイトで説明されている Cooley-Tukey のアルゴリズム
+からの単純な変形で導ける Stockham のアルゴリズムをタイプ1。私がなぜこれで
+フーリエ変換できるのか説明できない Stockham のアルゴリズムをタイプ2とします。
+<BR>
+<P>
+　タイプ1、タイプ2それぞれに周波数間引き(DIF)と時間間引き(DIT)のアルゴリズム
+があります。すなわち、Stockham のアルゴリズムは最低でも４種類あることになり
+ます。
+<BR>
+<P>
+　タイプ2のアルゴリズムは速度的にタイプ1に劣るので実際の FFT の実装に用いること
+はないでしょう。ただ、理論的にはタイプ2でも FFT が可能ということは、おそらく
+重要な事実と思われます。
+
+<P>
+<BR>
+<DIV ALIGN="CENTER">
+タイプ1-DIF Stockham アルゴリズム
+
+</DIV>
+<BR>
+<PRE>#include &lt;complex&gt;
+#include &lt;cmath&gt;
+
+typedef std::complex&lt;double&gt; complex_t;
+
+void fft0(int n, int s, bool eo, complex_t* x, complex_t* y)
+{
+    const int m = n/2;
+    const double theta0 = 2*M_PI/n;
+
+    if (n == 1) { if (eo) for (int q = 0; q &lt; s; q++) y[q] = x[q]; }
+    else {
+        for (int p = 0; p &lt; m; p++) {
+            const complex_t wp = complex_t(cos(p*theta0), -sin(p*theta0));
+            for (int q = 0; q &lt; s; q++) {
+                const complex_t a = x[q + s*(p + 0)];
+                const complex_t b = x[q + s*(p + m)];
+                y[q + s*(2*p + 0)] =  a + b;
+                y[q + s*(2*p + 1)] = (a - b) * wp;
+            }
+        }
+        fft0(n/2, 2*s, !eo, y, x);
+    }
+}
+
+void fft(int n, complex_t* x)
+{
+    complex_t* y = new complex_t[n];
+    fft0(n, 1, 0, x, y);
+    delete[] y;
+    for (int k = 0; k &lt; n; k++) x[k] /= n;
+}
+
+void ifft(int n, complex_t* x)
+{
+    for (int p = 0; p &lt; n; p++) x[p] = conj(x[p]);
+    complex_t* y = new complex_t[n];
+    fft0(n, 1, 0, x, y);
+    delete[] y;
+    for (int k = 0; k &lt; n; k++) x[k] = conj(x[k]);
+}
+</PRE>
+<BR>
+
+<P>
+<BR>
+<DIV ALIGN="CENTER">
+タイプ1-DIT Stockham アルゴリズム
+
+</DIV>
+<BR>
+<PRE>#include &lt;complex&gt;
+#include &lt;cmath&gt;
+
+typedef std::complex&lt;double&gt; complex_t;
+
+void fft0(int n, int s, bool eo, complex_t* x, complex_t* y)
+{
+    const int m = n/2;
+    const double theta0 = 2*M_PI/n;
+
+    if (n == 1) { if (eo) for (int q = 0; q &lt; s; q++) x[q] = y[q]; }
+    else {
+        fft0(n/2, 2*s, !eo, y, x);
+        for (int p = 0; p &lt; m; p++) {
+            const complex_t wp = complex_t(cos(p*theta0), -sin(p*theta0));
+            for (int q = 0; q &lt; s; q++) {
+                const complex_t a = y[q + s*(2*p + 0)];
+                const complex_t b = y[q + s*(2*p + 1)] * wp;
+                x[q + s*(p + 0)] = a + b;
+                x[q + s*(p + m)] = a - b;
+            }
+        }
+    }
+}
+
+void fft(int n, complex_t* x)
+{
+    complex_t* y = new complex_t[n];
+    fft0(n, 1, 0, x, y);
+    delete[] y;
+    for (int k = 0; k &lt; n; k++) x[k] /= n;
+}
+
+void ifft(int n, complex_t* x)
+{
+    for (int p = 0; p &lt; n; p++) x[p] = conj(x[p]);
+    complex_t* y = new complex_t[n];
+    fft0(n, 1, 0, x, y);
+    delete[] y;
+    for (int k = 0; k &lt; n; k++) x[k] = conj(x[k]);
+}
+</PRE>
+<BR>
+
+<P>
+<BR>
+<DIV ALIGN="CENTER">
+タイプ2-DIF Stockham アルゴリズム
+
+</DIV>
+<BR>
+<PRE>#include &lt;complex&gt;
+#include &lt;cmath&gt;
+
+typedef std::complex&lt;double&gt; complex_t;
+
+void fft0(int n, int s, bool eo, complex_t* x, complex_t* y)
+{
+    const int m = n/2;
+    const double theta0 = M_PI/s;
+
+    if (n == 1) { if (eo) for (int q = 0; q &lt; s; q++) x[q] = y[q]; }
+    else {
+        fft0(n/2, 2*s, !eo, y, x);
+        for (int p = 0; p &lt; m; p++) {
+            for (int q = 0; q &lt; s; q++) {
+                const complex_t wq = complex_t(cos(q*theta0), -sin(q*theta0));
+                const complex_t a = y[q + s*(2*p + 0)];
+                const complex_t b = y[q + s*(2*p + 1)];
+                x[q + s*(p + 0)] =  a + b;
+                x[q + s*(p + m)] = (a - b)*wq;
+            }
+        }
+    }
+}
+
+void fft(int n, complex_t* x)
+{
+    complex_t* y = new complex_t[n];
+    fft0(n, 1, 0, x, y);
+    delete[] y;
+    for (int k = 0; k &lt; n; k++) x[k] /= n;
+}
+
+void ifft(int n, complex_t* x)
+{
+    for (int p = 0; p &lt; n; p++) x[p] = conj(x[p]);
+    complex_t* y = new complex_t[n];
+    fft0(n, 1, 0, x, y);
+    delete[] y;
+    for (int k = 0; k &lt; n; k++) x[k] = conj(x[k]);
+}
+</PRE>
+<BR>
+
+<P>
+<BR>
+<DIV ALIGN="CENTER">
+タイプ2-DIT Stockham アルゴリズム
+
+</DIV>
+<BR>
+<PRE>#include &lt;complex&gt;
+#include &lt;cmath&gt;
+
+typedef std::complex&lt;double&gt; complex_t;
+
+void fft0(int n, int s, bool eo, complex_t* x, complex_t* y)
+{
+    const int m = n/2;
+    const double theta0 = M_PI/s;
+
+    if (n == 1) { if (eo) for (int q = 0; q &lt; s; q++) y[q] = x[q]; }
+    else {
+        for (int p = 0; p &lt; m; p++) {
+            for (int q = 0; q &lt; s; q++) {
+                const complex_t wq = complex_t(cos(q*theta0), -sin(q*theta0));
+                const complex_t a = x[q + s*(p + 0)];
+                const complex_t b = x[q + s*(p + m)] * wq;
+                y[q + s*(2*p + 0)] = a + b;
+                y[q + s*(2*p + 1)] = a - b;
+            }
+        }
+        fft0(n/2, 2*s, !eo, y, x);
+    }
+}
+
+void fft(int n, complex_t* x)
+{
+    complex_t* y = new complex_t[n];
+    fft0(n, 1, 0, x, y);
+    delete[] y;
+    for (int k = 0; k &lt; n; k++) x[k] /= n;
+}
+
+void ifft(int n, complex_t* x)
+{
+    for (int p = 0; p &lt; n; p++) x[p] = conj(x[p]);
+    complex_t* y = new complex_t[n];
+    fft0(n, 1, 0, x, y);
+    delete[] y;
+    for (int k = 0; k &lt; n; k++) x[k] = conj(x[k]);
+}
+</PRE>
+<BR>
+<HR>
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next" SRC="next_g.png"> 
+<A NAME="tex2html88"
+  HREF="stockham.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up" SRC="up.png"></A> 
+<A NAME="tex2html84"
+  HREF="node7.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous" SRC="prev.png"></A>   <BR>
+<B>Up:</B> <A NAME="tex2html89"
+  HREF="stockham.html">stockham</A>
+<B> Previous:</B> <A NAME="tex2html85"
+  HREF="node7.html">A. ダウンロード</A>
+
+<!--End of Navigation Panel-->
+
+</BODY>
+</HTML>
