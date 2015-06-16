@@ -28,7 +28,7 @@ CXXFLAGS += -fpeel-loops
 #CXXFLAGS += -fargument-noalias-global
 
 HEADERS1 = \
-	otfft_misc.h \
+	otfft/otfft_misc.h \
 	otfft_difavx.h \
 	otfft_difavxn.h \
 	otfft_difavx8.h \
@@ -57,7 +57,6 @@ HEADERS2 = \
 all:
 .PHONY: all clean install
 
-
 clean:
 	-rm -rf $(OUTDIR)/*
 
@@ -71,14 +70,14 @@ $(OUTDIR)/ffttune.log: $(OUTDIR)/ffttune | $(OUTINC)
 	cd $(OUTINC) && ../ffttune | tee ../ffttune.log
 $(HEADERS2): $(OUTDIR)/ffttune.log
 
-$(OUTDIR)/otfft.o: otfft.cpp $(HEADERS1) otfft.h $(HEADERS2)
+$(OUTDIR)/otfft.o: otfft.cpp $(HEADERS1) otfft/otfft.h $(HEADERS2)
 	@echo NOTE: This compilation may take several minutes.
 	$(CXX) $(CXXFLAGS)       -I $(OUTINC) -c -o $@ $<
 $(OUTDIR)/libotfft.a: $(OUTDIR)/otfft.o
 	ar cru $@ $<
 
 libotfft_shared_LDFLAGS:=-shared -Wl,-soname=libotfft.so.4
-$(OUTDIR)/otfft_shared.o: otfft.cpp $(HEADERS1) otfft.h $(HEADERS2)
+$(OUTDIR)/otfft_shared.o: otfft.cpp $(HEADERS1) otfft/otfft.h $(HEADERS2)
 	@echo NOTE: This compilation may take several minutes.
 	$(CXX) $(CXXFLAGS) -fPIC -I $(OUTINC) -c -o $@ $<
 $(OUTDIR)/libotfft.so.4.0: $(OUTDIR)/otfft_shared.o | $(OUTDIR)
@@ -89,7 +88,7 @@ all: $(OUTDIR)/libotfft.so.4.0 $(OUTDIR)/libotfft.so.4 $(OUTDIR)/libotfft.so
 
 # install headers
 install: $(INSDIR)/include/otfft/otfft.h $(INSDIR)/include/otfft/otfft_misc.h
-$(INSDIR)/include/otfft/%.h: %.h | $(INSDIR)/include/otfft
+$(INSDIR)/include/otfft/%.h: otfft/%.h | $(INSDIR)/include/otfft
 	cp $< $@
 
 # install library files

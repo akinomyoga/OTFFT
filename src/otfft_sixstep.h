@@ -8,7 +8,7 @@
 #include <cmath>
 #include <algorithm>
 
-#include "otfft_misc.h"
+#include "otfft/otfft_misc.h"
 //#include "otfft_difavx.h"
 //#include "otfft_ditavx.h"
 #include "otfft_difavx8.h"

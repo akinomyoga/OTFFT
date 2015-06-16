@@ -6,7 +6,7 @@
 #define otfft_ditavx8_h
 
 #include <cmath>
-#include "otfft_misc.h"
+#include "otfft/otfft_misc.h"
 #include "otfft_ditavx.h"
 
 namespace OTFFT_DITAVX8 { /////////////////////////////////////////////////////

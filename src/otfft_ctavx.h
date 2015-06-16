@@ -7,7 +7,7 @@
 
 #include <cmath>
 #include <algorithm>
-#include "otfft_misc.h"
+#include "otfft/otfft_misc.h"
 
 namespace OTFFT_CTAVX { ///////////////////////////////////////////////////////
 

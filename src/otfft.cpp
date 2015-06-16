@@ -3,7 +3,7 @@
 ******************************************************************************/
 
 #include <stdint.h>
-#include "otfft.h"
+#include "otfft/otfft.h"
 #include "otfft_difavx.h"
 #include "otfft_ditavx.h"
 #include "otfft_difavx8.h"
