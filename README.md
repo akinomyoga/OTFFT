@@ -89,37 +89,41 @@ otfft.o ファイルを目的のバイナリにリンクしてやれば OTFFT �
 
 　サイズ N の複素離散フーリエ変換を実行するには、
 
-    #include "otfft/otfft.h"
-    using OTFFT::complex_t;
-    using OTFFT::simd_malloc;
-    using OTFFT::simd_free;
+```cpp
+#include "otfft/otfft.h"
+using OTFFT::complex_t;
+using OTFFT::simd_malloc;
+using OTFFT::simd_free;
 
-    void f(int N)
-    {
-        complex_t* x = (complex_t*) simd_malloc(N*sizeof(complex_t));
-        // 何かする...
-        OTFFT::FFT fft(N); // FFT オブジェクトの作成
-        fft.fwd(x);        // 複素離散フーリエ変換を実行。x が入力かつ出力
-        // 何かする...
-        simd_free(x);
-    }
+void f(int N)
+{
+    complex_t* x = (complex_t*) simd_malloc(N*sizeof(complex_t));
+    // 何かする...
+    OTFFT::FFT fft(N); // FFT オブジェクトの作成
+    fft.fwd(x);        // 複素離散フーリエ変換を実行。x が入力かつ出力
+    // 何かする...
+    simd_free(x);
+}
+```
 
 のようにします。N は最大 2^24 (2の24乗)までで、2のべき乗である必要があります。
 
 complex_t は
 
-    struct complex_t
-    {
-        double Re, Im;
+```cpp
+struct complex_t
+{
+    double Re, Im;
 
-        complex_t() : Re(0), Im(0) {}
-        complex_t(const double& x) : Re(x), Im(0) {}
-        complex_t(const double& x, const double& y) : Re(x), Im(y) {}
-        complex_t(const std::complex<double>& z) : Re(z.real()), Im(z.imag()) {}
-        operator std::complex<double>() { return std::complex<double>(Re, Im); }
+    complex_t() : Re(0), Im(0) {}
+    complex_t(const double& x) : Re(x), Im(0) {}
+    complex_t(const double& x, const double& y) : Re(x), Im(y) {}
+    complex_t(const std::complex<double>& z) : Re(z.real()), Im(z.imag()) {}
+    operator std::complex<double>() { return std::complex<double>(Re, Im); }
 
-        // その他のメンバ関数...
-    };
+    // その他のメンバ関数...
+};
+```
 
 のように定義されています。
 
@@ -145,24 +149,26 @@ FFT のサイズを変更したい場合は、
 マルチスレッドのプログラムを組む場合など、それだと都合が悪い場合があります。
 そんな時は外部から作業領域を渡すバージョンもあります。次のように使います。
 
-    #include "otfft/otfft.h"
-    using OTFFT::complex_t;
-    using OTFFT::simd_malloc;
-    using OTFFT::simd_free;
+```cpp
+#include "otfft/otfft.h"
+using OTFFT::complex_t;
+using OTFFT::simd_malloc;
+using OTFFT::simd_free;
 
-    void f(int N)
-    {
-        complex_t* x = (complex_t*) simd_malloc(N*sizeof(complex_t));
-        complex_t* y = (complex_t*) simd_malloc(N*sizeof(complex_t));
-        // 何かする...
-        OTFFT::FFT0 fft(N);
-        fft.fwd(x, y); // x が入力、y が作業領域
-        // 何かする...
-        fft.inv(x, y); // x が入力、y が作業領域
-        // 何かする...
-        simd_free(y);
-        simd_free(x);
-    }
+void f(int N)
+{
+    complex_t* x = (complex_t*) simd_malloc(N*sizeof(complex_t));
+    complex_t* y = (complex_t*) simd_malloc(N*sizeof(complex_t));
+    // 何かする...
+    OTFFT::FFT0 fft(N);
+    fft.fwd(x, y); // x が入力、y が作業領域
+    // 何かする...
+    fft.inv(x, y); // x が入力、y が作業領域
+    // 何かする...
+    simd_free(y);
+    simd_free(x);
+}
+```
 
 　OTFFT::FFT だったところが OTFFT::FFT0 になっていることに注意してください。
 
@@ -173,22 +179,24 @@ FFT のサイズを変更したい場合は、
 Bluestein's FFT(任意サイズの FFT) もサポートするようになりました。
 サイズ N の実離散フーリエ変換を実行するには以下のようにします。
 
-    #include "otfft/otfft.h"
-    using OTFFT::complex_t;
-    using OTFFT::simd_malloc;
-    using OTFFT::simd_free;
+```cpp
+#include "otfft/otfft.h"
+using OTFFT::complex_t;
+using OTFFT::simd_malloc;
+using OTFFT::simd_free;
 
-    void f(int N)
-    {
-        double*    x = (double*)    simd_malloc(N*sizeof(double));
-        complex_t* y = (complex_t*) simd_malloc(N*sizeof(complex_t));
-        // 何かする...
-        OTFFT::RFFT rfft(N);
-        rfft.fwd(x, y); // 実離散フーリエ変換を実行。x が入力、y が出力
-        // 何かする...
-        simd_free(y);
-        simd_free(x);
-    }
+void f(int N)
+{
+    double*    x = (double*)    simd_malloc(N*sizeof(double));
+    complex_t* y = (complex_t*) simd_malloc(N*sizeof(complex_t));
+    // 何かする...
+    OTFFT::RFFT rfft(N);
+    rfft.fwd(x, y); // 実離散フーリエ変換を実行。x が入力、y が出力
+    // 何かする...
+    simd_free(y);
+    simd_free(x);
+}
+```
 
 　実離散フーリエ変換には以下のようなメンバ関数が用意されています。
 
@@ -216,20 +224,22 @@ y が斜対称、すなわち y[N-k] == conj(y[k]) でないと正しい結果�
 
 　サイズ N の離散コサイン変換(DCT-II)を実行するには以下のようにします。
 
-    #include "otfft/otfft.h"
-    using OTFFT::complex_t;
-    using OTFFT::simd_malloc;
-    using OTFFT::simd_free;
+```cpp
+#include "otfft/otfft.h"
+using OTFFT::complex_t;
+using OTFFT::simd_malloc;
+using OTFFT::simd_free;
 
-    void f(int N)
-    {
-        double* x = (double*) simd_malloc(N*sizeof(double));
-        // 何かする...
-        OTFFT::DCT dct(N);
-        dct.fwd(x); // DCT-II を実行する。x が入力かつ出力
-        // 何かする...
-        simd_free(x);
-    }
+void f(int N)
+{
+    double* x = (double*) simd_malloc(N*sizeof(double));
+    // 何かする...
+    OTFFT::DCT dct(N);
+    dct.fwd(x); // DCT-II を実行する。x が入力かつ出力
+    // 何かする...
+    simd_free(x);
+}
+```
 
 　離散コサイン変換には以下のようなメンバ関数が用意されています。
 
@@ -246,24 +256,26 @@ y が斜対称、すなわち y[N-k] == conj(y[k]) でないと正しい結果�
 FFT で実装されています。マルチスレッドで使う場合の作業領域を外部から与える
 バージョンもあります。以下のように使います。
 
-    #include "otfft/otfft.h"
-    using OTFFT::complex_t;
-    using OTFFT::simd_malloc;
-    using OTFFT::simd_free;
+```cpp
+#include "otfft/otfft.h"
+using OTFFT::complex_t;
+using OTFFT::simd_malloc;
+using OTFFT::simd_free;
 
-    void f(int N)
-    {
-        double*    x = (double*)    simd_malloc(N*sizeof(double));
-        double*    y = (double*)    simd_malloc(N*sizeof(double));
-        complex_t* z = (complex_t*) simd_malloc(N*sizeof(complex_t));
-        // 何かする...
-        OTFFT::DCT0 dct(N);
-        dct.fwd(x, y, z); // DCT-II を実行する。x が入力かつ出力、y,z が作業領域
-        // 何かする...
-        simd_free(z);
-        simd_free(y);
-        simd_free(x);
-    }
+void f(int N)
+{
+    double*    x = (double*)    simd_malloc(N*sizeof(double));
+    double*    y = (double*)    simd_malloc(N*sizeof(double));
+    complex_t* z = (complex_t*) simd_malloc(N*sizeof(complex_t));
+    // 何かする...
+    OTFFT::DCT0 dct(N);
+    dct.fwd(x, y, z); // DCT-II を実行する。x が入力かつ出力、y,z が作業領域
+    // 何かする...
+    simd_free(z);
+    simd_free(y);
+    simd_free(x);
+}
+```
 
 　OTFFT::DCT だったところが OTFFT::DCT0 になっていることに注意してください。
 
@@ -272,20 +284,22 @@ FFT で実装されています。マルチスレッドで使う場合の作業�
 
 　Bluestein's FFT(任意サイズ N の FFT) を実行するには以下のようにします。
 
-    #include "otfft/otfft.h"
-    using OTFFT::complex_t;
-    using OTFFT::simd_malloc;
-    using OTFFT::simd_free;
+```cpp
+#include "otfft/otfft.h"
+using OTFFT::complex_t;
+using OTFFT::simd_malloc;
+using OTFFT::simd_free;
 
-    void f(int N)
-    {
-        complex_t* x = (complex_t*) simd_malloc(N*sizeof(complex_t));
-        // 何かする...
-        OTFFT::Bluestein bst(N); // N は任意の自然数。ただし、2^23 より小さい。
-        bst.fwd(x); // Bluestein's FFT を実行する。x が入力かつ出力
-        // 何かする...
-        simd_free(x);
-    }
+void f(int N)
+{
+    complex_t* x = (complex_t*) simd_malloc(N*sizeof(complex_t));
+    // 何かする...
+    OTFFT::Bluestein bst(N); // N は任意の自然数。ただし、2^23 より小さい。
+    bst.fwd(x); // Bluestein's FFT を実行する。x が入力かつ出力
+    // 何かする...
+    simd_free(x);
+}
+```
 
 　Bluestein's FFT では離散フーリエ変換のサイズを２のべき乗に限る必要は
 ありません。例えば大きな素数のサイズでも計算量は O(N log N) になります。
