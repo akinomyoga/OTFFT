@@ -7,7 +7,7 @@
 ```bash
 PREFIX=/usr/local
 make all
-make install INSDIR=$PREFIX
+sudo make install INSDIR=$PREFIX
 g++ -I $PREFIX/include -c prog.c
 g++ -o prog prog.o -L $PREFIX/lib -lotfft -Wl,-R,$PREFIX/lib
 ```

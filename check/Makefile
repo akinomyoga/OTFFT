@@ -35,7 +35,7 @@ endif
 
 CXXFLAGS += -I ../src
 
-FFTW_THREADS:=
+FFTW_THREADS := yes
 ifeq ($(FFTW_THREADS),yes)
   LDLIBS := -lfftw3_threads
   CXXFLAGS += -D USE_FFTW_THREADS
