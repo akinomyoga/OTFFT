@@ -5,8 +5,11 @@
 
 例:
 ```bash
+PREFIX=/usr/local
 make all
-INSDIR=/usr/local make install
+make install INSDIR=$PREFIX
+g++ -I $PREFIX/include -c prog.c
+g++ -o prog prog.o -L $PREFIX/lib -lotfft -Wl,-R,$PREFIX/lib
 ```
 
 以下はオリジナル OTFFT の README です。
