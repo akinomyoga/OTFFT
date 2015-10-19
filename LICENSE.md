@@ -2,7 +2,7 @@
   OTFFT License
 ==============================================================================
 
-Copyright (c) 2012-2014 OK-Ojisan, 2015 KM modified
+Copyright (c) 2012-2015 Uncle OK, 2015 KM modified,
 All rights reserved.
 
 THIS SOFTWARE IS PROVIDED BY THE AUTHORS ''AS IS'' AND ANY
@@ -17,13 +17,10 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 The OTFFT can be freely used in your private programs. You can distribute or
-sell softwares which use the OTFFT if you include the credit, saying that the
-OTFFT by OK Ojisan is used, in their documents. That is the same when you
-redistribute or sell a modified version of the OTFFT library.
-
-This license is also applied to the older versions of this library named OKFFT
-(The name of OKFFT turned out to be already used, so it is changed to OTFFT
-which is the abbreviation of OK Ojisan Template FFT).
+sell a software which use the OTFFT if you include the credit that the Uncle
+OK's OTFFT is used in the software, in its documents. This requirement is
+also applied when you redistribute or sell a modified version of the OTFFT
+library.
 
 
 OTFFT は無保証です。OTFFT を使った結果どのような損害を被っても、作者OKおじさん
@@ -32,8 +29,3 @@ OTFFT は無保証です。OTFFT を使った結果どのような損害を被�
 OTFFT は自由に使ってくださって結構ですが、使ったプログラムを配布あるいは販売す
 る場合は、OKおじさんの OTFFT を使ったことをドキュメントに記載してください。改変
 して配布・販売する場合も同様です。
-
-以前は OTFFT を OKFFT の名前で公開していました。しかし、Google で検索してみる
-と、既に OKFFT のキーワードがたくさんヒットしました。こりゃまずいと思い、名前を
-OTFFT(OKおじさん Template FFT)に変更しました。古い OKFFT をダウンロードした人
-も、配布・販売する場合はこのドキュメントの記載にしたがってください。
