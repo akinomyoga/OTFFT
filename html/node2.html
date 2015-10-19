@@ -36,7 +36,7 @@
   HREF="stockham.html">stockham</A>
 <B> Previous:</B> <A NAME="tex2html24"
   HREF="node1.html">1 Stockham FFT 入門</A>
-<IMG SRC="http://www.sannet.ne.jp/counter/c0.gif" ALT="0"><IMG SRC="http://www.sannet.ne.jp/counter/c1.gif" ALT="1"><IMG SRC="http://www.sannet.ne.jp/counter/c7.gif" ALT="7"><IMG SRC="http://www.sannet.ne.jp/counter/c4.gif" ALT="4"><IMG SRC="http://www.sannet.ne.jp/counter/c5.gif" ALT="5">
+<IMG SRC="http://www.sannet.ne.jp/counter/c0.gif" ALT="0"><IMG SRC="http://www.sannet.ne.jp/counter/c2.gif" ALT="2"><IMG SRC="http://www.sannet.ne.jp/counter/c1.gif" ALT="1"><IMG SRC="http://www.sannet.ne.jp/counter/c0.gif" ALT="0"><IMG SRC="http://www.sannet.ne.jp/counter/c5.gif" ALT="5">
 
 <H1><A NAME="SECTION00020000000000000000"></A><A NAME="stockham-speedup"></A>
 2 Stockham のアルゴリズムの完成
@@ -63,7 +63,7 @@ Cooley-Tukey に有利な点はなく、そのままでは用いる価値はありません。
 <code>fft0(n,s,q,x,y), fft1(n,s,q,x,y)</code>
 は
 <code>x[q + s*p]</code> をアクセスして処理します。
-<A HREF="node1.html#list:selfsort1">リスト3</A> は2分岐していく再帰ですので、
+<A HREF="node1.html#list:selfsort1">リスト3</A> は２分岐していく再帰ですので、
 再帰の段数が進むと次のようになります。
 </P>
 <PRE>
@@ -81,14 +81,14 @@ Cooley-Tukey に有利な点はなく、そのままでは用いる価値はありません。
 </PRE>
 <P>
 　系列長 8 を例にとり、関数の下にアクセスする要素を表示しています。
-再帰2段目 <code>n == 2, s == 4</code> のときは <code>q = 0,2,1,3</code>
+再帰２段目 <code>n = 2, s = 4</code> のときは <code>q = 0,2,1,3</code>
 で処理することになります。
 処理する順番が <code>0,1,2,3</code> ではないですが、
 結局 <code>x[4p],x[4p+1],x[4p+2],x[4p+3]</code>
 全てを処理することには変わりはありません。<code>n, s</code> は共通ですから
-<code>q</code> をループ変数として <code>fft0(n,s,q,x,y)</code>
-を <code>0</code> から <code>s-1 (== 3)</code> まで回してやれば、
-再帰2段目とループが等価になることが分かります。
+<code>q</code> をループ変数として <code>fft0(n,s,q,x,y)</code> を
+<code>0</code> から <code>s-1</code> まで(つまり、3 まで)回してやれば、
+再帰２段目とループが等価になることが分かります。
 この事実に基づいて <A HREF="node1.html#list:selfsort1">リスト3</A>
 の再帰の一部をループに書き換えてやると以下のようになります。
 </P>
@@ -175,7 +175,7 @@ void ifft(int n, complex_t* x) // 逆フーリエ変換
 </PRE>
 <P>
 　どうでしょう。
-2分岐していく再帰が分岐しない再帰になってかなりスッキリしましたね。
+２分岐していく再帰が分岐しない再帰になってかなりスッキリしましたね。
 これでもう一段、再帰をループに書き換えられることが分かると思います。しかし、
 重要な点はそこではありません。そう勘の良い人はもう気がついたと思いますが、
 変数 <code>p</code> のループと変数 <code>q</code> のループは入れ替え可能です。
@@ -295,7 +295,7 @@ typedef std::complex&lt;double&gt; complex_t;
 void fft0(int n, int s, bool eo, complex_t* x, complex_t* y)
 // n  : 系列長
 // s  : ストライド
-// eo : eo == false(or 0) なら x が出力、eo == true(or 1) なら y が出力
+// eo : eo == false か 0 なら x が出力、eo == true か 1 なら y が出力
 // x  : フーリエ変換する系列(入力兼 eo == false のとき出力)
 // y  : 作業用配列(eo == true のとき出力)
 {

@@ -36,7 +36,7 @@
   HREF="stockham.html">stockham</A>
 <B> Previous:</B> <A NAME="tex2html54"
   HREF="node4.html">4 FFTW3 より速い FFT</A>
-<IMG SRC="http://www.sannet.ne.jp/counter/c0.gif" ALT="0"><IMG SRC="http://www.sannet.ne.jp/counter/c2.gif" ALT="2"><IMG SRC="http://www.sannet.ne.jp/counter/c8.gif" ALT="8"><IMG SRC="http://www.sannet.ne.jp/counter/c9.gif" ALT="9"><IMG SRC="http://www.sannet.ne.jp/counter/c8.gif" ALT="8">
+<IMG SRC="http://www.sannet.ne.jp/counter/c0.gif" ALT="0"><IMG SRC="http://www.sannet.ne.jp/counter/c3.gif" ALT="3"><IMG SRC="http://www.sannet.ne.jp/counter/c4.gif" ALT="4"><IMG SRC="http://www.sannet.ne.jp/counter/c5.gif" ALT="5"><IMG SRC="http://www.sannet.ne.jp/counter/c4.gif" ALT="4">
 <!--End of Navigation Panel-->
 
 <H1><A NAME="SECTION00050000000000000000"></A><A NAME="otfft-usage"></A>
@@ -59,7 +59,7 @@ OTFFT はコンパイルする環境に最適化されます。
 <H3>【必要なファイル】</H3>
 <P>
 　<A HREF="node7.html#download">ダウンロードのページA</A>
-から otfft-4.0.tar.gz(もしくは otfft-4.0.zip)
+から otfft-5.3.tar.gz(もしくは otfft-5.2.zip)
 をダウンロードし展開すると、いくつかのファイルができますが、
 OTFFT を使うのに必要なファイルはその中の otfft フォルダとその中身です。
 このうち、
@@ -76,6 +76,7 @@ OTFFT を使うのに必要なファイルはその中の otfft フォルダとその中身です。
 ffttune を使って生成し直してやる必要があります。
 GCC の場合、otfft フォルダで以下のように実行し、
 ffttune コマンドを作ります。
+Makefile は自分の環境に合わせていじってください。
 </P>
 <PRE>
     make ffttune
@@ -103,6 +104,9 @@ C++ の template によるメタプログラミング技法を用いているので、
 と ffttune コマンドを実行します。
 すると先に示したファイルの自動生成が始まります。
 しばらく時間がかかるのでお待ちください。
+このとき、Core i7(4 コア 8 スレッド)
+の環境の場合、環境変数 OMP_NUM_THREADS を 7 に設定する必要があるかもしれません。
+一部の Linux では、8 スレッドで動かすと謎の速度低下を起こします。
 </P>
 <P>
 　OTFFT は内部で幾つかのアルゴリズムを使い分けていますが、
@@ -148,6 +152,12 @@ OTFFT は使えます。
 </P>
 <P>
 　g++ でコンパイルするには -march=native -mtune=native -fopenmp
+オプションを付けてください。さらに、-lgomp や -liomp5 など
+OpenMP のランタイムをリンクする必要があります。
+</P>
+<P>
+　Cilk Plus 版の場合は、
+-march=native -mtune=native -fcilkplus -lcilkrts
 オプションを付けてください。
 </P>
 <P>

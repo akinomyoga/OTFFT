@@ -36,14 +36,14 @@
   HREF="stockham.html">stockham</A>
 <B> Previous:</B> <A NAME="tex2html14"
   HREF="stockham.html">stockham</A>
-<IMG SRC="http://www.sannet.ne.jp/counter/c0.gif" ALT="0"><IMG SRC="http://www.sannet.ne.jp/counter/c3.gif" ALT="3"><IMG SRC="http://www.sannet.ne.jp/counter/c9.gif" ALT="9"><IMG SRC="http://www.sannet.ne.jp/counter/c0.gif" ALT="0"><IMG SRC="http://www.sannet.ne.jp/counter/c9.gif" ALT="9">
+<IMG SRC="http://www.sannet.ne.jp/counter/c0.gif" ALT="0"><IMG SRC="http://www.sannet.ne.jp/counter/c4.gif" ALT="4"><IMG SRC="http://www.sannet.ne.jp/counter/c8.gif" ALT="8"><IMG SRC="http://www.sannet.ne.jp/counter/c1.gif" ALT="1"><IMG SRC="http://www.sannet.ne.jp/counter/c3.gif" ALT="3">
 <!--End of Navigation Panel-->
 
 <H1><A NAME="SECTION00010000000000000000"></A><A NAME="stockham-intro"></A>
 1 Stockham FFT 入門
 </H1>
 <P>
-　このホームページはFFT(高速フーリエ変換)の１アルゴリズムである Stockham
+　このホームページはFFT(高速フーリエ変換)のアルゴリズムの１つである Stockham
 のアルゴリズムについて解説するホームページです。Cooley-Tukey
 のアルゴリズムは理解できたけど、Stockham のアルゴリズムは、
 何故あの漸化式が出てくるのか分からないという人に向けて書きました。
@@ -70,7 +70,7 @@ Cooley-Tukey アルゴリズムを再帰呼び出しを使って実装すると以下のようになります。
 <PRE>
 #include &lt;complex&gt;
 #include &lt;cmath&gt;
-#include &lt;algorithm&gt;
+#include &lt;utility&gt;
 
 typedef std::complex&lt;double&gt; complex_t;
 
@@ -101,7 +101,7 @@ void bit_reverse(int n, complex_t* x) // ビット反転並べ替え
 {
     for (int i = 0, j = 1; j &lt; n-1; j++) {
         for (int k = n &gt;&gt; 1; k &gt; (i ^= k); k &gt;&gt;= 1);
-        if (i &lt; j) swap(x[i], x[j]); // x[i]とx[j]を交換する
+        if (i &lt; j) std::swap(x[i], x[j]); // x[i]とx[j]を交換する
     }
 }
 
@@ -375,7 +375,7 @@ void ifft(int n, complex_t* x) // 逆フーリエ変換
 でフーリエ変換した結果を <code>y</code> に書き込みます。
 <code>q</code> は偶数位置と奇数位置を切り替えるために使われます。
 出力変数が <code>y</code> になっていることに注意してください。
-これで <code>x</code> と<code>y</code> を交互に書き換え出来るようになります。
+これで <code>x</code> と <code>y</code> を交互に書き換え出来るようになります。
 </P>
 <P>
 　さて、今までの書き換えは理解できたでしょうか。
