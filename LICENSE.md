@@ -17,13 +17,13 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 The OTFFT can be freely used in your private programs. You can distribute or
-sell softwares using the OTFFT if you write the credit in their documents that
-the OTFFT by OK Ojisan is used. That is the same when you redistribute or sell
-a modified version of the OTFFT library.
+sell softwares which use the OTFFT if you include the credit, saying that the
+OTFFT by OK Ojisan is used, in their documents. That is the same when you
+redistribute or sell a modified version of the OTFFT library.
 
-This license is also applied to the older versions of this library with
-the title OKFFT. (The name of OKFFT turned out to be already used by Googling,
-so it is changed to OTFFT, the abbreviation of OK Ojisan Template FFT).
+This license is also applied to the older versions of this library named OKFFT
+(The name of OKFFT turned out to be already used, so it is changed to OTFFT
+which is the abbreviation of OK Ojisan Template FFT).
 
 
 OTFFT は無保証です。OTFFT を使った結果どのような損害を被っても、作者OKおじさん
