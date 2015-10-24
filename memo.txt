@@ -6,6 +6,8 @@
 
   $ mkdir html2; cd html2; wget -r http://www.moon.sannet.ne.jp/okahisa/stockham/stockham.html
 
+  ソースコードの差分を見たら、check/cpp_fftw3.h の
+  FFTW_MEASURE が FFTW_ESTIMATE に変更されただけであった。適用する。
 
 * 更新otfft-4.0 → otfft-5.3
 

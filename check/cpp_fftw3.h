@@ -10,8 +10,8 @@
 #include <omp.h>
 #include "otfft/otfft_misc.h"
 
-//#define FFTW_FLAG FFTW_ESTIMATE
-#define FFTW_FLAG FFTW_MEASURE
+#define FFTW_FLAG FFTW_ESTIMATE
+//#define FFTW_FLAG FFTW_MEASURE
 //#define FFTW_FLAG FFTW_PATIENT
 //#define FFTW_FLAG FFTW_EXHAUSTIVE
 
