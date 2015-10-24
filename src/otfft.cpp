@@ -1,13 +1,13 @@
 /******************************************************************************
-*  OTFFT Implementation Version 4.0
+*  OTFFT Implementation Version 5.3
 ******************************************************************************/
 
 #include <stdint.h>
 #include "otfft/otfft.h"
-#include "otfft_difavx.h"
-#include "otfft_ditavx.h"
-#include "otfft_difavx8.h"
-#include "otfft_ditavx8.h"
+#include "otfft_avxdif4.h"
+#include "otfft_avxdit4.h"
+#include "otfft_avxdif8.h"
+#include "otfft_avxdit8.h"
 #include "otfft_sixstep.h"
 
 namespace OTFFT { /////////////////////////////////////////////////////////////
@@ -17,26 +17,26 @@ namespace OTFFT { /////////////////////////////////////////////////////////////
 ******************************************************************************/
 
     FFT0::FFT0() try : N(0), log_N(0),
-        fft1(0), fft2(0), fft3(0), fft4(0), fft5(0), fft6(0)
+        fft1(0), fft2(0), fft3(0), fft4(0), fft5(0) //, fft6(0)
     {
-        fft1 = new OTFFT_DIFAVX::FFT0();
-        fft2 = new OTFFT_DITAVX::FFT0();
-        fft3 = new OTFFT_DIFAVX8::FFT0();
-        fft4 = new OTFFT_DITAVX8::FFT0();
+        fft1 = new OTFFT_AVXDIF4::FFT0();
+        fft2 = new OTFFT_AVXDIT4::FFT0();
+        fft3 = new OTFFT_AVXDIF8::FFT0();
+        fft4 = new OTFFT_AVXDIT8::FFT0();
         fft5 = new OTFFT_Sixstep::FFT0();
-        fft6 = new OTFFT_Sixstep::FFT1();
+        //fft6 = new OTFFT_Sixstep::FFT1();
     }
     catch (...) { this->~FFT0(); throw; }
 
     FFT0::FFT0(int n) try :
-        fft1(0), fft2(0), fft3(0), fft4(0), fft5(0), fft6(0)
+        fft1(0), fft2(0), fft3(0), fft4(0), fft5(0) //, fft6(0)
     {
-        fft1 = new OTFFT_DIFAVX::FFT0();
-        fft2 = new OTFFT_DITAVX::FFT0();
-        fft3 = new OTFFT_DIFAVX8::FFT0();
-        fft4 = new OTFFT_DITAVX8::FFT0();
+        fft1 = new OTFFT_AVXDIF4::FFT0();
+        fft2 = new OTFFT_AVXDIT4::FFT0();
+        fft3 = new OTFFT_AVXDIF8::FFT0();
+        fft4 = new OTFFT_AVXDIT8::FFT0();
         fft5 = new OTFFT_Sixstep::FFT0();
-        fft6 = new OTFFT_Sixstep::FFT1();
+        //fft6 = new OTFFT_Sixstep::FFT1();
         setup(n);
     }
     catch (...) { this->~FFT0(); throw; }
@@ -48,7 +48,7 @@ namespace OTFFT { /////////////////////////////////////////////////////////////
         delete fft3;
         delete fft4;
         delete fft5;
-        delete fft6;
+        //delete fft6;
     }
 
     void FFT0::setup(int n)
@@ -60,35 +60,37 @@ namespace OTFFT { /////////////////////////////////////////////////////////////
     void FFT0::setup2(int n)
     {
         log_N = n; N = 1 << n;
-#include "otfft_setup.h"
-    }
-
-    void FFT0::fwd0(complex_vector x, complex_vector y) const
-    {
-        if (N < 2) return;
-#include "otfft_fwd0.h"
+        #include "otfft_setup.h"
     }
 
     void FFT0::fwd(complex_vector x, complex_vector y) const
     {
-        if (N < 2) return;
-#include "otfft_fwd.h"
+        #include "otfft_fwd.h"
     }
 
-    void FFT0::fwdn(complex_vector x, complex_vector y) const { fwd(x, y); }
+    void FFT0::fwd0(complex_vector x, complex_vector y) const
+    {
+        #include "otfft_fwd0.h"
+    }
 
-    void FFT0::inv0(complex_vector x, complex_vector y) const { inv(x, y); }
+    void FFT0::fwdn(complex_vector x, complex_vector y) const
+    {
+        fwd(x, y);
+    }
 
     void FFT0::inv(complex_vector x, complex_vector y) const
     {
-        if (N < 2) return;
-#include "otfft_inv.h"
+        #include "otfft_inv.h"
+    }
+
+    void FFT0::inv0(complex_vector x, complex_vector y) const
+    {
+        inv(x, y);
     }
 
     void FFT0::invn(complex_vector x, complex_vector y) const
     {
-        if (N < 2) return;
-#include "otfft_invn.h"
+        #include "otfft_invn.h"
     }
 
 /******************************************************************************

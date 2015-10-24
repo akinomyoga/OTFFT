@@ -5,7 +5,7 @@
 #ifndef simple_fft_h
 #define simple_fft_h
 
-#include <algorithm>
+#include <utility>
 #include "otfft/otfft_misc.h"
 
 namespace SimpleFFT { /////////////////////////////////////////////////////////
@@ -190,23 +190,7 @@ struct FFT
         }
     }
 
-    void fwd0(complex_t* const x) const
-    {
-        fwdbut(N, x, W);
-        if (N < OMP_THRESHOLD) {
-            for (int p = 0; p < N; p++) {
-                const int q = bitrev[p];
-                if (p > q) std::swap(x[p], x[q]);
-            }
-        }
-        else {
-            #pragma omp parallel for schedule(static)
-            for (int p = 0; p < N; p++) {
-                const int q = bitrev[p];
-                if (p > q) std::swap(x[p], x[q]);
-            }
-        }
-    }
+    ///////////////////////////////////////////////////////////////////////////
 
     void fwd(complex_t* const x) const
     {
@@ -232,9 +216,27 @@ struct FFT
         }
     }
 
+    void fwd0(complex_t* const x) const
+    {
+        fwdbut(N, x, W);
+        if (N < OMP_THRESHOLD) {
+            for (int p = 0; p < N; p++) {
+                const int q = bitrev[p];
+                if (p > q) std::swap(x[p], x[q]);
+            }
+        }
+        else {
+            #pragma omp parallel for schedule(static)
+            for (int p = 0; p < N; p++) {
+                const int q = bitrev[p];
+                if (p > q) std::swap(x[p], x[q]);
+            }
+        }
+    }
+
     void fwdn(complex_t* const x) const { fwd(x); }
 
-    void inv0(complex_t* const x) const { inv(x); }
+    ///////////////////////////////////////////////////////////////////////////
 
     void inv(complex_t* const x) const
     {
@@ -253,6 +255,8 @@ struct FFT
             }
         }
     }
+
+    void inv0(complex_t* const x) const { inv(x); }
 
     void invn(complex_t* const x) const
     {

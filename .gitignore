@@ -5,4 +5,9 @@
 /check/fft
 /check/fftsg.c
 
+#
+/check/*check
 /check/*.exe
+/check/fftbench?.txt
+
+

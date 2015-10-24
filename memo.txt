@@ -1,0 +1,106 @@
+
+* 更新otfft-4.0 → otfft-5.3
+
+  元の otfft の version が上がっている様なので更新を行う。
+
+  ファイルの増減は以下の通りである。
+
+  --- a.find       2015-10-24 19:25:02.636561285 +0900
+  +++ b.find       2015-10-24 19:25:02.643560487 +0900
+  @@ -1,7 +1,6 @@
+
+   /bstcheck.cpp
+   /cpp_fftw3.h
+  -/ctavx_fft.h
+   /dctcheck.cpp
+   /fftbench1.cpp
+   /fftbench1.txt
+  @@ -17,16 +16,16 @@
+   /otfft/Makefile
+   /otfft/otfft.cpp
+   /otfft/otfft.h
+  -/otfft/otfft_ctavx.h
+  -/otfft/otfft_ctavxn.h
+  -/otfft/otfft_difavx.h
+  -/otfft/otfft_difavx8.h
+  -/otfft/otfft_difavx8n.h
+  -/otfft/otfft_difavxn.h
+  -/otfft/otfft_ditavx.h
+  -/otfft/otfft_ditavx8.h
+  -/otfft/otfft_ditavx8n.h
+  -/otfft/otfft_ditavxn.h
+  +/otfft/otfft_avxdif4.h
+  +/otfft/otfft_avxdif4omp.h
+  +/otfft/otfft_avxdif8.h
+  +/otfft/otfft_avxdif8omp.h
+  +/otfft/otfft_avxdifx.h
+  +/otfft/otfft_avxdit4.h
+  +/otfft/otfft_avxdit4omp.h
+  +/otfft/otfft_avxdit8.h
+  +/otfft/otfft_avxdit8omp.h
+  +/otfft/otfft_eightstep.h
+   /otfft/otfft_fwd.h
+   /otfft/otfft_fwd0.h
+   /otfft/otfft_inv.h
+  @@ -34,10 +33,14 @@
+   /otfft/otfft_misc.h
+   /otfft/otfft_setup.h
+   /otfft/otfft_sixstep.h
+  -/otfft/otfft_sixstepn.h
+  +/otfft/otfft_sixstep0r.h
+  +/otfft/otfft_sixstep0s.h
+  +/otfft/otfft_sixstepnr.h
+  +/otfft/otfft_sixstepns.h
+   /otfft/stopwatch.h
+  +/otfft/towin.sh
+   /otfft/version.sh
+   /rfftcheck.cpp
+   /simple_fft.h
+  +/towin.sh
+   /unify.sh
+
+  ot_fft_dif* から otfft_avxdif* に名称変更が行われている様である。
+  一方でこちらで勝手に修正した項目も各ファイルに存在している。
+  取り敢えず手許で行われた変更について確認を行う。
+
+  ヘッダ名の変更
+  -#include "otfft_misc.h"
+  +#include "otfft/otfft_misc.h"
+  と、#pragma omp を #ifdef _OPENMP で囲むという事だけの様だ。
+
+  他に、以下のヘッダ名の変更がある。
+  -#include "stopwatch.h"
+  +#include "otfft/stopwatch.h"
+  -#include "otfft.h"
+  +#include "otfft/otfft.h"
+
+  1 src ディレクトリ
+
+    1.1 先ずファイルを新しいものに全て交換する。
+      otfft.h stopwatch.h otfft_misc.h は otfft ディレクトリ以下に移動する。
+
+    1.2 次に #ifdef _OPENMP の付加を以下のコマンドで実行する。
+      $ sed -i 's/^[[:space:]]*#pragma[[:space:]]\{1,\}omp[[:space:]]\{1,\}.*$/#ifdef _OPENMP\n&\n#endif/g' *.h *.cpp otfft/*.h
+
+    1.3 ヘッダファイル名の変更は以下で行う。
+      $ refact '(otfft|otfft_misc|stopwatch)\.h' 'otfft/&' *.h *.cpp
+
+    1.4 b/otfft/towin.sh をコピーする。
+
+  2 check ディレクトリ以下についてもファイルを更新する。
+    $ cd check; cp ../html/diff/b/*.{cpp,h} ./; rm ctavx_fft.h
+
+    2.1 USE_FFTW_THREADS で囲む
+      $ refact '^.*\bfftw_[a-z_]+threads\b.*$' '#ifdef USE_FFTW_THREADS\n&\n#endif'
+      2行連続で fft_...threads の呼出をしている箇所が cpp_fftw.h にあったので微修正する。
+
+      ※check ディレクトリ以下の *.cpp で otfft/otfft.h, otfft/stopwatch.h 等を include する時に、
+        #include "..." ではなくて #include <...> を使う様にしていたが面倒なので、
+        #include "..." のまま保持する事にした。
+
+    2.2 /check/fftbench?.txt は repository から除外する。新しい物をコピーする。
+      $ git rm fftbench?.txt
+
+    2.3 b/towin.sh をコピーする。
+
+  3 src/version.sh 差分を適用

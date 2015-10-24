@@ -1,32 +1,37 @@
 # -*- makefile-gmake -*-
 # otfft/check/Makefile
 
-#CXX = g++-mp-4.9# for Mac with macports and Xcode
+# configurations
+
+FFTW_THREADS := yes
+
+#------------------------------------------------------------------------------
+
+#CXX = g++-mp-5# for Mac with MacPorts and Xcode
+#CXX = g++-5
+#CXX = clang++-mp-3.7
 #CXX = x86_64-w64-mingw32-g++
+
 #CXXFLAGS = -Ofast
 CXXFLAGS = -O3
 #CXXFLAGS += -Wa,-q# for Mac (required: cd /opt/local/bin; ln -s /usr/bin/clang)
-#CXXFLAGS += -std=c++11 -fpermissive
+#CXXFLAGS += -std=c++11
 CXXFLAGS += -msse2 -mfpmath=sse#+387
 CXXFLAGS += -march=native -mtune=native# -mno-fma
 #CXXFLAGS += -march=core-avx-i -mtune=core-avx-i
 CXXFLAGS += -fopenmp
+#CXXFLAGS += -Xclang -fopenmp
+#CXXFLAGS += -Xclang -fopenmp=libiomp5
 CXXFLAGS += -ffast-math
+#CXXFLAGS += -funroll-loops
 CXXFLAGS += -funroll-all-loops
-CXXFLAGS += -fpeel-loops
-#CXXFLAGS += -fomit-frame-pointer
+#CXXFLAGS += -fpeel-loops
 #CXXFLAGS += -floop-flatten
+#CXXFLAGS += -floop-optimize
 #CXXFLAGS += -funswitch-loops
+#CXXFLAGS += -fomit-frame-pointer
 #CXXFLAGS += -fforce-addr
 #CXXFLAGS += -ftree-vectorize
-#CXXFLAGS += -floop-optimize
-#CXXFLAGS += -floop-nest-optimize
-#CXXFLAGS += -floop-block
-#CXXFLAGS += -floop-interchange
-#CXXFLAGS += -floop-parallelize-all
-#CXXFLAGS += -funsafe-loop-optimizations
-#CXXFLAGS += -fargument-noalias
-#CXXFLAGS += -fargument-noalias-global
 
 ifeq ($(CXX),icpc)
 CXX = icpc
@@ -35,26 +40,36 @@ endif
 
 CXXFLAGS += -I ../src
 
-FFTW_THREADS := yes
-ifeq ($(FFTW_THREADS),yes)
-  LDLIBS := -lfftw3_threads
-  CXXFLAGS += -D USE_FFTW_THREADS
-endif
-
 bench_LDFLAGS := -L $(HOME)/local/lib
 
-#bench_CXXFLAGS = -I/alt/include
-#LDLIBS += -L/alt/lib -lfftw3_threads -lfftw3 -lpthread
-#LDLIBS += -L/alt/lib -lfftw3_omp -lfftw3 -lpthread
-#bench_CXXFLAGS = -I/alt-mingw/include
-#LDLIBS += -L/alt-mingw/lib -lfftw3_threads -lfftw3 -lpthread
-#LDLIBS += -lfftw3_threads -lfftw3 -lpthread
-LDLIBS += -lfftw3 -lpthread
+#CXXFLAGS += -I/alt/include
+#CXXFLAGS += -I/opt/local/include
+#CXXFLAGS += -I/opt/local/include/libomp
+#CXXFLAGS += -I/alt-mingw/include
 
+# Enable library: gomp
+OMPLIB = -lgomp
+#OMPLIB = -L/alt/lib -liomp5
+#OMPLIB = -L$(HOME)/lib -liomp5
+#OMPLIB = -L/opt/local/lib/libomp -lomp
+
+LDLIBS = $(OMPLIB)
+
+# Enable library: fftw3_threads
+ifeq ($(FFTW_THREADS),yes)
+  bench_LDLIBS := -lfftw3_threads
+  bench_CXXFLAGS += -D USE_FFTW_THREADS
+endif
+
+bench_LDLIBS += -lfftw3 -lpthread
+
+#LDLIBS = -L/alt/lib -lfftw3_threads -lfftw3 -lpthread $(OMPLIB)
+#LDLIBS = -L/alt/lib -lfftw3_omp -lfftw3 -lpthread $(OMPLIB)
+#LDLIBS = -L/opt/local/lib -lfftw3_threads -lfftw3 -lpthread $(OMPLIB)
+#LDLIBS = -L/alt-mingw/lib -lfftw3_threads -lfftw3 -lpthread -lgomp   
 
 HEADERS1 = cpp_fftw3.h ooura1.h simple_fft.h
 HEADERS2 = cpp_fftw3.h ooura2.h simple_fft.h
-
 
 #LDFLAGS:=otfft/otfft.o
 #LDFLAGS:=-L out -lotfft -Wl,-R,'$ORIGIN/out'
@@ -64,19 +79,29 @@ all:
 .PHONY: clean  benchmark check
 
 clean:
-	-rm -f fftcheck rfftcheck dctcheck bstcheck fftbench1 fftbench2 *.exe
+	-rm -f fftcheck rfftcheck dctcheck bstcheck fftbench{1,2} *.exe *.o
+
+#------------------------------------------------------------------------------
+# check
 
 check: fftcheck rfftcheck dctcheck bstcheck
-fftcheck.exe: fftcheck.cpp simple_fft.h
-	$(CXX) $(CXXFLAGS) $< $(LDFLAGS) -o $@
-rfftcheck.exe: rfftcheck.cpp simple_fft.h
-	$(CXX) $(CXXFLAGS) $< $(LDFLAGS) -o $@
-dctcheck.exe: dctcheck.cpp
-	$(CXX) $(CXXFLAGS) $< $(LDFLAGS) -o $@
-bstcheck.exe: bstcheck.cpp
-	$(CXX) $(CXXFLAGS) $< $(LDFLAGS) -o $@
+
+fftcheck.o: fftcheck.cpp simple_fft.h
+rfftcheck.o: rfftcheck.cpp simple_fft.h
+dctcheck.o: dctcheck.cpp
+bstcheck.o: bstcheck.cpp
+fftcheck.o rffhcheck.o dctcheck.o bstcheck.o:
+	$(CXX) -c $(CXXFLAGS) $<
+
+%check.exe: %check.o
+fftcheck.exe rffhcheck.exe dctcheck.exe bstcheck.exe:
+	$(CXX) $(CXXFLAGS) $^ $(LDFLAGS) $(LDLIBS) -o $@
+
 %check: %check.exe
 	./$< && touch $@
+
+#------------------------------------------------------------------------------
+# benchmark
 
 benchmark: fftbench1 fftbench2
 
@@ -85,8 +110,8 @@ fft.tgz:
 fftsg.c: fft.tgz
 	tar xOf fft.tgz fft/$@ > $@
 fftbench1.exe: fftbench1.cpp fftsg.c ../src/otfft/stopwatch.h $(HEADERS1)
-	$(CXX) $(CXXFLAGS) $(bench_CXXFLAGS) -I ext -I . $< $(LDFLAGS) $(bench_LDFLAGS) $(LDLIBS) -o $@
+	$(CXX) $(CXXFLAGS) $(bench_CXXFLAGS) -I ext -I . $< $(LDFLAGS) $(bench_LDFLAGS) $(LDLIBS) $(bench_LDFLAGS) -o $@
 fftbench2.exe: fftbench2.cpp fftsg.c ../src/otfft/stopwatch.h $(HEADERS2)
-	$(CXX) $(CXXFLAGS) $(bench_CXXFLAGS) -I ext -I . $< $(LDFLAGS) $(bench_LDFLAGS) $(LDLIBS) -o $@
+	$(CXX) $(CXXFLAGS) $(bench_CXXFLAGS) -I ext -I . $< $(LDFLAGS) $(bench_LDFLAGS) $(LDLIBS) $(bench_LDFLAGS) -o $@
 fftbench%: fftbench%.exe
 	./$< | tee $@.txt && touch $@

@@ -1,866 +1,49 @@
 /******************************************************************************
-*  OTFFT Sixstep Version 4.0
+*  OTFFT Sixstep Version 5.3
 ******************************************************************************/
 
 #ifndef otfft_sixstep_h
 #define otfft_sixstep_h
 
-#include <cmath>
-#include <algorithm>
-
 #include "otfft/otfft_misc.h"
-//#include "otfft_difavx.h"
-//#include "otfft_ditavx.h"
-#include "otfft_difavx8.h"
-//#include "otfft_ditavx8.h"
+#include "otfft_avxdif8.h"
+//#include "otfft_avxdifx.h"
 
 namespace OTFFT_Sixstep { /////////////////////////////////////////////////////
 
 using namespace OTFFT_MISC;
 
-const int OMP_THRESHOLD1  = 1<<13;
-const int OMP_THRESHOLD2  = 1<<18;
+static const int OMP_THRESHOLD1 = 1<<13;
+static const int OMP_THRESHOLD2 = 1<<17;
 
-///////////////////////////////////////////////////////////////////////////////
+typedef const_complex_vector weight_t;
+struct index_t { int row, col; };
+typedef const index_t* __restrict const const_index_vector;
 
-template <int log_N> struct fwd0ffte
-{
-    static const int log_n = log_N / 2;
-    static const int N = 1 << log_N;
-    static const int n = 1 << log_n;
-    
-    template <class fft_t1, class fft_t2>
-    void operator()(complex_vector x, complex_vector y, const_complex_vector W, const fft_t1& fft1, const fft_t2& fft2)
-    {
-        if (N < OMP_THRESHOLD1) {
-            for (int k = 0; k < n; k += 2) {
-                const int k_kn = k + k*n;
-                std::swap(x[k_kn+1], x[k_kn+n]);
-                for (int p = k+2; p < n; p += 2) {
-                    const int p_kn = p + k*n;
-                    const int k_pn = k + p*n;
-                    std::swap(x[p_kn],     x[k_pn]);
-                    std::swap(x[p_kn+1],   x[k_pn+n]);
-                    std::swap(x[p_kn+n],   x[k_pn+1]);
-                    std::swap(x[p_kn+1+n], x[k_pn+1+n]);
-                }
-            }
-            for (int p = 0; p < n; p++) {
-                const int pn = p*n;
-                fft1.fwd0(x + pn, y + pn);
-            }
-            for (int p = 0; p < n; p += 2) {
-                const int pp = p*p;
-                const complex_t w = W[pp+p];
-                complex_vector x_p_pn = x + p + p*n;
-                const ymm w1 = cmplx2(W[pp], w);
-                const ymm w2 = cmplx2(w, W[pp+2*p+1]);
-                const ymm a = mulpz2(w1, getpz3<n>(x_p_pn));
-                const ymm b = mulpz2(w2, getpz3<n>(x_p_pn+1));
-                setpz2(x_p_pn,   a);
-                setpz2(x_p_pn+n, b);
-                for (int k = p+2; k < n; k += 2) {
-                    const int kp = k*p;
-                    complex_vector x_k_pn = x + k + p*n;
-                    complex_vector x_p_kn = x + p + k*n;
-                    const ymm w1 = cmplx2(W[kp], W[kp+p]);
-                    const ymm w2 = cmplx2(W[kp+k], W[kp+k+p+1]);
-                    const ymm a = mulpz2(w1, getpz3<n>(x_p_kn));
-                    const ymm b = mulpz2(w2, getpz3<n>(x_p_kn+1));
-                    const ymm c = mulpz2(w1, getpz2(x_k_pn));
-                    const ymm d = mulpz2(w2, getpz2(x_k_pn+n));
-                    setpz2(x_k_pn,   a);
-                    setpz2(x_k_pn+n, b);
-                    setpz3<n>(x_p_kn,   c);
-                    setpz3<n>(x_p_kn+1, d);
-                }
-            }
-            for (int k = 0; k < n; k++) {
-                const int kn = k*n;
-                fft1.fwd0(x + kn, y + kn);
-            }
-            for (int k = 0; k < n; k += 2) {
-                const int k_kn = k + k*n;
-                std::swap(x[k_kn+1], x[k_kn+n]);
-                for (int p = k+2; p < n; p += 2) {
-                    const int p_kn = p + k*n;
-                    const int k_pn = k + p*n;
-                    std::swap(x[p_kn],     x[k_pn]);
-                    std::swap(x[p_kn+1],   x[k_pn+n]);
-                    std::swap(x[p_kn+n],   x[k_pn+1]);
-                    std::swap(x[p_kn+1+n], x[k_pn+1+n]);
-                }
-            }
-        }
-        else if (N < OMP_THRESHOLD2) //////////////////////////////////////////
-#ifdef _OPENMP
-        #pragma omp parallel
-#endif
-        {
-#ifdef _OPENMP
-            #pragma omp for schedule(static)
-#endif
-            for (int k = 0; k < n; k += 2) {
-                const int k_kn = k + k*n;
-                std::swap(x[k_kn+1], x[k_kn+n]);
-                for (int p = k+2; p < n; p += 2) {
-                    const int p_kn = p + k*n;
-                    const int k_pn = k + p*n;
-                    std::swap(x[p_kn],     x[k_pn]);
-                    std::swap(x[p_kn+1],   x[k_pn+n]);
-                    std::swap(x[p_kn+n],   x[k_pn+1]);
-                    std::swap(x[p_kn+1+n], x[k_pn+1+n]);
-                }
-            }
-#ifdef _OPENMP
-            #pragma omp for schedule(static)
-#endif
-            for (int p = 0; p < n; p++) {
-                const int pn = p*n;
-                fft1.fwd0(x + pn, y + pn);
-            }
-#ifdef _OPENMP
-            #pragma omp for schedule(static)
-#endif
-            for (int p = 0; p < n; p += 2) {
-                const int pp = p*p;
-                const complex_t w = W[pp+p];
-                complex_vector x_p_pn = x + p + p*n;
-                const ymm w1 = cmplx2(W[pp], w);
-                const ymm w2 = cmplx2(w, W[pp+2*p+1]);
-                const ymm a = mulpz2(w1, getpz3<n>(x_p_pn));
-                const ymm b = mulpz2(w2, getpz3<n>(x_p_pn+1));
-                setpz2(x_p_pn,   a);
-                setpz2(x_p_pn+n, b);
-                for (int k = p+2; k < n; k += 2) {
-                    const int kp = k*p;
-                    complex_vector x_k_pn = x + k + p*n;
-                    complex_vector x_p_kn = x + p + k*n;
-                    const ymm w1 = cmplx2(W[kp], W[kp+p]);
-                    const ymm w2 = cmplx2(W[kp+k], W[kp+k+p+1]);
-                    const ymm a = mulpz2(w1, getpz3<n>(x_p_kn));
-                    const ymm b = mulpz2(w2, getpz3<n>(x_p_kn+1));
-                    const ymm c = mulpz2(w1, getpz2(x_k_pn));
-                    const ymm d = mulpz2(w2, getpz2(x_k_pn+n));
-                    setpz2(x_k_pn,   a);
-                    setpz2(x_k_pn+n, b);
-                    setpz3<n>(x_p_kn,   c);
-                    setpz3<n>(x_p_kn+1, d);
-                }
-            }
-#ifdef _OPENMP
-            #pragma omp for schedule(static)
-#endif
-            for (int k = 0; k < n; k++) {
-                const int kn = k*n;
-                fft1.fwd0(x + kn, y + kn);
-            }
-#ifdef _OPENMP
-            #pragma omp for schedule(static) nowait
-#endif
-            for (int k = 0; k < n; k += 2) {
-                const int k_kn = k + k*n;
-                std::swap(x[k_kn+1], x[k_kn+n]);
-                for (int p = k+2; p < n; p += 2) {
-                    const int p_kn = p + k*n;
-                    const int k_pn = k + p*n;
-                    std::swap(x[p_kn],     x[k_pn]);
-                    std::swap(x[p_kn+1],   x[k_pn+n]);
-                    std::swap(x[p_kn+n],   x[k_pn+1]);
-                    std::swap(x[p_kn+1+n], x[k_pn+1+n]);
-                }
-            }
-        }
-        else //////////////////////////////////////////////////////////////////
-#ifdef _OPENMP
-        #pragma omp parallel
-#endif
-        {
-#ifdef _OPENMP
-            #pragma omp for schedule(guided)
-#endif
-            for (int k = 0; k < n; k += 2) {
-                const int k_kn = k + k*n;
-                std::swap(x[k_kn+1], x[k_kn+n]);
-                for (int p = k+2; p < n; p += 2) {
-                    const int p_kn = p + k*n;
-                    const int k_pn = k + p*n;
-                    std::swap(x[p_kn],     x[k_pn]);
-                    std::swap(x[p_kn+1],   x[k_pn+n]);
-                    std::swap(x[p_kn+n],   x[k_pn+1]);
-                    std::swap(x[p_kn+1+n], x[k_pn+1+n]);
-                }
-            }
-#ifdef _OPENMP
-            #pragma omp for schedule(guided)
-#endif
-            for (int p = 0; p < n; p++) {
-                const int pn = p*n;
-                fft1.fwd0(x + pn, y + pn);
-            }
-#ifdef _OPENMP
-            #pragma omp for schedule(guided)
-#endif
-            for (int p = 0; p < n; p += 2) {
-                const int pp = p*p;
-                const complex_t w = W[pp+p];
-                complex_vector x_p_pn = x + p + p*n;
-                const ymm w1 = cmplx2(W[pp], w);
-                const ymm w2 = cmplx2(w, W[pp+2*p+1]);
-                const ymm a = mulpz2(w1, getpz3<n>(x_p_pn));
-                const ymm b = mulpz2(w2, getpz3<n>(x_p_pn+1));
-                setpz2(x_p_pn,   a);
-                setpz2(x_p_pn+n, b);
-                for (int k = p+2; k < n; k += 2) {
-                    const int kp = k*p;
-                    complex_vector x_k_pn = x + k + p*n;
-                    complex_vector x_p_kn = x + p + k*n;
-                    const ymm w1 = cmplx2(W[kp], W[kp+p]);
-                    const ymm w2 = cmplx2(W[kp+k], W[kp+k+p+1]);
-                    const ymm a = mulpz2(w1, getpz3<n>(x_p_kn));
-                    const ymm b = mulpz2(w2, getpz3<n>(x_p_kn+1));
-                    const ymm c = mulpz2(w1, getpz2(x_k_pn));
-                    const ymm d = mulpz2(w2, getpz2(x_k_pn+n));
-                    setpz2(x_k_pn,   a);
-                    setpz2(x_k_pn+n, b);
-                    setpz3<n>(x_p_kn,   c);
-                    setpz3<n>(x_p_kn+1, d);
-                }
-            }
-#ifdef _OPENMP
-            #pragma omp for schedule(guided)
-#endif
-            for (int k = 0; k < n; k++) {
-                const int kn = k*n;
-                fft1.fwd0(x + kn, y + kn);
-            }
-#ifdef _OPENMP
-            #pragma omp for schedule(guided) nowait
-#endif
-            for (int k = 0; k < n; k += 2) {
-                const int k_kn = k + k*n;
-                std::swap(x[k_kn+1], x[k_kn+n]);
-                for (int p = k+2; p < n; p += 2) {
-                    const int p_kn = p + k*n;
-                    const int k_pn = k + p*n;
-                    std::swap(x[p_kn],     x[k_pn]);
-                    std::swap(x[p_kn+1],   x[k_pn+n]);
-                    std::swap(x[p_kn+n],   x[k_pn+1]);
-                    std::swap(x[p_kn+1+n], x[k_pn+1+n]);
-                }
-            }
-        }
-    }
-};
+} /////////////////////////////////////////////////////////////////////////////
 
-///////////////////////////////////////////////////////////////////////////////
+//#include "otfft_sixstep0r.h"
+//#include "otfft_sixstepnr.h"
+#include "otfft_sixstep0s.h"
+#include "otfft_sixstepns.h"
+#include "otfft_eightstep.h"
 
-template <int log_N> struct inv0ffte
-{
-    static const int log_n = log_N / 2;
-    static const int N = 1 << log_N;
-    static const int n = 1 << log_n;
-    
-    template <class fft_t1, class fft_t2>
-    void operator()(complex_vector x, complex_vector y, const_complex_vector W, const fft_t1& fft1, const fft_t2& fft2)
-    {
-        if (N < OMP_THRESHOLD1) {
-            for (int k = 0; k < n; k += 2) {
-                const int k_kn = k + k*n;
-                std::swap(x[k_kn+1], x[k_kn+n]);
-                for (int p = k+2; p < n; p += 2) {
-                    const int p_kn = p + k*n;
-                    const int k_pn = k + p*n;
-                    std::swap(x[p_kn],     x[k_pn]);
-                    std::swap(x[p_kn+1],   x[k_pn+n]);
-                    std::swap(x[p_kn+n],   x[k_pn+1]);
-                    std::swap(x[p_kn+1+n], x[k_pn+1+n]);
-                }
-            }
-            for (int p = 0; p < n; p++) {
-                const int pn = p*n;
-                fft1.inv0(x + pn, y + pn);
-            }
-            for (int p = 0; p < n; p += 2) {
-                const int N_pp = N-p*p;
-                const complex_t w = W[N_pp-p];
-                complex_vector x_p_pn = x + p + p*n;
-                const ymm w1 = cmplx2(W[N_pp], w);
-                const ymm w2 = cmplx2(w, W[N_pp-2*p-1]);
-                const ymm a = mulpz2(w1, getpz3<n>(x_p_pn));
-                const ymm b = mulpz2(w2, getpz3<n>(x_p_pn+1));
-                setpz2(x_p_pn,   a);
-                setpz2(x_p_pn+n, b);
-                for (int k = p+2; k < n; k += 2) {
-                    const int N_kp = N-k*p;
-                    complex_vector x_k_pn = x + k + p*n;
-                    complex_vector x_p_kn = x + p + k*n;
-                    const ymm w1 = cmplx2(W[N_kp], W[N_kp-p]);
-                    const ymm w2 = cmplx2(W[N_kp-k], W[N_kp-k-p-1]);
-                    const ymm a = mulpz2(w1, getpz3<n>(x_p_kn));
-                    const ymm b = mulpz2(w2, getpz3<n>(x_p_kn+1));
-                    const ymm c = mulpz2(w1, getpz2(x_k_pn));
-                    const ymm d = mulpz2(w2, getpz2(x_k_pn+n));
-                    setpz2(x_k_pn,   a);
-                    setpz2(x_k_pn+n, b);
-                    setpz3<n>(x_p_kn,   c);
-                    setpz3<n>(x_p_kn+1, d);
-                }
-            }
-            for (int k = 0; k < n; k++) {
-                const int kn = k*n;
-                fft1.inv0(x + kn, y + kn);
-            }
-            for (int k = 0; k < n; k += 2) {
-                const int k_kn = k + k*n;
-                std::swap(x[k_kn+1], x[k_kn+n]);
-                for (int p = k+2; p < n; p += 2) {
-                    const int p_kn = p + k*n;
-                    const int k_pn = k + p*n;
-                    std::swap(x[p_kn],     x[k_pn]);
-                    std::swap(x[p_kn+1],   x[k_pn+n]);
-                    std::swap(x[p_kn+n],   x[k_pn+1]);
-                    std::swap(x[p_kn+1+n], x[k_pn+1+n]);
-                }
-            }
-        }
-        else if (N < OMP_THRESHOLD2) //////////////////////////////////////////
-#ifdef _OPENMP
-        #pragma omp parallel
-#endif
-        {
-#ifdef _OPENMP
-            #pragma omp for schedule(static)
-#endif
-            for (int k = 0; k < n; k += 2) {
-                const int k_kn = k + k*n;
-                std::swap(x[k_kn+1], x[k_kn+n]);
-                for (int p = k+2; p < n; p += 2) {
-                    const int p_kn = p + k*n;
-                    const int k_pn = k + p*n;
-                    std::swap(x[p_kn],     x[k_pn]);
-                    std::swap(x[p_kn+1],   x[k_pn+n]);
-                    std::swap(x[p_kn+n],   x[k_pn+1]);
-                    std::swap(x[p_kn+1+n], x[k_pn+1+n]);
-                }
-            }
-#ifdef _OPENMP
-            #pragma omp for schedule(static)
-#endif
-            for (int p = 0; p < n; p++) {
-                const int pn = p*n;
-                fft1.inv0(x + pn, y + pn);
-            }
-#ifdef _OPENMP
-            #pragma omp for schedule(static)
-#endif
-            for (int p = 0; p < n; p += 2) {
-                const int N_pp = N-p*p;
-                const complex_t w = W[N_pp-p];
-                complex_vector x_p_pn = x + p + p*n;
-                const ymm w1 = cmplx2(W[N_pp], w);
-                const ymm w2 = cmplx2(w, W[N_pp-2*p-1]);
-                const ymm a = mulpz2(w1, getpz3<n>(x_p_pn));
-                const ymm b = mulpz2(w2, getpz3<n>(x_p_pn+1));
-                setpz2(x_p_pn,   a);
-                setpz2(x_p_pn+n, b);
-                for (int k = p+2; k < n; k += 2) {
-                    const int N_kp = N-k*p;
-                    complex_vector x_k_pn = x + k + p*n;
-                    complex_vector x_p_kn = x + p + k*n;
-                    const ymm w1 = cmplx2(W[N_kp], W[N_kp-p]);
-                    const ymm w2 = cmplx2(W[N_kp-k], W[N_kp-k-p-1]);
-                    const ymm a = mulpz2(w1, getpz3<n>(x_p_kn));
-                    const ymm b = mulpz2(w2, getpz3<n>(x_p_kn+1));
-                    const ymm c = mulpz2(w1, getpz2(x_k_pn));
-                    const ymm d = mulpz2(w2, getpz2(x_k_pn+n));
-                    setpz2(x_k_pn,   a);
-                    setpz2(x_k_pn+n, b);
-                    setpz3<n>(x_p_kn,   c);
-                    setpz3<n>(x_p_kn+1, d);
-                }
-            }
-#ifdef _OPENMP
-            #pragma omp for schedule(static)
-#endif
-            for (int k = 0; k < n; k++) {
-                const int kn = k*n;
-                fft1.inv0(x + kn, y + kn);
-            }
-#ifdef _OPENMP
-            #pragma omp for schedule(static) nowait
-#endif
-            for (int k = 0; k < n; k += 2) {
-                const int k_kn = k + k*n;
-                std::swap(x[k_kn+1], x[k_kn+n]);
-                for (int p = k+2; p < n; p += 2) {
-                    const int p_kn = p + k*n;
-                    const int k_pn = k + p*n;
-                    std::swap(x[p_kn],     x[k_pn]);
-                    std::swap(x[p_kn+1],   x[k_pn+n]);
-                    std::swap(x[p_kn+n],   x[k_pn+1]);
-                    std::swap(x[p_kn+1+n], x[k_pn+1+n]);
-                }
-            }
-        }
-        else //////////////////////////////////////////////////////////////////
-#ifdef _OPENMP
-        #pragma omp parallel
-#endif
-        {
-#ifdef _OPENMP
-            #pragma omp for schedule(guided)
-#endif
-            for (int k = 0; k < n; k += 2) {
-                const int k_kn = k + k*n;
-                std::swap(x[k_kn+1], x[k_kn+n]);
-                for (int p = k+2; p < n; p += 2) {
-                    const int p_kn = p + k*n;
-                    const int k_pn = k + p*n;
-                    std::swap(x[p_kn],     x[k_pn]);
-                    std::swap(x[p_kn+1],   x[k_pn+n]);
-                    std::swap(x[p_kn+n],   x[k_pn+1]);
-                    std::swap(x[p_kn+1+n], x[k_pn+1+n]);
-                }
-            }
-#ifdef _OPENMP
-            #pragma omp for schedule(guided)
-#endif
-            for (int p = 0; p < n; p++) {
-                const int pn = p*n;
-                fft1.inv0(x + pn, y + pn);
-            }
-#ifdef _OPENMP
-            #pragma omp for schedule(guided)
-#endif
-            for (int p = 0; p < n; p += 2) {
-                const int N_pp = N-p*p;
-                const complex_t w = W[N_pp-p];
-                complex_vector x_p_pn = x + p + p*n;
-                const ymm w1 = cmplx2(W[N_pp], w);
-                const ymm w2 = cmplx2(w, W[N_pp-2*p-1]);
-                const ymm a = mulpz2(w1, getpz3<n>(x_p_pn));
-                const ymm b = mulpz2(w2, getpz3<n>(x_p_pn+1));
-                setpz2(x_p_pn,   a);
-                setpz2(x_p_pn+n, b);
-                for (int k = p+2; k < n; k += 2) {
-                    const int N_kp = N-k*p;
-                    complex_vector x_k_pn = x + k + p*n;
-                    complex_vector x_p_kn = x + p + k*n;
-                    const ymm w1 = cmplx2(W[N_kp], W[N_kp-p]);
-                    const ymm w2 = cmplx2(W[N_kp-k], W[N_kp-k-p-1]);
-                    const ymm a = mulpz2(w1, getpz3<n>(x_p_kn));
-                    const ymm b = mulpz2(w2, getpz3<n>(x_p_kn+1));
-                    const ymm c = mulpz2(w1, getpz2(x_k_pn));
-                    const ymm d = mulpz2(w2, getpz2(x_k_pn+n));
-                    setpz2(x_k_pn,   a);
-                    setpz2(x_k_pn+n, b);
-                    setpz3<n>(x_p_kn,   c);
-                    setpz3<n>(x_p_kn+1, d);
-                }
-            }
-#ifdef _OPENMP
-            #pragma omp for schedule(guided)
-#endif
-            for (int k = 0; k < n; k++) {
-                const int kn = k*n;
-                fft1.inv0(x + kn, y + kn);
-            }
-#ifdef _OPENMP
-            #pragma omp for schedule(guided) nowait
-#endif
-            for (int k = 0; k < n; k += 2) {
-                const int k_kn = k + k*n;
-                std::swap(x[k_kn+1], x[k_kn+n]);
-                for (int p = k+2; p < n; p += 2) {
-                    const int p_kn = p + k*n;
-                    const int k_pn = k + p*n;
-                    std::swap(x[p_kn],     x[k_pn]);
-                    std::swap(x[p_kn+1],   x[k_pn+n]);
-                    std::swap(x[p_kn+n],   x[k_pn+1]);
-                    std::swap(x[p_kn+1+n], x[k_pn+1+n]);
-                }
-            }
-        }
-    }
-};
+namespace OTFFT_Sixstep { /////////////////////////////////////////////////////
 
-///////////////////////////////////////////////////////////////////////////////
-
-template <int log_N> struct fwd0ffto
-{
-    static const int log_n = log_N / 2;
-    static const int log_m = log_N - log_n;
-    static const int N = 1 << log_N;
-    static const int n = 1 << log_n;
-    static const int m = 1 << log_m;
-    
-    template <class fft_t1, class fft_t2>
-    void operator()(complex_vector x, complex_vector y, const_complex_vector W, const fft_t1& fft1, const fft_t2& fft2)
-    {
-        if (N < OMP_THRESHOLD1) {
-            for (int p = 0; p < m; p += 2) {
-                for (int k = 0; k < n; k += 2) {
-                    const int k_pn = k + p*n;
-                    const int p_km = p + k*m;
-                    y[k_pn]     = x[p_km];
-                    y[k_pn+1]   = x[p_km+m];
-                    y[k_pn+n]   = x[p_km+1];
-                    y[k_pn+1+n] = x[p_km+1+m];
-                }
-            }
-            for (int p = 0; p < m; p++) {
-                const int pn = p*n;
-                fft1.fwd0(y + pn, x + pn);
-            }
-            for (int k = 0; k < n; k += 2) {
-                for (int p = 0; p < m; p += 2) {
-                    const int kp = k*p;
-                    complex_vector x_p_km = x + p + k*m;
-                    complex_vector y_k_pn = y + k + p*n;
-                    const ymm w1 = cmplx2(W[kp], W[kp+k]);
-                    const ymm w2 = cmplx2(W[kp+p], W[kp+p+k+1]);
-                    setpz2(x_p_km,   mulpz2(w1, getpz3<n>(y_k_pn)));
-                    setpz2(x_p_km+m, mulpz2(w2, getpz3<n>(y_k_pn+1)));
-                }
-            }
-            for (int k = 0; k < n; k++) {
-                const int km = k*m;
-                fft2.fwd0o(x + km, y + km);
-            }
-            for (int p = 0; p < m; p += 2) {
-                for (int k = 0; k < n; k += 2) {
-                    const int k_pn = k + p*n;
-                    const int p_km = p + k*m;
-                    x[k_pn]     = y[p_km];
-                    x[k_pn+1]   = y[p_km+m];
-                    x[k_pn+n]   = y[p_km+1];
-                    x[k_pn+1+n] = y[p_km+1+m];
-                }
-            }
-        }
-        else if (N < OMP_THRESHOLD2) //////////////////////////////////////////
-#ifdef _OPENMP
-        #pragma omp parallel
-#endif
-        {
-#ifdef _OPENMP
-            #pragma omp for schedule(static)
-#endif
-            for (int p = 0; p < m; p += 2) {
-                for (int k = 0; k < n; k += 2) {
-                    const int k_pn = k + p*n;
-                    const int p_km = p + k*m;
-                    y[k_pn]     = x[p_km];
-                    y[k_pn+1]   = x[p_km+m];
-                    y[k_pn+n]   = x[p_km+1];
-                    y[k_pn+1+n] = x[p_km+1+m];
-                }
-            }
-#ifdef _OPENMP
-            #pragma omp for schedule(static)
-#endif
-            for (int p = 0; p < m; p++) {
-                const int pn = p*n;
-                fft1.fwd0(y + pn, x + pn);
-            }
-#ifdef _OPENMP
-            #pragma omp for schedule(static)
-#endif
-            for (int k = 0; k < n; k += 2) {
-                for (int p = 0; p < m; p += 2) {
-                    const int kp = k*p;
-                    complex_vector x_p_km = x + p + k*m;
-                    complex_vector y_k_pn = y + k + p*n;
-                    const ymm w1 = cmplx2(W[kp], W[kp+k]);
-                    const ymm w2 = cmplx2(W[kp+p], W[kp+p+k+1]);
-                    setpz2(x_p_km,   mulpz2(w1, getpz3<n>(y_k_pn)));
-                    setpz2(x_p_km+m, mulpz2(w2, getpz3<n>(y_k_pn+1)));
-                }
-            }
-#ifdef _OPENMP
-            #pragma omp for schedule(static)
-#endif
-            for (int k = 0; k < n; k++) {
-                const int km = k*m;
-                fft2.fwd0o(x + km, y + km);
-            }
-#ifdef _OPENMP
-            #pragma omp for schedule(static) nowait
-#endif
-            for (int p = 0; p < m; p += 2) {
-                for (int k = 0; k < n; k += 2) {
-                    const int k_pn = k + p*n;
-                    const int p_km = p + k*m;
-                    x[k_pn]     = y[p_km];
-                    x[k_pn+1]   = y[p_km+m];
-                    x[k_pn+n]   = y[p_km+1];
-                    x[k_pn+1+n] = y[p_km+1+m];
-                }
-            }
-        }
-        else //////////////////////////////////////////////////////////////////
-#ifdef _OPENMP
-        #pragma omp parallel
-#endif
-        {
-#ifdef _OPENMP
-            #pragma omp for schedule(guided)
-#endif
-            for (int p = 0; p < m; p += 2) {
-                for (int k = 0; k < n; k += 2) {
-                    const int k_pn = k + p*n;
-                    const int p_km = p + k*m;
-                    y[k_pn]     = x[p_km];
-                    y[k_pn+1]   = x[p_km+m];
-                    y[k_pn+n]   = x[p_km+1];
-                    y[k_pn+1+n] = x[p_km+1+m];
-                }
-            }
-#ifdef _OPENMP
-            #pragma omp for schedule(guided)
-#endif
-            for (int p = 0; p < m; p++) {
-                const int pn = p*n;
-                fft1.fwd0(y + pn, x + pn);
-            }
-#ifdef _OPENMP
-            #pragma omp for schedule(guided)
-#endif
-            for (int k = 0; k < n; k += 2) {
-                for (int p = 0; p < m; p += 2) {
-                    const int kp = k*p;
-                    complex_vector x_p_km = x + p + k*m;
-                    complex_vector y_k_pn = y + k + p*n;
-                    const ymm w1 = cmplx2(W[kp], W[kp+k]);
-                    const ymm w2 = cmplx2(W[kp+p], W[kp+p+k+1]);
-                    setpz2(x_p_km,   mulpz2(w1, getpz3<n>(y_k_pn)));
-                    setpz2(x_p_km+m, mulpz2(w2, getpz3<n>(y_k_pn+1)));
-                }
-            }
-#ifdef _OPENMP
-            #pragma omp for schedule(guided)
-#endif
-            for (int k = 0; k < n; k++) {
-                const int km = k*m;
-                fft2.fwd0o(x + km, y + km);
-            }
-#ifdef _OPENMP
-            #pragma omp for schedule(guided) nowait
-#endif
-            for (int p = 0; p < m; p += 2) {
-                for (int k = 0; k < n; k += 2) {
-                    const int k_pn = k + p*n;
-                    const int p_km = p + k*m;
-                    x[k_pn]     = y[p_km];
-                    x[k_pn+1]   = y[p_km+m];
-                    x[k_pn+n]   = y[p_km+1];
-                    x[k_pn+1+n] = y[p_km+1+m];
-                }
-            }
-        }
-    }
-};
-
-///////////////////////////////////////////////////////////////////////////////
-
-template <int log_N> struct inv0ffto
-{
-    static const int log_n = log_N / 2;
-    static const int log_m = log_N - log_n;
-    static const int N = 1 << log_N;
-    static const int n = 1 << log_n;
-    static const int m = 1 << log_m;
-    
-    template <class fft_t1, class fft_t2>
-    void operator()(complex_vector x, complex_vector y, const_complex_vector W, const fft_t1& fft1, const fft_t2& fft2)
-    {
-        if (N < OMP_THRESHOLD1) {
-            for (int p = 0; p < m; p += 2) {
-                for (int k = 0; k < n; k += 2) {
-                    const int k_pn = k + p*n;
-                    const int p_km = p + k*m;
-                    y[k_pn]     = x[p_km];
-                    y[k_pn+1]   = x[p_km+m];
-                    y[k_pn+n]   = x[p_km+1];
-                    y[k_pn+1+n] = x[p_km+1+m];
-                }
-            }
-            for (int p = 0; p < m; p++) {
-                const int pn = p*n;
-                fft1.inv0(y + pn, x + pn);
-            }
-            for (int k = 0; k < n; k += 2) {
-                for (int p = 0; p < m; p += 2) {
-                    const int N_kp = N-k*p;
-                    complex_vector x_p_km = x + p + k*m;
-                    complex_vector y_k_pn = y + k + p*n;
-                    const ymm w1 = cmplx2(W[N_kp], W[N_kp-k]);
-                    const ymm w2 = cmplx2(W[N_kp-p], W[N_kp-p-k-1]);
-                    setpz2(x_p_km,   mulpz2(w1, getpz3<n>(y_k_pn)));
-                    setpz2(x_p_km+m, mulpz2(w2, getpz3<n>(y_k_pn+1)));
-                }
-            }
-            for (int k = 0; k < n; k++) {
-                const int km = k*m;
-                fft2.inv0o(x + km, y + km);
-            }
-            for (int p = 0; p < m; p += 2) {
-                for (int k = 0; k < n; k += 2) {
-                    const int k_pn = k + p*n;
-                    const int p_km = p + k*m;
-                    x[k_pn]     = y[p_km];
-                    x[k_pn+1]   = y[p_km+m];
-                    x[k_pn+n]   = y[p_km+1];
-                    x[k_pn+1+n] = y[p_km+1+m];
-                }
-            }
-        }
-        else if (N < OMP_THRESHOLD2) //////////////////////////////////////////
-#ifdef _OPENMP
-        #pragma omp parallel
-#endif
-        {
-#ifdef _OPENMP
-            #pragma omp for schedule(static)
-#endif
-            for (int p = 0; p < m; p += 2) {
-                for (int k = 0; k < n; k += 2) {
-                    const int k_pn = k + p*n;
-                    const int p_km = p + k*m;
-                    y[k_pn]     = x[p_km];
-                    y[k_pn+1]   = x[p_km+m];
-                    y[k_pn+n]   = x[p_km+1];
-                    y[k_pn+1+n] = x[p_km+1+m];
-                }
-            }
-#ifdef _OPENMP
-            #pragma omp for schedule(static)
-#endif
-            for (int p = 0; p < m; p++) {
-                const int pn = p*n;
-                fft1.inv0(y + pn, x + pn);
-            }
-#ifdef _OPENMP
-            #pragma omp for schedule(static)
-#endif
-            for (int k = 0; k < n; k += 2) {
-                for (int p = 0; p < m; p += 2) {
-                    const int N_kp = N-k*p;
-                    complex_vector x_p_km = x + p + k*m;
-                    complex_vector y_k_pn = y + k + p*n;
-                    const ymm w1 = cmplx2(W[N_kp], W[N_kp-k]);
-                    const ymm w2 = cmplx2(W[N_kp-p], W[N_kp-p-k-1]);
-                    setpz2(x_p_km,   mulpz2(w1, getpz3<n>(y_k_pn)));
-                    setpz2(x_p_km+m, mulpz2(w2, getpz3<n>(y_k_pn+1)));
-                }
-            }
-#ifdef _OPENMP
-            #pragma omp for schedule(static)
-#endif
-            for (int k = 0; k < n; k++) {
-                const int km = k*m;
-                fft2.inv0o(x + km, y + km);
-            }
-#ifdef _OPENMP
-            #pragma omp for schedule(static) nowait
-#endif
-            for (int p = 0; p < m; p += 2) {
-                for (int k = 0; k < n; k += 2) {
-                    const int k_pn = k + p*n;
-                    const int p_km = p + k*m;
-                    x[k_pn]     = y[p_km];
-                    x[k_pn+1]   = y[p_km+m];
-                    x[k_pn+n]   = y[p_km+1];
-                    x[k_pn+1+n] = y[p_km+1+m];
-                }
-            }
-        }
-        else //////////////////////////////////////////////////////////////////
-#ifdef _OPENMP
-        #pragma omp parallel
-#endif
-        {
-#ifdef _OPENMP
-            #pragma omp for schedule(guided)
-#endif
-            for (int p = 0; p < m; p += 2) {
-                for (int k = 0; k < n; k += 2) {
-                    const int k_pn = k + p*n;
-                    const int p_km = p + k*m;
-                    y[k_pn]     = x[p_km];
-                    y[k_pn+1]   = x[p_km+m];
-                    y[k_pn+n]   = x[p_km+1];
-                    y[k_pn+1+n] = x[p_km+1+m];
-                }
-            }
-#ifdef _OPENMP
-            #pragma omp for schedule(guided)
-#endif
-            for (int p = 0; p < m; p++) {
-                const int pn = p*n;
-                fft1.inv0(y + pn, x + pn);
-            }
-#ifdef _OPENMP
-            #pragma omp for schedule(guided)
-#endif
-            for (int k = 0; k < n; k += 2) {
-                for (int p = 0; p < m; p += 2) {
-                    const int N_kp = N-k*p;
-                    complex_vector x_p_km = x + p + k*m;
-                    complex_vector y_k_pn = y + k + p*n;
-                    const ymm w1 = cmplx2(W[N_kp], W[N_kp-k]);
-                    const ymm w2 = cmplx2(W[N_kp-p], W[N_kp-p-k-1]);
-                    setpz2(x_p_km,   mulpz2(w1, getpz3<n>(y_k_pn)));
-                    setpz2(x_p_km+m, mulpz2(w2, getpz3<n>(y_k_pn+1)));
-                }
-            }
-#ifdef _OPENMP
-            #pragma omp for schedule(guided)
-#endif
-            for (int k = 0; k < n; k++) {
-                const int km = k*m;
-                fft2.inv0o(x + km, y + km);
-            }
-#ifdef _OPENMP
-            #pragma omp for schedule(guided) nowait
-#endif
-            for (int p = 0; p < m; p += 2) {
-                for (int k = 0; k < n; k += 2) {
-                    const int k_pn = k + p*n;
-                    const int p_km = p + k*m;
-                    x[k_pn]     = y[p_km];
-                    x[k_pn+1]   = y[p_km+m];
-                    x[k_pn+n]   = y[p_km+1];
-                    x[k_pn+1+n] = y[p_km+1+m];
-                }
-            }
-        }
-    }
-};
-
-///////////////////////////////////////////////////////////////////////////////
-
-#include "otfft_sixstepn.h"
-
-///////////////////////////////////////////////////////////////////////////////
+using namespace OTFFT_Eightstep;
 
 struct FFT0
 {
     int N, log_N;
     simd_array<complex_t> weight;
-    complex_t* W;
-    //OTFFT_DIFAVX::FFT0 fft1, fft2;
-    //OTFFT_DITAVX::FFT0 fft1, fft2;
-    OTFFT_DIFAVX8::FFT0 fft1, fft2;
-    //OTFFT_DITAVX8::FFT0 fft1, fft2;
+    complex_t* __restrict W;
+    simd_array<complex_t> weight_sub;
+    complex_t* __restrict Ws;
+    simd_array<index_t> index;
+    index_t* __restrict ip;
 
-    FFT0() : N(0), log_N(0), W(0) {}
-    FFT0(int n)
-    {
-        for (log_N = 0; n > 1; n >>= 1) log_N++;
-        setup2(log_N);
-    }
+    FFT0() : N(0), log_N(0), W(0), Ws(0), ip(0) {}
+    FFT0(const int n) { setup(n); }
 
     void setup(int n)
     {
@@ -868,160 +51,178 @@ struct FFT0
         setup2(log_N);
     }
 
-    void setup2(int n)
+    inline void setup2(const int n)
     {
         log_N = n; N = 1 << n;
-        weight.setup(N+1); W = &weight;
-        if (N < 4) fft1.setup2(n);
-        else { fft1.setup2(n/2); fft2.setup2(n - n/2); }
-        init_W(N, W);
-    }
-
-    inline void fwd0(complex_vector x, complex_vector y) const
-    {
-        if (N < 2) return;
-        switch (log_N) {
-        case  1: fft1.fwd0(x, y); break;
-        case  2: fwd0ffte< 2>()(x, y, W, fft1, fft2); break;
-        case  3: fwd0ffto< 3>()(x, y, W, fft1, fft2); break;
-        case  4: fwd0ffte< 4>()(x, y, W, fft1, fft2); break;
-        case  5: fwd0ffto< 5>()(x, y, W, fft1, fft2); break;
-        case  6: fwd0ffte< 6>()(x, y, W, fft1, fft2); break;
-        case  7: fwd0ffto< 7>()(x, y, W, fft1, fft2); break;
-        case  8: fwd0ffte< 8>()(x, y, W, fft1, fft2); break;
-        case  9: fwd0ffto< 9>()(x, y, W, fft1, fft2); break;
-        case 10: fwd0ffte<10>()(x, y, W, fft1, fft2); break;
-        case 11: fwd0ffto<11>()(x, y, W, fft1, fft2); break;
-        case 12: fwd0ffte<12>()(x, y, W, fft1, fft2); break;
-        case 13: fwd0ffto<13>()(x, y, W, fft1, fft2); break;
-        case 14: fwd0ffte<14>()(x, y, W, fft1, fft2); break;
-        case 15: fwd0ffto<15>()(x, y, W, fft1, fft2); break;
-        case 16: fwd0ffte<16>()(x, y, W, fft1, fft2); break;
-        case 17: fwd0ffto<17>()(x, y, W, fft1, fft2); break;
-        case 18: fwd0ffte<18>()(x, y, W, fft1, fft2); break;
-        case 19: fwd0ffto<19>()(x, y, W, fft1, fft2); break;
-        case 20: fwd0ffte<20>()(x, y, W, fft1, fft2); break;
-        case 21: fwd0ffto<21>()(x, y, W, fft1, fft2); break;
-        case 22: fwd0ffte<22>()(x, y, W, fft1, fft2); break;
-        case 23: fwd0ffto<23>()(x, y, W, fft1, fft2); break;
-        case 24: fwd0ffte<24>()(x, y, W, fft1, fft2); break;
+        weight.setup(N+1); W = &weight; init_W(N, W);
+        if (n < 4) {}
+        else if ((n & 1) == 1) {
+            const int m = 1 << n/2-1;
+            weight_sub.setup(m+1); Ws = &weight_sub; init_W(m, Ws);
+            index.setup(m/2*(m/2+1)/2); ip = &index;
+            int i = 0;
+            for (int k = 0; k < m; k += 2) {
+                for (int p = k; p < m; p += 2) {
+                    ip[i].row = k;
+                    ip[i].col = p;
+                    i++;
+                }
+            }
+        }
+        else {
+            const int m = 1 << n/2;
+            weight_sub.setup(m+1); Ws = &weight_sub; init_W(m, Ws);
+            index.setup(m/2*(m/2+1)/2); ip = &index;
+            int i = 0;
+            for (int k = 0; k < m; k += 2) {
+                for (int p = k; p < m; p += 2) {
+                    ip[i].row = k;
+                    ip[i].col = p;
+                    i++;
+                }
+            }
         }
     }
 
     inline void fwd(complex_vector x, complex_vector y) const
     {
-        if (N < 2) return;
         switch (log_N) {
-        case  1: fft1.fwd(x, y); break;
-        case  2: fwdnffte< 2>()(x, y, W, fft1, fft2); break;
-        case  3: fwdnffto< 3>()(x, y, W, fft1, fft2); break;
-        case  4: fwdnffte< 4>()(x, y, W, fft1, fft2); break;
-        case  5: fwdnffto< 5>()(x, y, W, fft1, fft2); break;
-        case  6: fwdnffte< 6>()(x, y, W, fft1, fft2); break;
-        case  7: fwdnffto< 7>()(x, y, W, fft1, fft2); break;
-        case  8: fwdnffte< 8>()(x, y, W, fft1, fft2); break;
-        case  9: fwdnffto< 9>()(x, y, W, fft1, fft2); break;
-        case 10: fwdnffte<10>()(x, y, W, fft1, fft2); break;
-        case 11: fwdnffto<11>()(x, y, W, fft1, fft2); break;
-        case 12: fwdnffte<12>()(x, y, W, fft1, fft2); break;
-        case 13: fwdnffto<13>()(x, y, W, fft1, fft2); break;
-        case 14: fwdnffte<14>()(x, y, W, fft1, fft2); break;
-        case 15: fwdnffto<15>()(x, y, W, fft1, fft2); break;
-        case 16: fwdnffte<16>()(x, y, W, fft1, fft2); break;
-        case 17: fwdnffto<17>()(x, y, W, fft1, fft2); break;
-        case 18: fwdnffte<18>()(x, y, W, fft1, fft2); break;
-        case 19: fwdnffto<19>()(x, y, W, fft1, fft2); break;
-        case 20: fwdnffte<20>()(x, y, W, fft1, fft2); break;
-        case 21: fwdnffto<21>()(x, y, W, fft1, fft2); break;
-        case 22: fwdnffte<22>()(x, y, W, fft1, fft2); break;
-        case 23: fwdnffto<23>()(x, y, W, fft1, fft2); break;
-        case 24: fwdnffte<24>()(x, y, W, fft1, fft2); break;
+            case  0: break;
+            case  1: OTFFT_AVXDIF8::fwdnfft<1<<1,1,0>()(x, y, W); break;
+            case  2: OTFFT_AVXDIF8::fwdnfft<1<<2,1,0>()(x, y, W); break;
+            case  3: OTFFT_AVXDIF8::fwdnfft<1<<3,1,0>()(x, y, W); break;
+            case  4: fwdnffts< 4>()(ip, x, y, W, Ws); break;
+            case  5: fwdnfftq< 5>()(ip, x, y, W, Ws); break;
+            case  6: fwdnffts< 6>()(ip, x, y, W, Ws); break;
+            case  7: fwdnfftq< 7>()(ip, x, y, W, Ws); break;
+            case  8: fwdnffts< 8>()(ip, x, y, W, Ws); break;
+            case  9: fwdnfftq< 9>()(ip, x, y, W, Ws); break;
+            case 10: fwdnffts<10>()(ip, x, y, W, Ws); break;
+            case 11: fwdnfftq<11>()(ip, x, y, W, Ws); break;
+            case 12: fwdnffts<12>()(ip, x, y, W, Ws); break;
+            case 13: fwdnfftq<13>()(ip, x, y, W, Ws); break;
+            case 14: fwdnffts<14>()(ip, x, y, W, Ws); break;
+            case 15: fwdnfftq<15>()(ip, x, y, W, Ws); break;
+            case 16: fwdnffts<16>()(ip, x, y, W, Ws); break;
+            case 17: fwdnfftq<17>()(ip, x, y, W, Ws); break;
+            case 18: fwdnffts<18>()(ip, x, y, W, Ws); break;
+            case 19: fwdnfftq<19>()(ip, x, y, W, Ws); break;
+            case 20: fwdnffts<20>()(ip, x, y, W, Ws); break;
+            case 21: fwdnfftq<21>()(ip, x, y, W, Ws); break;
+            case 22: fwdnffts<22>()(ip, x, y, W, Ws); break;
+            case 23: fwdnfftq<23>()(ip, x, y, W, Ws); break;
+            case 24: fwdnffts<24>()(ip, x, y, W, Ws); break;
+        }
+    }
+
+    inline void fwd0(complex_vector x, complex_vector y) const
+    {
+        switch (log_N) {
+            case  0: break;
+            case  1: OTFFT_AVXDIF8::fwd0fft<1<<1,1,0>()(x, y, W); break;
+            case  2: OTFFT_AVXDIF8::fwd0fft<1<<2,1,0>()(x, y, W); break;
+            case  3: OTFFT_AVXDIF8::fwd0fft<1<<3,1,0>()(x, y, W); break;
+            case  4: fwd0ffts< 4>()(ip, x, y, W, Ws); break;
+            case  5: fwd0fftq< 5>()(ip, x, y, W, Ws); break;
+            case  6: fwd0ffts< 6>()(ip, x, y, W, Ws); break;
+            case  7: fwd0fftq< 7>()(ip, x, y, W, Ws); break;
+            case  8: fwd0ffts< 8>()(ip, x, y, W, Ws); break;
+            case  9: fwd0fftq< 9>()(ip, x, y, W, Ws); break;
+            case 10: fwd0ffts<10>()(ip, x, y, W, Ws); break;
+            case 11: fwd0fftq<11>()(ip, x, y, W, Ws); break;
+            case 12: fwd0ffts<12>()(ip, x, y, W, Ws); break;
+            case 13: fwd0fftq<13>()(ip, x, y, W, Ws); break;
+            case 14: fwd0ffts<14>()(ip, x, y, W, Ws); break;
+            case 15: fwd0fftq<15>()(ip, x, y, W, Ws); break;
+            case 16: fwd0ffts<16>()(ip, x, y, W, Ws); break;
+            case 17: fwd0fftq<17>()(ip, x, y, W, Ws); break;
+            case 18: fwd0ffts<18>()(ip, x, y, W, Ws); break;
+            case 19: fwd0fftq<19>()(ip, x, y, W, Ws); break;
+            case 20: fwd0ffts<20>()(ip, x, y, W, Ws); break;
+            case 21: fwd0fftq<21>()(ip, x, y, W, Ws); break;
+            case 22: fwd0ffts<22>()(ip, x, y, W, Ws); break;
+            case 23: fwd0fftq<23>()(ip, x, y, W, Ws); break;
+            case 24: fwd0ffts<24>()(ip, x, y, W, Ws); break;
         }
     }
 
     inline void fwdn(complex_vector x, complex_vector y) const { fwd(x, y); }
 
-    inline void inv0(complex_vector x, complex_vector y) const { inv(x, y); }
-
     inline void inv(complex_vector x, complex_vector y) const
     {
-        if (N < 2) return;
         switch (log_N) {
-        case  1: fft1.inv0(x, y); break;
-        case  2: inv0ffte< 2>()(x, y, W, fft1, fft2); break;
-        case  3: inv0ffto< 3>()(x, y, W, fft1, fft2); break;
-        case  4: inv0ffte< 4>()(x, y, W, fft1, fft2); break;
-        case  5: inv0ffto< 5>()(x, y, W, fft1, fft2); break;
-        case  6: inv0ffte< 6>()(x, y, W, fft1, fft2); break;
-        case  7: inv0ffto< 7>()(x, y, W, fft1, fft2); break;
-        case  8: inv0ffte< 8>()(x, y, W, fft1, fft2); break;
-        case  9: inv0ffto< 9>()(x, y, W, fft1, fft2); break;
-        case 10: inv0ffte<10>()(x, y, W, fft1, fft2); break;
-        case 11: inv0ffto<11>()(x, y, W, fft1, fft2); break;
-        case 12: inv0ffte<12>()(x, y, W, fft1, fft2); break;
-        case 13: inv0ffto<13>()(x, y, W, fft1, fft2); break;
-        case 14: inv0ffte<14>()(x, y, W, fft1, fft2); break;
-        case 15: inv0ffto<15>()(x, y, W, fft1, fft2); break;
-        case 16: inv0ffte<16>()(x, y, W, fft1, fft2); break;
-        case 17: inv0ffto<17>()(x, y, W, fft1, fft2); break;
-        case 18: inv0ffte<18>()(x, y, W, fft1, fft2); break;
-        case 19: inv0ffto<19>()(x, y, W, fft1, fft2); break;
-        case 20: inv0ffte<20>()(x, y, W, fft1, fft2); break;
-        case 21: inv0ffto<21>()(x, y, W, fft1, fft2); break;
-        case 22: inv0ffte<22>()(x, y, W, fft1, fft2); break;
-        case 23: inv0ffto<23>()(x, y, W, fft1, fft2); break;
-        case 24: inv0ffte<24>()(x, y, W, fft1, fft2); break;
+            case  0: break;
+            case  1: OTFFT_AVXDIF8::inv0fft<1<<1,1,0>()(x, y, W); break;
+            case  2: OTFFT_AVXDIF8::inv0fft<1<<2,1,0>()(x, y, W); break;
+            case  3: OTFFT_AVXDIF8::inv0fft<1<<3,1,0>()(x, y, W); break;
+            case  4: inv0ffts< 4>()(ip, x, y, W, Ws); break;
+            case  5: inv0fftq< 5>()(ip, x, y, W, Ws); break;
+            case  6: inv0ffts< 6>()(ip, x, y, W, Ws); break;
+            case  7: inv0fftq< 7>()(ip, x, y, W, Ws); break;
+            case  8: inv0ffts< 8>()(ip, x, y, W, Ws); break;
+            case  9: inv0fftq< 9>()(ip, x, y, W, Ws); break;
+            case 10: inv0ffts<10>()(ip, x, y, W, Ws); break;
+            case 11: inv0fftq<11>()(ip, x, y, W, Ws); break;
+            case 12: inv0ffts<12>()(ip, x, y, W, Ws); break;
+            case 13: inv0fftq<13>()(ip, x, y, W, Ws); break;
+            case 14: inv0ffts<14>()(ip, x, y, W, Ws); break;
+            case 15: inv0fftq<15>()(ip, x, y, W, Ws); break;
+            case 16: inv0ffts<16>()(ip, x, y, W, Ws); break;
+            case 17: inv0fftq<17>()(ip, x, y, W, Ws); break;
+            case 18: inv0ffts<18>()(ip, x, y, W, Ws); break;
+            case 19: inv0fftq<19>()(ip, x, y, W, Ws); break;
+            case 20: inv0ffts<20>()(ip, x, y, W, Ws); break;
+            case 21: inv0fftq<21>()(ip, x, y, W, Ws); break;
+            case 22: inv0ffts<22>()(ip, x, y, W, Ws); break;
+            case 23: inv0fftq<23>()(ip, x, y, W, Ws); break;
+            case 24: inv0ffts<24>()(ip, x, y, W, Ws); break;
         }
     }
 
+    inline void inv0(complex_vector x, complex_vector y) const { inv(x, y); }
+
     inline void invn(complex_vector x, complex_vector y) const
     {
-        if (N < 2) return;
         switch (log_N) {
-        case  1: fft1.invn(x, y); break;
-        case  2: invnffte< 2>()(x, y, W, fft1, fft2); break;
-        case  3: invnffto< 3>()(x, y, W, fft1, fft2); break;
-        case  4: invnffte< 4>()(x, y, W, fft1, fft2); break;
-        case  5: invnffto< 5>()(x, y, W, fft1, fft2); break;
-        case  6: invnffte< 6>()(x, y, W, fft1, fft2); break;
-        case  7: invnffto< 7>()(x, y, W, fft1, fft2); break;
-        case  8: invnffte< 8>()(x, y, W, fft1, fft2); break;
-        case  9: invnffto< 9>()(x, y, W, fft1, fft2); break;
-        case 10: invnffte<10>()(x, y, W, fft1, fft2); break;
-        case 11: invnffto<11>()(x, y, W, fft1, fft2); break;
-        case 12: invnffte<12>()(x, y, W, fft1, fft2); break;
-        case 13: invnffto<13>()(x, y, W, fft1, fft2); break;
-        case 14: invnffto<14>()(x, y, W, fft1, fft2); break;
-        case 15: invnffto<15>()(x, y, W, fft1, fft2); break;
-        case 16: invnffte<16>()(x, y, W, fft1, fft2); break;
-        case 17: invnffto<17>()(x, y, W, fft1, fft2); break;
-        case 18: invnffte<18>()(x, y, W, fft1, fft2); break;
-        case 19: invnffto<19>()(x, y, W, fft1, fft2); break;
-        case 20: invnffte<20>()(x, y, W, fft1, fft2); break;
-        case 21: invnffto<21>()(x, y, W, fft1, fft2); break;
-        case 22: invnffte<22>()(x, y, W, fft1, fft2); break;
-        case 23: invnffto<23>()(x, y, W, fft1, fft2); break;
-        case 24: invnffte<24>()(x, y, W, fft1, fft2); break;
+            case  0: break;
+            case  1: OTFFT_AVXDIF8::invnfft<1<<1,1,0>()(x, y, W); break;
+            case  2: OTFFT_AVXDIF8::invnfft<1<<2,1,0>()(x, y, W); break;
+            case  3: OTFFT_AVXDIF8::invnfft<1<<3,1,0>()(x, y, W); break;
+            case  4: invnffts< 4>()(ip, x, y, W, Ws); break;
+            case  5: invnfftq< 5>()(ip, x, y, W, Ws); break;
+            case  6: invnffts< 6>()(ip, x, y, W, Ws); break;
+            case  7: invnfftq< 7>()(ip, x, y, W, Ws); break;
+            case  8: invnffts< 8>()(ip, x, y, W, Ws); break;
+            case  9: invnfftq< 9>()(ip, x, y, W, Ws); break;
+            case 10: invnffts<10>()(ip, x, y, W, Ws); break;
+            case 11: invnfftq<11>()(ip, x, y, W, Ws); break;
+            case 12: invnffts<12>()(ip, x, y, W, Ws); break;
+            case 13: invnfftq<13>()(ip, x, y, W, Ws); break;
+            case 14: invnffts<14>()(ip, x, y, W, Ws); break;
+            case 15: invnfftq<15>()(ip, x, y, W, Ws); break;
+            case 16: invnffts<16>()(ip, x, y, W, Ws); break;
+            case 17: invnfftq<17>()(ip, x, y, W, Ws); break;
+            case 18: invnffts<18>()(ip, x, y, W, Ws); break;
+            case 19: invnfftq<19>()(ip, x, y, W, Ws); break;
+            case 20: invnffts<20>()(ip, x, y, W, Ws); break;
+            case 21: invnfftq<21>()(ip, x, y, W, Ws); break;
+            case 22: invnffts<22>()(ip, x, y, W, Ws); break;
+            case 23: invnfftq<23>()(ip, x, y, W, Ws); break;
+            case 24: invnffts<24>()(ip, x, y, W, Ws); break;
         }
     }
 };
 
+#if 0
 struct FFT1
 {
     int N, log_N;
     simd_array<complex_t> weight;
-    complex_t* W;
-    //OTFFT_DIFAVX::FFT0 fft1, fft2;
-    //OTFFT_DITAVX::FFT0 fft1, fft2;
-    OTFFT_DIFAVX8::FFT0 fft1, fft2;
-    //OTFFT_DITAVX8::FFT0 fft1, fft2;
+    complex_t* __restrict W;
+    OTFFT_AVXDIFx::FFT0 fft1, fft2;
 
     FFT1() : N(0), log_N(0), W(0) {}
-    FFT1(int n)
-    {
-        for (log_N = 0; n > 1; n >>= 1) log_N++;
-        setup2(log_N);
-    }
+    FFT1(const int n) { setup(n); }
 
     void setup(int n)
     {
@@ -1029,7 +230,7 @@ struct FFT1
         setup2(log_N);
     }
 
-    void setup2(int n)
+    inline void setup2(const int n)
     {
         log_N = n; N = 1 << n;
         weight.setup(N+1); W = &weight;
@@ -1038,134 +239,135 @@ struct FFT1
         init_W(N, W);
     }
 
-    inline void fwd0(complex_vector x, complex_vector y) const
+    inline void fwd(complex_vector x, complex_vector y) const
     {
-        if (N < 2) return;
         switch (log_N) {
-        case  1: fft1.fwd0(x, y); break;
-        case  2: fwd0ffto< 2>()(x, y, W, fft1, fft2); break;
-        case  3: fwd0ffto< 3>()(x, y, W, fft1, fft2); break;
-        case  4: fwd0ffto< 4>()(x, y, W, fft1, fft2); break;
-        case  5: fwd0ffto< 5>()(x, y, W, fft1, fft2); break;
-        case  6: fwd0ffto< 6>()(x, y, W, fft1, fft2); break;
-        case  7: fwd0ffto< 7>()(x, y, W, fft1, fft2); break;
-        case  8: fwd0ffto< 8>()(x, y, W, fft1, fft2); break;
-        case  9: fwd0ffto< 9>()(x, y, W, fft1, fft2); break;
-        case 10: fwd0ffto<10>()(x, y, W, fft1, fft2); break;
-        case 11: fwd0ffto<11>()(x, y, W, fft1, fft2); break;
-        case 12: fwd0ffto<12>()(x, y, W, fft1, fft2); break;
-        case 13: fwd0ffto<13>()(x, y, W, fft1, fft2); break;
-        case 14: fwd0ffto<14>()(x, y, W, fft1, fft2); break;
-        case 15: fwd0ffto<15>()(x, y, W, fft1, fft2); break;
-        case 16: fwd0ffto<16>()(x, y, W, fft1, fft2); break;
-        case 17: fwd0ffto<17>()(x, y, W, fft1, fft2); break;
-        case 18: fwd0ffto<18>()(x, y, W, fft1, fft2); break;
-        case 19: fwd0ffto<19>()(x, y, W, fft1, fft2); break;
-        case 20: fwd0ffto<20>()(x, y, W, fft1, fft2); break;
-        case 21: fwd0ffto<21>()(x, y, W, fft1, fft2); break;
-        case 22: fwd0ffto<22>()(x, y, W, fft1, fft2); break;
-        case 23: fwd0ffto<23>()(x, y, W, fft1, fft2); break;
-        case 24: fwd0ffto<24>()(x, y, W, fft1, fft2); break;
+            case  0: break;
+            case  1: fft1.fwd(x, y); break;
+            case  2: fwdnfftr< 2>()(fft1, fft2, x, y, W); break;
+            case  3: fwdnfftr< 3>()(fft1, fft2, x, y, W); break;
+            case  4: fwdnfftr< 4>()(fft1, fft2, x, y, W); break;
+            case  5: fwdnfftr< 5>()(fft1, fft2, x, y, W); break;
+            case  6: fwdnfftr< 6>()(fft1, fft2, x, y, W); break;
+            case  7: fwdnfftr< 7>()(fft1, fft2, x, y, W); break;
+            case  8: fwdnfftr< 8>()(fft1, fft2, x, y, W); break;
+            case  9: fwdnfftr< 9>()(fft1, fft2, x, y, W); break;
+            case 10: fwdnfftr<10>()(fft1, fft2, x, y, W); break;
+            case 11: fwdnfftr<11>()(fft1, fft2, x, y, W); break;
+            case 12: fwdnfftr<12>()(fft1, fft2, x, y, W); break;
+            case 13: fwdnfftr<13>()(fft1, fft2, x, y, W); break;
+            case 14: fwdnfftr<14>()(fft1, fft2, x, y, W); break;
+            case 15: fwdnfftr<15>()(fft1, fft2, x, y, W); break;
+            case 16: fwdnfftr<16>()(fft1, fft2, x, y, W); break;
+            case 17: fwdnfftr<17>()(fft1, fft2, x, y, W); break;
+            case 18: fwdnfftr<18>()(fft1, fft2, x, y, W); break;
+            case 19: fwdnfftr<19>()(fft1, fft2, x, y, W); break;
+            case 20: fwdnfftr<20>()(fft1, fft2, x, y, W); break;
+            case 21: fwdnfftr<21>()(fft1, fft2, x, y, W); break;
+            case 22: fwdnfftr<22>()(fft1, fft2, x, y, W); break;
+            case 23: fwdnfftr<23>()(fft1, fft2, x, y, W); break;
+            case 24: fwdnfftr<24>()(fft1, fft2, x, y, W); break;
         }
     }
 
-    inline void fwd(complex_vector x, complex_vector y) const
+    inline void fwd0(complex_vector x, complex_vector y) const
     {
-        if (N < 2) return;
         switch (log_N) {
-        case  1: fft1.fwd(x, y); break;
-        case  2: fwdnffto< 2>()(x, y, W, fft1, fft2); break;
-        case  3: fwdnffto< 3>()(x, y, W, fft1, fft2); break;
-        case  4: fwdnffto< 4>()(x, y, W, fft1, fft2); break;
-        case  5: fwdnffto< 5>()(x, y, W, fft1, fft2); break;
-        case  6: fwdnffto< 6>()(x, y, W, fft1, fft2); break;
-        case  7: fwdnffto< 7>()(x, y, W, fft1, fft2); break;
-        case  8: fwdnffto< 8>()(x, y, W, fft1, fft2); break;
-        case  9: fwdnffto< 9>()(x, y, W, fft1, fft2); break;
-        case 10: fwdnffto<10>()(x, y, W, fft1, fft2); break;
-        case 11: fwdnffto<11>()(x, y, W, fft1, fft2); break;
-        case 12: fwdnffto<12>()(x, y, W, fft1, fft2); break;
-        case 13: fwdnffto<13>()(x, y, W, fft1, fft2); break;
-        case 14: fwdnffto<14>()(x, y, W, fft1, fft2); break;
-        case 15: fwdnffto<15>()(x, y, W, fft1, fft2); break;
-        case 16: fwdnffto<16>()(x, y, W, fft1, fft2); break;
-        case 17: fwdnffto<17>()(x, y, W, fft1, fft2); break;
-        case 18: fwdnffto<18>()(x, y, W, fft1, fft2); break;
-        case 19: fwdnffto<19>()(x, y, W, fft1, fft2); break;
-        case 20: fwdnffto<20>()(x, y, W, fft1, fft2); break;
-        case 21: fwdnffto<21>()(x, y, W, fft1, fft2); break;
-        case 22: fwdnffto<22>()(x, y, W, fft1, fft2); break;
-        case 23: fwdnffto<23>()(x, y, W, fft1, fft2); break;
-        case 24: fwdnffto<24>()(x, y, W, fft1, fft2); break;
+            case  0: break;
+            case  1: fft1.fwd0(x, y); break;
+            case  2: fwd0fftr< 2>()(fft1, fft2, x, y, W); break;
+            case  3: fwd0fftr< 3>()(fft1, fft2, x, y, W); break;
+            case  4: fwd0fftr< 4>()(fft1, fft2, x, y, W); break;
+            case  5: fwd0fftr< 5>()(fft1, fft2, x, y, W); break;
+            case  6: fwd0fftr< 6>()(fft1, fft2, x, y, W); break;
+            case  7: fwd0fftr< 7>()(fft1, fft2, x, y, W); break;
+            case  8: fwd0fftr< 8>()(fft1, fft2, x, y, W); break;
+            case  9: fwd0fftr< 9>()(fft1, fft2, x, y, W); break;
+            case 10: fwd0fftr<10>()(fft1, fft2, x, y, W); break;
+            case 11: fwd0fftr<11>()(fft1, fft2, x, y, W); break;
+            case 12: fwd0fftr<12>()(fft1, fft2, x, y, W); break;
+            case 13: fwd0fftr<13>()(fft1, fft2, x, y, W); break;
+            case 14: fwd0fftr<14>()(fft1, fft2, x, y, W); break;
+            case 15: fwd0fftr<15>()(fft1, fft2, x, y, W); break;
+            case 16: fwd0fftr<16>()(fft1, fft2, x, y, W); break;
+            case 17: fwd0fftr<17>()(fft1, fft2, x, y, W); break;
+            case 18: fwd0fftr<18>()(fft1, fft2, x, y, W); break;
+            case 19: fwd0fftr<19>()(fft1, fft2, x, y, W); break;
+            case 20: fwd0fftr<20>()(fft1, fft2, x, y, W); break;
+            case 21: fwd0fftr<21>()(fft1, fft2, x, y, W); break;
+            case 22: fwd0fftr<22>()(fft1, fft2, x, y, W); break;
+            case 23: fwd0fftr<23>()(fft1, fft2, x, y, W); break;
+            case 24: fwd0fftr<24>()(fft1, fft2, x, y, W); break;
         }
     }
 
     inline void fwdn(complex_vector x, complex_vector y) const { fwd(x, y); }
 
-    inline void inv0(complex_vector x, complex_vector y) const { inv(x, y); }
-
     inline void inv(complex_vector x, complex_vector y) const
     {
-        if (N < 2) return;
         switch (log_N) {
-        case  1: fft1.inv0(x, y); break;
-        case  2: inv0ffto< 2>()(x, y, W, fft1, fft2); break;
-        case  3: inv0ffto< 3>()(x, y, W, fft1, fft2); break;
-        case  4: inv0ffto< 4>()(x, y, W, fft1, fft2); break;
-        case  5: inv0ffto< 5>()(x, y, W, fft1, fft2); break;
-        case  6: inv0ffto< 6>()(x, y, W, fft1, fft2); break;
-        case  7: inv0ffto< 7>()(x, y, W, fft1, fft2); break;
-        case  8: inv0ffto< 8>()(x, y, W, fft1, fft2); break;
-        case  9: inv0ffto< 9>()(x, y, W, fft1, fft2); break;
-        case 10: inv0ffto<10>()(x, y, W, fft1, fft2); break;
-        case 11: inv0ffto<11>()(x, y, W, fft1, fft2); break;
-        case 12: inv0ffto<12>()(x, y, W, fft1, fft2); break;
-        case 13: inv0ffto<13>()(x, y, W, fft1, fft2); break;
-        case 14: inv0ffto<14>()(x, y, W, fft1, fft2); break;
-        case 15: inv0ffto<15>()(x, y, W, fft1, fft2); break;
-        case 16: inv0ffto<16>()(x, y, W, fft1, fft2); break;
-        case 17: inv0ffto<17>()(x, y, W, fft1, fft2); break;
-        case 18: inv0ffto<18>()(x, y, W, fft1, fft2); break;
-        case 19: inv0ffto<19>()(x, y, W, fft1, fft2); break;
-        case 20: inv0ffto<20>()(x, y, W, fft1, fft2); break;
-        case 21: inv0ffto<21>()(x, y, W, fft1, fft2); break;
-        case 22: inv0ffto<22>()(x, y, W, fft1, fft2); break;
-        case 23: inv0ffto<23>()(x, y, W, fft1, fft2); break;
-        case 24: inv0ffto<24>()(x, y, W, fft1, fft2); break;
+            case  0: break;
+            case  1: fft1.inv0(x, y); break;
+            case  2: inv0fftr< 2>()(fft1, fft2, x, y, W); break;
+            case  3: inv0fftr< 3>()(fft1, fft2, x, y, W); break;
+            case  4: inv0fftr< 4>()(fft1, fft2, x, y, W); break;
+            case  5: inv0fftr< 5>()(fft1, fft2, x, y, W); break;
+            case  6: inv0fftr< 6>()(fft1, fft2, x, y, W); break;
+            case  7: inv0fftr< 7>()(fft1, fft2, x, y, W); break;
+            case  8: inv0fftr< 8>()(fft1, fft2, x, y, W); break;
+            case  9: inv0fftr< 9>()(fft1, fft2, x, y, W); break;
+            case 10: inv0fftr<10>()(fft1, fft2, x, y, W); break;
+            case 11: inv0fftr<11>()(fft1, fft2, x, y, W); break;
+            case 12: inv0fftr<12>()(fft1, fft2, x, y, W); break;
+            case 13: inv0fftr<13>()(fft1, fft2, x, y, W); break;
+            case 14: inv0fftr<14>()(fft1, fft2, x, y, W); break;
+            case 15: inv0fftr<15>()(fft1, fft2, x, y, W); break;
+            case 16: inv0fftr<16>()(fft1, fft2, x, y, W); break;
+            case 17: inv0fftr<17>()(fft1, fft2, x, y, W); break;
+            case 18: inv0fftr<18>()(fft1, fft2, x, y, W); break;
+            case 19: inv0fftr<19>()(fft1, fft2, x, y, W); break;
+            case 20: inv0fftr<20>()(fft1, fft2, x, y, W); break;
+            case 21: inv0fftr<21>()(fft1, fft2, x, y, W); break;
+            case 22: inv0fftr<22>()(fft1, fft2, x, y, W); break;
+            case 23: inv0fftr<23>()(fft1, fft2, x, y, W); break;
+            case 24: inv0fftr<24>()(fft1, fft2, x, y, W); break;
         }
     }
+
+    inline void inv0(complex_vector x, complex_vector y) const { inv(x, y); }
 
     inline void invn(complex_vector x, complex_vector y) const
     {
-        if (N < 2) return;
         switch (log_N) {
-        case  1: fft1.invn(x, y); break;
-        case  2: invnffto< 2>()(x, y, W, fft1, fft2); break;
-        case  3: invnffto< 3>()(x, y, W, fft1, fft2); break;
-        case  4: invnffto< 4>()(x, y, W, fft1, fft2); break;
-        case  5: invnffto< 5>()(x, y, W, fft1, fft2); break;
-        case  6: invnffto< 6>()(x, y, W, fft1, fft2); break;
-        case  7: invnffto< 7>()(x, y, W, fft1, fft2); break;
-        case  8: invnffto< 8>()(x, y, W, fft1, fft2); break;
-        case  9: invnffto< 9>()(x, y, W, fft1, fft2); break;
-        case 10: invnffto<10>()(x, y, W, fft1, fft2); break;
-        case 11: invnffto<11>()(x, y, W, fft1, fft2); break;
-        case 12: invnffto<12>()(x, y, W, fft1, fft2); break;
-        case 13: invnffto<13>()(x, y, W, fft1, fft2); break;
-        case 14: invnffto<14>()(x, y, W, fft1, fft2); break;
-        case 15: invnffto<15>()(x, y, W, fft1, fft2); break;
-        case 16: invnffto<16>()(x, y, W, fft1, fft2); break;
-        case 17: invnffto<17>()(x, y, W, fft1, fft2); break;
-        case 18: invnffto<18>()(x, y, W, fft1, fft2); break;
-        case 19: invnffto<19>()(x, y, W, fft1, fft2); break;
-        case 20: invnffto<20>()(x, y, W, fft1, fft2); break;
-        case 21: invnffto<21>()(x, y, W, fft1, fft2); break;
-        case 22: invnffto<22>()(x, y, W, fft1, fft2); break;
-        case 23: invnffto<23>()(x, y, W, fft1, fft2); break;
-        case 24: invnffto<24>()(x, y, W, fft1, fft2); break;
+            case  0: break;
+            case  1: fft1.invn(x, y); break;
+            case  2: invnfftr< 2>()(fft1, fft2, x, y, W); break;
+            case  3: invnfftr< 3>()(fft1, fft2, x, y, W); break;
+            case  4: invnfftr< 4>()(fft1, fft2, x, y, W); break;
+            case  5: invnfftr< 5>()(fft1, fft2, x, y, W); break;
+            case  6: invnfftr< 6>()(fft1, fft2, x, y, W); break;
+            case  7: invnfftr< 7>()(fft1, fft2, x, y, W); break;
+            case  8: invnfftr< 8>()(fft1, fft2, x, y, W); break;
+            case  9: invnfftr< 9>()(fft1, fft2, x, y, W); break;
+            case 10: invnfftr<10>()(fft1, fft2, x, y, W); break;
+            case 11: invnfftr<11>()(fft1, fft2, x, y, W); break;
+            case 12: invnfftr<12>()(fft1, fft2, x, y, W); break;
+            case 13: invnfftr<13>()(fft1, fft2, x, y, W); break;
+            case 14: invnfftr<14>()(fft1, fft2, x, y, W); break;
+            case 15: invnfftr<15>()(fft1, fft2, x, y, W); break;
+            case 16: invnfftr<16>()(fft1, fft2, x, y, W); break;
+            case 17: invnfftr<17>()(fft1, fft2, x, y, W); break;
+            case 18: invnfftr<18>()(fft1, fft2, x, y, W); break;
+            case 19: invnfftr<19>()(fft1, fft2, x, y, W); break;
+            case 20: invnfftr<20>()(fft1, fft2, x, y, W); break;
+            case 21: invnfftr<21>()(fft1, fft2, x, y, W); break;
+            case 22: invnfftr<22>()(fft1, fft2, x, y, W); break;
+            case 23: invnfftr<23>()(fft1, fft2, x, y, W); break;
+            case 24: invnfftr<24>()(fft1, fft2, x, y, W); break;
         }
     }
 };
+#endif
 
 #if 0
 struct FFT
@@ -1179,12 +381,12 @@ struct FFT
 
     inline void setup(const int n) { fft.setup(n); work.setup(n); y = &work; }
 
+    inline void fwd(complex_vector  x) const { fft.fwd(x, y);  }
     inline void fwd0(complex_vector x) const { fft.fwd0(x, y); }
-    inline void fwd(complex_vector x)  const { fft.fwd(x, y);  }
-    inline void fwdn(complex_vector x) const { fft.fwd(x, y);  }
+    inline void fwdn(complex_vector x) const { fft.fwdn(x, y); }
+    inline void inv(complex_vector  x) const { fft.inv(x, y);  }
     inline void inv0(complex_vector x) const { fft.inv0(x, y); }
-    inline void inv(complex_vector x)  const { fft.inv(x, y);  }
-    inline void invn(complex_vector x) const { fft.invn(x, y);  }
+    inline void invn(complex_vector x) const { fft.invn(x, y); }
 };
 #endif
 

@@ -1,5 +1,5 @@
 /******************************************************************************
-*  FFT Miscellaneous Routines Version 4.0
+*  FFT Miscellaneous Routines Version 5.3
 ******************************************************************************/
 
 #ifndef otfft_misc_h
@@ -10,7 +10,7 @@
 #include <new>
 
 #define USE_INTRINSIC 1
-#define __OPTIMIZE__ 1
+//#define __OPTIMIZE__ 1
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846264338327950288
@@ -21,6 +21,9 @@
 #endif
 
 #if (__GNUC__ >= 3)
+//#define force_inline
+//#define force_inline2
+//#define force_inline3
 //#define force_inline  __attribute__((const))
 //#define force_inline2 __attribute__((pure))
 //#define force_inline3
@@ -280,6 +283,11 @@ static inline void setpz(complex_t& z, const xmm x) { _mm_store_pd(&z.Re, x); }
 static inline void setpz(double_vector x, const xmm z) force_inline3;
 static inline void setpz(double_vector x, const xmm z) { _mm_store_pd(x, z); }
 
+static inline void swappz(complex_t& x, complex_t& y)
+{
+    const xmm z = getpz(x); setpz(x, getpz(y)); setpz(y, z);
+}
+
 static inline xmm cnjpz(const xmm xy) force_inline;
 static inline xmm cnjpz(const xmm xy)
 {
@@ -327,7 +335,6 @@ static inline xmm haddpz(const xmm ab, const xmm xy)
 static inline xmm mulpz(const xmm ab, const xmm xy) force_inline;
 static inline xmm mulpz(const xmm ab, const xmm xy)
 {
-    //const xmm aa = _mm_movedup_pd(ab);
     const xmm aa = _mm_unpacklo_pd(ab, ab);
     const xmm bb = _mm_unpackhi_pd(ab, ab);
     const xmm yx = _mm_shuffle_pd(xy, xy, 1);
@@ -445,6 +452,11 @@ static inline void setpz(complex_t& z, const xmm& x) { z.Re = x.Re; z.Im = x.Im;
 static inline void setpz(double_vector x, const xmm z) force_inline3;
 static inline void setpz(double_vector x, const xmm z) { x[0] = z.Re; x[1] = z.Im; }
 
+static inline void swappz(complex_t& x, complex_t& y)
+{
+    const xmm z = getpz(x); setpz(x, getpz(y)); setpz(y, z);
+}
+
 static inline xmm cnjpz(const xmm& z) force_inline;
 static inline xmm cnjpz(const xmm& z) { const xmm x = { z.Re, -z.Im }; return x; }
 static inline xmm jxpz(const xmm& z) force_inline;
@@ -536,6 +548,9 @@ namespace OTFFT_MISC {
 
 typedef __m256d ymm;
 
+static inline void zeroupper() force_inline;
+static inline void zeroupper() { _mm256_zeroupper(); }
+
 static inline ymm cmplx2(const double& a, const double& b, const double& c, const double& d) force_inline;
 static inline ymm cmplx2(const double& a, const double& b, const double& c, const double& d)
 {
@@ -547,15 +562,24 @@ static inline ymm cmplx2(const complex_t& x, const complex_t& y)
 {
     const xmm a = getpz(x);
     const xmm b = getpz(y);
-    return _mm256_insertf128_pd(_mm256_castpd128_pd256(a), b, 1);
+    const ymm ax = _mm256_castpd128_pd256(a);
+    const ymm bx = _mm256_castpd128_pd256(b);
+    return _mm256_permute2f128_pd(ax, bx, 0x20);
+//    return _mm256_insertf128_pd(_mm256_castpd128_pd256(a), b, 1);
 }
 
 static inline ymm cmplx3(const complex_t& x, const complex_t& y) force_inline;
 static inline ymm cmplx3(const complex_t& x, const complex_t& y)
 {
-    const ymm a = _mm256_load_pd(&x.Re);
-    const xmm b = getpz(y);
-    return _mm256_insertf128_pd(a, b, 1);
+#if 1
+    const ymm ax = _mm256_load_pd(&x.Re);
+    const ymm bx = _mm256_load_pd(&y.Re);
+    return _mm256_permute2f128_pd(ax, bx, 0x20);
+#else
+    const ymm ax = _mm256_load_pd(&x.Re);
+    const xmm b  = getpz(y);
+    return _mm256_insertf128_pd(ax, b, 1);
+#endif
 }
 
 static inline ymm getpz2(const_complex_vector z) force_inline2;
@@ -619,13 +643,6 @@ static inline ymm divpd2(const ymm a, const ymm b) { return _mm256_div_pd(a, b);
 static inline ymm mulpz2(const ymm ab, const ymm xy) force_inline;
 static inline ymm mulpz2(const ymm ab, const ymm xy)
 {
-    //const ymm aa = _mm256_permute_pd(ab, 0x0);
-    //const ymm bb = _mm256_permute_pd(ab, 0xf);
-    //const ymm yx = _mm256_permute_pd(xy, 0x5);
-    //const ymm aa = _mm256_permute4x64_pd(ab, 0xa0);
-    //const ymm bb = _mm256_permute4x64_pd(ab, 0xf5);
-    //const ymm yx = _mm256_permute4x64_pd(xy, 0xb1);
-    //const ymm aa = _mm256_movedup_pd(ab);
     const ymm aa = _mm256_unpacklo_pd(ab, ab);
     const ymm bb = _mm256_unpackhi_pd(ab, ab);
     const ymm yx = _mm256_shuffle_pd(xy, xy, 5);
@@ -652,30 +669,48 @@ static inline ymm duppz3(const complex_t& z)
 {
 #if 1
     const ymm x = getpz2(&z);
-#ifdef __AVX2__
-    return _mm256_permute4x64_pd(x, 0x44);
-#else
     return _mm256_permute2f128_pd(x, x, 0);
-#endif // __AVX2__
 #else
     const xmm x = getpz(z);
     return _mm256_broadcast_pd(&x);
 #endif
 }
 
-static inline ymm catlohi(const xmm a, const xmm b) force_inline;
-static inline ymm catlohi(const xmm a, const xmm b)
+static inline ymm cat(const xmm a, const xmm b) force_inline;
+static inline ymm cat(const xmm a, const xmm b)
 {
-    return _mm256_insertf128_pd(_mm256_castpd128_pd256(a), b, 1);
+    const ymm ax = _mm256_castpd128_pd256(a);
+    const ymm bx = _mm256_castpd128_pd256(b);
+    return _mm256_permute2f128_pd(ax, bx, 0x20);
+    //return _mm256_insertf128_pd(_mm256_castpd128_pd256(a), b, 1);
+}
+
+static inline ymm catlo(const ymm ax, const ymm by) force_inline;
+static inline ymm catlo(const ymm ax, const ymm by)
+{
+    return _mm256_permute2f128_pd(ax, by, 0x20); // == ab
+}
+
+static inline ymm cathi(const ymm ax, const ymm by) force_inline;
+static inline ymm cathi(const ymm ax, const ymm by)
+{
+    return _mm256_permute2f128_pd(ax, by, 0x31); // == xy
 }
 
 template <int s> static inline ymm getwp2(const_complex_vector W, const int p) force_inline2;
 template <int s> static inline ymm getwp2(const_complex_vector W, const int p)
 {
+#if 1
     const int sp0 = s * p;
     const int sp1 = s * (p + 1);
-    return cmplx3(W[sp0], W[sp1]);
     //return cmplx2(W[sp0], W[sp1]);
+    return cmplx3(W[sp0], W[sp1]);
+#else
+    const int sp0 = 2*s * p;
+    const int sp1 = 2*s * (p + 1);
+    const_double_vector r = &W[0].Re;
+    return _mm256_i64gather_pd(r, _mm256_set_epi64x(sp1+1,sp1,sp0+1,sp0), 8);
+#endif
 }
 
 template <int s> static inline ymm cnj_getwp2(const_complex_vector W, const int p) force_inline2;
@@ -683,7 +718,9 @@ template <int s> static inline ymm cnj_getwp2(const_complex_vector W, const int 
 {
     const int sp0 = s * p;
     const int sp1 = s * (p + 1);
-    return catlohi(cnjpz(getpz(W[sp0])), cnjpz(getpz(W[sp1])));
+    return cnjpz2(cmplx3(W[sp0], W[sp1]));
+    //return cnjpz2(cat(getpz(W[sp0]), getpz(W[sp1])));
+    //return cat(cnjpz(getpz(W[sp0])), cnjpz(getpz(W[sp1])));
 }
 
 static inline ymm swaplohi(const ymm a_b) force_inline;
@@ -707,14 +744,23 @@ static inline ymm cnjlohi(const ymm a_b)
 template <int s> static inline ymm getpz3(const_complex_vector z) force_inline2;
 template <int s> static inline ymm getpz3(const_complex_vector z)
 {
+#if 1
     return cmplx2(z[0], z[s]);
+#else
+    static const __m256i idx = _mm256_set_epi64x(2*s+1,2*s,1,0);
+    return _mm256_i64gather_pd(&z->Re, idx, 8);
+#endif
 }
 
 template <int s> static inline void setpz3(complex_vector z, const ymm x) force_inline3;
 template <int s> static inline void setpz3(complex_vector z, const ymm x)
 {
-    setpz(z[0], getlo(x));
-    setpz(z[s], gethi(x));
+    const xmm b = gethi(x);
+    const xmm a = getlo(x);
+    setpz(z[0], a);
+    setpz(z[s], b);
+    //setpz(z[0], getlo(x));
+    //setpz(z[s], gethi(x));
 }
 
 static inline void* simd_malloc(int ns) { return _mm_malloc(ns, 32); }
@@ -727,6 +773,9 @@ static inline void simd_free(void* p) { _mm_free(p); }
 namespace OTFFT_MISC {
 
 struct ymm { xmm lo, hi; };
+
+static inline void zeroupper() force_inline;
+static inline void zeroupper() {}
 
 static inline ymm cmplx2(const double& a, const double& b, const double& c, const double &d) force_inline;
 static inline ymm cmplx2(const double& a, const double& b, const double& c, const double &d)
@@ -742,15 +791,15 @@ static inline ymm cmplx2(const complex_t& a, const complex_t& b)
     return y;
 }
 
-static inline ymm getpz2(const complex_t* z) force_inline2;
-static inline ymm getpz2(const complex_t* z)
+static inline ymm getpz2(const_complex_vector z) force_inline2;
+static inline ymm getpz2(const_complex_vector z)
 {
     const ymm y = { getpz(z[0]), getpz(z[1]) };
     return y;
 }
 
-static inline void setpz2(complex_t* z, const ymm& y) force_inline3;
-static inline void setpz2(complex_t* z, const ymm& y)
+static inline void setpz2(complex_vector z, const ymm& y) force_inline3;
+static inline void setpz2(complex_vector z, const ymm& y)
 {
     setpz(z[0], y.lo);
     setpz(z[1], y.hi);
@@ -836,28 +885,43 @@ static inline ymm duppz3(const complex_t& z) {
     return y;
 }
 
-static inline ymm catlohi(const xmm a, const xmm b) force_inline;
-static inline ymm catlohi(const xmm a, const xmm b)
+static inline ymm cat(const xmm& a, const xmm& b) force_inline;
+static inline ymm cat(const xmm& a, const xmm& b)
 {
     const ymm y = { a, b };
     return y;
 }
 
-template <int s> static inline ymm getwp2(const complex_t* W, const int p) force_inline2;
-template <int s> static inline ymm getwp2(const complex_t* W, const int p)
+static inline ymm catlo(const ymm& ax, const ymm& by) force_inline;
+static inline ymm catlo(const ymm& ax, const ymm& by)
+{
+    const ymm ab = { ax.lo, by.lo };
+    return ab;
+}
+
+static inline ymm cathi(const ymm ax, const ymm by) force_inline;
+static inline ymm cathi(const ymm ax, const ymm by)
+{
+    const ymm xy = { ax.hi, by.hi };
+    return xy;
+}
+
+template <int s> static inline ymm getwp2(const_complex_vector W, const int p) force_inline2;
+template <int s> static inline ymm getwp2(const_complex_vector W, const int p)
 {
     const int sp0 = s * p;
     const int sp1 = s * (p + 1);
     return cmplx2(W[sp0], W[sp1]);
 }
 
-template <int s> static inline ymm cnj_getwp2(const complex_t* W, const int p) force_inline2;
-template <int s> static inline ymm cnj_getwp2(const complex_t* W, const int p)
+template <int s> static inline ymm cnj_getwp2(const_complex_vector W, const int p) force_inline2;
+template <int s> static inline ymm cnj_getwp2(const_complex_vector W, const int p)
 {
 #if 1
     const int sp0 = s * p;
     const int sp1 = s * (p + 1);
-    return catlohi(cnjpz(getpz(W[sp0])), cnjpz(getpz(W[sp1])));
+    return cnjpz2(cat(getpz(W[sp0]), getpz(W[sp1])));
+    //return cat(cnjpz(getpz(W[sp0])), cnjpz(getpz(W[sp1])));
 #else
     const int sp0 = s * p;
     const int sp1 = s * (p + 1);
@@ -888,14 +952,14 @@ static inline ymm cnjlohi(const ymm& a_b)
     return a_mb;
 }
 
-template <int s> static inline ymm getpz3(const complex_t* z) force_inline2;
-template <int s> static inline ymm getpz3(const complex_t* z)
+template <int s> static inline ymm getpz3(const_complex_vector z) force_inline2;
+template <int s> static inline ymm getpz3(const_complex_vector z)
 {
     return cmplx2(z[0], z[s]);
 }
 
-template <int s> static inline void setpz3(complex_t* z, const ymm& y) force_inline3;
-template <int s> static inline void setpz3(complex_t* z, const ymm& y)
+template <int s> static inline void setpz3(complex_vector z, const ymm& y) force_inline3;
+template <int s> static inline void setpz3(complex_vector z, const ymm& y)
 {
     setpz(z[0], getlo(y));
     setpz(z[s], gethi(y));

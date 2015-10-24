@@ -32,8 +32,8 @@ private:
     double* const w;
 public:
     FFT(int n) : N(n),
-        iparr(2 + int(ceil(sqrt(double(n))))),
-        weight(int(ceil(n / 2.0))),
+        iparr(2 + ceil(sqrt(n))),
+        weight(ceil(n/2.0)),
         ip(&iparr), w(&weight)
     {
         ip[0] = 0;
