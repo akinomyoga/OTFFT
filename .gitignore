@@ -7,7 +7,7 @@
 
 #
 /check/*check
+/check/fftbench[12]
 /check/*.exe
 /check/fftbench?.txt
-
-
+/check/*.o

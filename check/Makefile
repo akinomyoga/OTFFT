@@ -57,11 +57,11 @@ LDLIBS = $(OMPLIB)
 
 # Enable library: fftw3_threads
 ifeq ($(FFTW_THREADS),yes)
-  bench_LDLIBS := -lfftw3_threads
+  bench_LIBS := -lfftw3_threads
   bench_CXXFLAGS += -D USE_FFTW_THREADS
 endif
 
-bench_LDLIBS += -lfftw3 -lpthread
+bench_LIBS += -lfftw3 -lpthread
 
 #LDLIBS = -L/alt/lib -lfftw3_threads -lfftw3 -lpthread $(OMPLIB)
 #LDLIBS = -L/alt/lib -lfftw3_omp -lfftw3 -lpthread $(OMPLIB)
@@ -90,12 +90,15 @@ fftcheck.o: fftcheck.cpp simple_fft.h
 rfftcheck.o: rfftcheck.cpp simple_fft.h
 dctcheck.o: dctcheck.cpp
 bstcheck.o: bstcheck.cpp
-fftcheck.o rffhcheck.o dctcheck.o bstcheck.o:
+fftcheck.o rfftcheck.o dctcheck.o bstcheck.o:
 	$(CXX) -c $(CXXFLAGS) $<
 
-%check.exe: %check.o
-fftcheck.exe rffhcheck.exe dctcheck.exe bstcheck.exe:
-	$(CXX) $(CXXFLAGS) $^ $(LDFLAGS) $(LDLIBS) -o $@
+fftcheck.exe: fftcheck.o
+rfftcheck.exe: rfftcheck.o
+dctcheck.exe: dctcheck.o
+bstcheck.exe: bstcheck.o
+fftcheck.exe rfftcheck.exe dctcheck.exe bstcheck.exe:
+	$(CXX) $(CXXFLAGS) $< $(LDFLAGS) $(LDLIBS) -o $@
 
 %check: %check.exe
 	./$< && touch $@
@@ -110,8 +113,8 @@ fft.tgz:
 fftsg.c: fft.tgz
 	tar xOf fft.tgz fft/$@ > $@
 fftbench1.exe: fftbench1.cpp fftsg.c ../src/otfft/stopwatch.h $(HEADERS1)
-	$(CXX) $(CXXFLAGS) $(bench_CXXFLAGS) -I ext -I . $< $(LDFLAGS) $(bench_LDFLAGS) $(LDLIBS) $(bench_LDFLAGS) -o $@
+	$(CXX) $(CXXFLAGS) $(bench_CXXFLAGS) -I ext -I . $< $(LDFLAGS) $(bench_LDFLAGS) $(LDLIBS) $(bench_LIBS) -o $@
 fftbench2.exe: fftbench2.cpp fftsg.c ../src/otfft/stopwatch.h $(HEADERS2)
-	$(CXX) $(CXXFLAGS) $(bench_CXXFLAGS) -I ext -I . $< $(LDFLAGS) $(bench_LDFLAGS) $(LDLIBS) $(bench_LDFLAGS) -o $@
+	$(CXX) $(CXXFLAGS) $(bench_CXXFLAGS) -I ext -I . $< $(LDFLAGS) $(bench_LDFLAGS) $(LDLIBS) $(bench_LIBS) -o $@
 fftbench%: fftbench%.exe
 	./$< | tee $@.txt && touch $@

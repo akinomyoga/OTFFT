@@ -234,7 +234,7 @@ template <int log_N, int s> struct inv0ffts_body
     static const int N = 1 << log_N;
     static const int n = 1 << log_n;
     static const int m = n/2*(n/2+1)/2;
-    
+
     static inline void transpose_kernel(
             const int k, const int p, complex_vector x)
     {
