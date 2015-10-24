@@ -36,7 +36,7 @@
 <B> Previous:</B> <A NAME="tex2html44"
   HREF="node3.html">3 4基底の Stockham FFT</A>
 <BR>
-<IMG SRC="http://www.sannet.ne.jp/counter/c0.gif" ALT="0"><IMG SRC="http://www.sannet.ne.jp/counter/c8.gif" ALT="8"><IMG SRC="http://www.sannet.ne.jp/counter/c0.gif" ALT="0"><IMG SRC="http://www.sannet.ne.jp/counter/c1.gif" ALT="1"><IMG SRC="http://www.sannet.ne.jp/counter/c3.gif" ALT="3">
+<IMG SRC="http://www.sannet.ne.jp/counter/c0.gif" ALT="0"><IMG SRC="http://www.sannet.ne.jp/counter/c8.gif" ALT="8"><IMG SRC="http://www.sannet.ne.jp/counter/c0.gif" ALT="0"><IMG SRC="http://www.sannet.ne.jp/counter/c7.gif" ALT="7"><IMG SRC="http://www.sannet.ne.jp/counter/c2.gif" ALT="2">
 
 <H1><A NAME="SECTION00040000000000000000"></A><A NAME="otfft"></A>
 4 FFTW より速い FFT ライブラリ OTFFT
@@ -192,7 +192,8 @@ length|FFTW3[usec]|   OOURA   [usec]| SimpleFFT [usec]|   OTFFT   [usec]
 　FFT オブジェクトの初期化も計測時間に含めた場合、
 あまり小さなサイズの FFT では FFTW3 での実行時間が計測困難だったため、
 サイズ \(2^4\) から計測を開始しています。
-ご覧の様に、少なくとも \(2^{22}\) のサイズまでは OTFFT がお得になっております。
+ご覧の様に、\(2^{22}\) のサイズまでは、OTFFT が FFTW3 に、
+それなりの差をつけてお得になっております。
 </P>
 <P>
 　つまり OTFFT は、内部で FFT を使うサブルーチンを書く場合に、

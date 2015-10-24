@@ -1,4 +1,12 @@
 
+
+2015-10-24
+
+* 改めてページを確認した所、更に更新がされている様だったので再度取得を試みる。
+
+  $ mkdir html2; cd html2; wget -r http://www.moon.sannet.ne.jp/okahisa/stockham/stockham.html
+
+
 * 更新otfft-4.0 → otfft-5.3
 
   元の otfft の version が上がっている様なので更新を行う。

@@ -8,7 +8,7 @@
 PREFIX=/usr/local
 make all
 sudo make install INSDIR=$PREFIX
-g++ -I $PREFIX/include -c prog.c
+g++ -I $PREFIX/include -c prog.cpp
 g++ -o prog prog.o -L $PREFIX/lib -lotfft -Wl,-R,$PREFIX/lib
 ```
 
