@@ -1,6 +1,8 @@
 #OTFFT
 [Stockham FFT アルゴリズムの解説](http://www.moon.sannet.ne.jp/okahisa/stockham/stockham.html) で紹介されている「OTFFT(OKおじさん Template FFT ライブラリ)」を使いやすいように弄ったものです。
 
+#####★★★OKおじさん様へ: この様な場にて失礼致します。御質問させていただきたいことがあるのですが、okahisa/ サイト内に連絡先を見つけることができませんでした。もしこちらにお気付きでしたら myoga.murase at gmail.com 宛てに連絡先を教えて頂けると幸いに存じます。★★★
+
 ##使い方
 
 例:
