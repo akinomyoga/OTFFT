@@ -1,10 +1,10 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <HTML>
 <HEAD>
-<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=EUC-JP">
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=utf-8">
 <META NAME="Generator" CONTENT="jLaTeX2HTML v2008 JA patch-2.1beta1.13">
 <META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
-<META NAME="description" CONTENT="5 OTFFT �λȤ���">
+<META NAME="description" CONTENT="5 OTFFT の使い方">
 <META NAME="keywords" CONTENT="stockham">
 <META NAME="resource-type" CONTENT="document">
 <META NAME="distribution" CONTENT="global">
@@ -15,7 +15,7 @@
 <LINK REL="previous" HREF="node4.html">
 <LINK REL="up" HREF="stockham.html">
 <LINK REL="next" HREF="node6.html">
-<TITLE>5 OTFFT �λȤ���</TITLE>
+<TITLE>5 OTFFT の使い方</TITLE>
 <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
 <script type="text/javascript" src="ga.js"></script>
 </HEAD>
@@ -31,38 +31,37 @@
   HREF="node4.html">
 <IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous" SRC="prev.png"></A>   <BR>
 <B> Next:</B> <A NAME="tex2html62"
-  HREF="node6.html">���Ȥ���</A>
+  HREF="node6.html">あとがき</A>
 <B>Up:</B> <A NAME="tex2html60"
   HREF="stockham.html">stockham</A>
 <B> Previous:</B> <A NAME="tex2html54"
-  HREF="node4.html">4 FFTW3 ���®�� FFT</A>
-<IMG SRC="http://www.sannet.ne.jp/counter/c0.gif" ALT="0"><IMG SRC="http://www.sannet.ne.jp/counter/c3.gif" ALT="3"><IMG SRC="http://www.sannet.ne.jp/counter/c4.gif" ALT="4"><IMG SRC="http://www.sannet.ne.jp/counter/c9.gif" ALT="9"><IMG SRC="http://www.sannet.ne.jp/counter/c1.gif" ALT="1">
+  HREF="node4.html">4 FFTW3 より速い FFT</A>
 <!--End of Navigation Panel-->
 
 <H1><A NAME="SECTION00050000000000000000"></A><A NAME="otfft-usage"></A>
-5 OTFFT �λȤ���
+5 OTFFT の使い方
 </H1>
 <P>
-�����ơ����ä������ͤ������ȤäƤ������뤫ʬ����ޤ��󤬡���������Ƥ���
-OTFFT �λȤ����ˤĤ����������Ƥ����ޤ��礦��
+　さて、いったい何人の方が使ってくださるか分かりませんが、一応私の提案する
+OTFFT の使い方について説明しておきましょう。
 </P>
-<H3>�ڻ��Ѿ�����ա�</H3>
+<H3>【使用上の注意】</H3>
 <P>
-��GCC �� -march=native -mtune=native ���ץ�����դ��ǥ���ѥ��뤹���硢
-OTFFT �ϥ���ѥ��뤹��Ķ��˺�Ŭ������ޤ���
-�ĤޤꡢAVX ��ͭ���ʴĶ��ǥ���ѥ��뤹��С�AVX ��Ȥ��褦�ˤʤ�ޤ���
-���ΥХ��ʥ�� AVX �򥵥ݡ��Ȥ��ʤ��Ķ���ư�����С�
-�������㳰�򵯤���������ޤ������Τ��ᡢ����ѥ��뤷���Х��ʥ��
-�������̤����ۤ���褦�����ѷ��֤ˤϡ�OTFFT �ϸ����ޤ���OTFFT �ϡ�
-���ͷ׻��Υץ������򥽡������饳��ѥ��뤹��褦�����ѷ��֤����ꤷ�Ƥ��ޤ���
+　GCC で -march=native -mtune=native オプション付きでコンパイルする場合、
+OTFFT はコンパイルする環境に最適化されます。
+つまり、AVX が有効な環境でコンパイルすれば、AVX を使うようになります。
+このバイナリを AVX をサポートしない環境で動かせば、
+当然、例外を起こして落ちます。そのため、コンパイルしたバイナリを、
+広く一般に配布するような利用形態には、OTFFT は向きません。OTFFT は、
+数値計算のプログラムをソースからコンパイルするような利用形態を想定しています。
 </P>
-<H3>��ɬ�פʥե������</H3>
+<H3>【必要なファイル】</H3>
 <P>
-��<A HREF="node7.html#download">����������ɤΥڡ���A</A>
-���� otfft-5.3.tar.gz(�⤷���� otfft-5.2.zip)
-�����������ɤ�Ÿ������ȡ������Ĥ��Υե����뤬�Ǥ��ޤ�����
-OTFFT ��Ȥ��Τ�ɬ�פʥե�����Ϥ������ otfft �ե�����Ȥ�����ȤǤ���
-���Τ�����
+　<A HREF="node7.html#download">ダウンロードのページA</A>
+から otfft-5.4.tar.gz(もしくは otfft-5.4.zip)
+をダウンロードし展開すると、いくつかのファイルができますが、
+OTFFT を使うのに必要なファイルはその中の otfft フォルダとその中身です。
+このうち、
 </P>
 <PRE>
     otfft_setup.h
@@ -72,109 +71,104 @@ OTFFT ��Ȥ��Τ�ɬ�פʥե�����Ϥ������ otfft �ե�����Ȥ�����ȤǤ���
     otfft_invn.h
 </PRE>
 <P>
-�ϼ�ư���������ե�����ǡ���ʬ�δĶ��Ǻ���θ��̤�ȯ�����������
-ffttune ��Ȥä�������ľ���Ƥ��ɬ�פ�����ޤ���
-GCC �ξ�硢otfft �ե�����ǰʲ��Τ褦�˼¹Ԥ���
-ffttune ���ޥ�ɤ���ޤ���
-Makefile �ϼ�ʬ�δĶ��˹�碌�Ƥ����äƤ���������
+は自動生成されるファイルで、自分の環境で最大の効果を発揮したければ
+ffttune を使って生成し直してやる必要があります。
+GCC の場合、otfft フォルダで以下のように実行し、
+ffttune コマンドを作ります。
+Makefile は自分の環境に合わせていじってください。
 </P>
 <PRE>
     make ffttune
 </PRE>
 <P>
-Visual Studio �ξ�硢otfft �ե�����ǰʲ��Τ褦�˼¹Ԥ��ޤ���
+Visual Studio の場合、otfft フォルダで以下のように実行します。
 </P>
 <PRE>
     nmake ffttune
 </PRE>
 <P>
-C++ �� template �ˤ��᥿�ץ�����ߥ󥰵�ˡ���Ѥ��Ƥ���Τǡ�
-����ѥ���ˤϤ��ʤ�λ��֤�������ޤ�������
+C++ の template によるメタプログラミング技法を用いているので、
+コンパイルにはかなりの時間がかかります。次に
 </P>
 <PRE>
     ./ffttune
 </PRE>
 <P>
-���뤤�� Windows �ξ�硢
+あるいは Windows の場合、
 </P>
 <PRE>
     ffttune
 </PRE>
 <P>
-�� ffttune ���ޥ�ɤ�¹Ԥ��ޤ���
-�������˼������ե�����μ�ư�������Ϥޤ�ޤ���
-���Ф餯���֤�������ΤǤ��Ԥ�����������
-���ΤȤ���Core i7(4 ���� 8 ����å�)
-�δĶ��ξ�硢�Ķ��ѿ� OMP_NUM_THREADS �� 7 �����ꤹ��ɬ�פ����뤫�⤷��ޤ���
-������ Linux �Ǥϡ�8 ����åɤ�ư���������®���㲼�򵯤����ޤ���
+と ffttune コマンドを実行します。
+すると先に示したファイルの自動生成が始まります。
+しばらく時間がかかるのでお待ちください。
+このとき、Core i7(4 コア 8 スレッド)
+の環境の場合、環境変数 OMP_NUM_THREADS を 7 に設定する必要があるかもしれません。
+一部の Linux では、8 スレッドで動かすと謎の速度低下を起こします。
 </P>
 <P>
-��OTFFT �������Ǵ��Ĥ��Υ��르�ꥺ���Ȥ�ʬ���Ƥ��ޤ�����
-�ɤΥ��르�ꥺ�ब�ɤΥ������ǰ���®�������ºݤ˷�¬���Ʒ��ꤷ�ޤ���
-���������ѥ������ FFT �������ۡ��ȼ¹Ԥ��Ƥ���櫓�ǤϤʤ���
-΢�ǿ����ʥץ�������ư���Ƥ��ޤ�����¬�ˤϾ����ȯŪ�ʤ�줬�������ޤ���
-���Τ��ᡢ����η�¬�Ǻ�Ŭ���Ȥ߹�碌����ޤ�Ȥϸ¤�ޤ���
-Ǽ�������ʤ����ϲ��٤� ffttune ��¹Ԥ�ľ���Ƥ���������
+　OTFFT は内部で幾つかのアルゴリズムを使い分けていますが、
+どのアルゴリズムがどのサイズで一番速いか、実際に計測して決定します。
+しかし、パソコンは FFT だけを黙々と実行しているわけではなく、
+裏で色々なプロセスが動いています。計測には常に突発的なゆれが混入します。
+そのため、１回の計測で最適な組み合わせが求まるとは限りません。
+納得いかない場合は何度か ffttune を実行し直してください。
 </P>
 <P>
-����ư����������ä��顢���� otfft.o ���뤤�� otfft.obj �ե�������������ޤ���
-GCC �ξ��ϡ�otfft �ե�����Ǽ��Υ��ޥ�ɤ�¹Ԥ��ޤ���
+　自動生成が終わったら、次は otfft.o あるいは otfft.obj ファイルを生成します。
+GCC の場合は、otfft フォルダで次のコマンドを実行します。
 </P>
 <PRE>
     make otfft.o
 </PRE>
 <P>
-Visual Studio �ξ��ϡ�otfft �ե�����Ǽ��Υ��ޥ�ɤ�¹Ԥ��ޤ���
+Visual Studio の場合は、otfft フォルダで次のコマンドを実行します。
 </P>
 <PRE>
     nmake otfft.obj
 </PRE>
 <P>
-��C++ �� template �ˤ��᥿�ץ�����ߥ󥰵�ˡ���Ѥ��Ƥ���Τǡ�
-����ѥ���ˤ�����Ĺ�����֤�������ޤ��������������Ԥ�����������
+　C++ の template によるメタプログラミング技法を用いているので、
+コンパイルには非常に長い時間がかかります。辛抱強くお待ちください。
 </P>
 <P>
-������ǽ����Ͻ����Ǥ���
-�С������ 3.2 �ޤǤ� OTFFT �����ƥإå��ե�����Ǽ�������Ƥ������ᡢ
-����ʬ�ΥХ��ʥ�����Ѥ�����Ǥ⡢������������ѥ��뤷ľ����Ƥ��ޤ�����
-���Τ��ᡢ�嵭�Τ褦������Ĺ������ѥ�����֤�ɬ�פǤ�����
-�С������ 4.0 ���� OTFFT ���ȤΥ���ѥ���ϻ����˺Ѥޤ��Ƥ����褦�ˤ��ޤ�����
-�Ǥ����顢����ʬ�ΥХ��ʥ�����Ѥ�����ϥ�󥯤�������Ǥ���
-</P>
-
-<H3>�ڤ���ʬ�ΥХ��ʥ�Υ���ѥ�����ˡ��</H3>
-<P>
-��otfft.o ���뤤�� otfft.obj �������������С�
-���Ȥ� otfft/otfft.h �򥤥󥯥롼�ɤ���
-����ѥ���Υ��󥯥롼�ɥѥ��� otfft �ե�����Τ���ե������ä��ơ�
-otfft.o ���뤤�� otfft.obj �ե��������Ū�ΥХ��ʥ�˥�󥯤��Ƥ���
-OTFFT �ϻȤ��ޤ���
-</P>
-<P>
-��g++ �ǥ���ѥ��뤹��ˤ� -march=native -mtune=native -fopenmp
-���ץ������դ��Ƥ�������������ˡ�-lgomp �� -liomp5 �ʤ�
-OpenMP �Υ�󥿥�����󥯤���ɬ�פ�����ޤ���
-</P>
-<P>
-��Cilk Plus �Ǥξ��ϡ�
--march=native -mtune=native -fcilkplus -lcilkrts
-���ץ������դ��Ƥ���������
-</P>
-<P>
-��Visual C++ �ξ�硢
-AVX ��Ȥ��ˤϡ�/arch:AVX /DUSE_AVX ����ꤷ�Ƥ���������
-AVX2 ��Ȥ����� /arch:AVX2 /DUSE_AVX2 ����ꤷ�Ƥ���������
-OpenMP ��Ȥ��ˤ� /openmp ����ꤷ�Ƥ���������
-��ʬ����Ȥϻפ��ޤ�����otfft.o ���뤤�� otfft.obj �Υ���ѥ�������ǡ�
-�����Υ��ץ������դ��Ƥ����ʤ���ͭ���ˤϤʤ�ޤ���
-ɬ�פʤ� OTFFT �� Makefile �˵��ܤ��Ƥ���������
-Visual Studio �ѤΥǥե���Ȥ� Makefile �ϡ�
-AVX �� OpenMP ��Ȥ��褦���ꤵ��Ƥ��ޤ���
+　これで準備は終わりです。
+バージョン 3.2 までは OTFFT は全てヘッダファイルで実装されていたため、
+ご自分のバイナリで利用する場合でも、いちいちコンパイルし直されていました。
+そのため、上記のように非常に長いコンパイル時間が必要でした。
+バージョン 4.0 から OTFFT 自身のコンパイルは事前に済ませておくようにしました。
+ですから、ご自分のバイナリで利用する場合はリンクするだけです。
 </P>
 
-<H3>��ʣ��Υ���ա��ꥨ�Ѵ���</H3>
+<H3>【ご自分のバイナリのコンパイル方法】</H3>
 <P>
-�������� <code>N</code> ��ʣ��Υ���ա��ꥨ�Ѵ���¹Ԥ���ˤϡ�
+　otfft.o あるいは otfft.obj の生成が終われば、
+あとは otfft/otfft.h をインクルードし、
+コンパイラのインクルードパスに otfft フォルダのあるフォルダを加えて、
+otfft.o あるいは otfft.obj ファイルを目的のバイナリにリンクしてやれば
+OTFFT は使えます。
+</P>
+<P>
+　g++ でコンパイルするには -march=native -mtune=native -fopenmp
+オプションを付けてください。さらに、-lgomp や -liomp5 など
+OpenMP のランタイムをリンクする必要があります。
+</P>
+<P>
+　Visual C++ の場合、
+AVX を使うには、/arch:AVX /DUSE_AVX を指定してください。
+AVX2 も使う場合は /arch:AVX2 /DUSE_AVX2 も指定してください。
+OpenMP も使うには /openmp を指定してください。
+お分かりとは思いますが、otfft.o あるいは otfft.obj のコンパイル時点で、
+これらのオプションを付けておかないと有効にはなりません。
+必要なら OTFFT の Makefile に記載してください。
+Visual Studio 用のデフォルトの Makefile は、
+AVX と OpenMP を使うよう指定されています。
+</P>
+
+<H3>【複素離散フーリエ変換】</H3>
+<P>
+　サイズ <code>N</code> の複素離散フーリエ変換を実行するには、
 </P>
 <PRE>
     #include "otfft/otfft.h"
@@ -185,19 +179,19 @@ AVX �� OpenMP ��Ȥ��褦���ꤵ��Ƥ��ޤ���
     void f(int N)
     {
         complex_t* x = (complex_t*) simd_malloc(N*sizeof(complex_t));
-        // ��������...
-        OTFFT::FFT fft(N); // FFT ���֥������Ȥκ���
-        fft.fwd(x);        // ʣ��Υ���ա��ꥨ�Ѵ���¹ԡ�x �����Ϥ��Ľ���
-        // ��������...
+        // 何かする...
+        OTFFT::FFT fft(N); // FFT オブジェクトの作成
+        fft.fwd(x);        // 複素離散フーリエ変換を実行。x が入力かつ出力
+        // 何かする...
         simd_free(x);
     }
 </PRE>
 <P>
-�Τ褦�ˤ��ޤ���<code>N</code> �Ϻ��� \(2^{24}\) �ޤǤǡ�
-2�Τ٤���Ǥ���ɬ�פ�����ޤ���
+のようにします。<code>N</code> は最大 \(2^{24}\) までで、
+2のべき乗である必要があります。
 </P>
 <P>
-<code>complex_t</code> ��
+<code>complex_t</code> は
 </P>
 <PRE>
     struct complex_t
@@ -210,41 +204,41 @@ AVX �� OpenMP ��Ȥ��褦���ꤵ��Ƥ��ޤ���
         complex_t(const std::complex&lt;double&gt;&amp; z) : Re(z.real()), Im(z.imag()) {}
         operator std::complex&lt;double&gt;() { return std::complex&lt;double&gt;(Re, Im); }
 
-        // ����¾�Υ��дؿ�...
+        // その他のメンバ関数...
     };
 </PRE>
 <P>
-�Τ褦���������Ƥ��ޤ���
+のように定義されています。
 </P>
 <P>
-���ա��ꥨ�Ѵ�(<code>fwd</code>)�ˤϷ��� <code>1/N</code> ���ݤ��äƤ��ޤ���
-�⤷���줬���Թ�ʤ鷸���γݤ��äƤ��ʤ�(<code>fwd0</code>)�⤢��ޤ���
-�ʲ��Τ褦�ʥ��дؿ����Ѱդ���Ƥ��ޤ���
+　フーリエ変換(<code>fwd</code>)には係数 <code>1/N</code> が掛かっています。
+もしそれが不都合なら係数の掛かっていない(<code>fwd0</code>)もあります。
+以下のようなメンバ関数が用意されています。
 </P>
 <PRE>
-    fwd0(x) Υ���ա��ꥨ�Ѵ�(������̵��)
-    fwd(x)  Υ���ա��ꥨ�Ѵ�(1/N �ˤ���������դ�)
-    fwdn(x) Υ���ա��ꥨ�Ѵ�(1/N �ˤ���������դ�)
+    fwd0(x) 離散フーリエ変換(正規化無し)
+    fwd(x)  離散フーリエ変換(1/N による正規化付き)
+    fwdn(x) 離散フーリエ変換(1/N による正規化付き)
 
-    inv0(x) ��Υ���ա��ꥨ�Ѵ�(������̵��)
-    inv(x)  ��Υ���ա��ꥨ�Ѵ�(������̵��)
-    invn(x) ��Υ���ա��ꥨ�Ѵ�(1/N �ˤ���������դ�)
+    inv0(x) 逆離散フーリエ変換(正規化無し)
+    inv(x)  逆離散フーリエ変換(正規化無し)
+    invn(x) 逆離散フーリエ変換(1/N による正規化付き)
 </PRE>
 <P>
-FFT �Υ��������ѹ����������ϡ�
+FFT のサイズを変更したい場合は、
 </P>
 <PRE>
     fft.setup(2 * N);
 </PRE>
 <P>
-�Τ褦�ˤ��ޤ���
+のようにします。
 </P>
 <P>
-��OTFFT �� Stockham �Υ��르�ꥺ���ȤäƤ��ޤ��Τǡ�
-�¹Ԥˤ����Ϸ����Ʊ���������κ���ΰ褬ɬ�פǤ���
-���̤������Ǥ����ΰ����ݤ��ޤ�����
-�ޥ������åɤΥץ��������Ȥ���ʤɡ���������Թ礬������礬����ޤ���
-����ʻ��ϳ����������ΰ���Ϥ��С������⤢��ޤ������Τ褦�˻Ȥ��ޤ���
+　OTFFT は Stockham のアルゴリズムを使っていますので、
+実行には入力系列と同じサイズの作業領域が必要です。
+普通は内部でその領域を確保しますが、
+マルチスレッドのプログラムを組む場合など、それだと都合が悪い場合があります。
+そんな時は外部から作業領域を渡すバージョンもあります。次のように使います。
 </P>
 <PRE>
     #include "otfft/otfft.h"
@@ -256,26 +250,26 @@ FFT �Υ��������ѹ����������ϡ�
     {
         complex_t* x = (complex_t*) simd_malloc(N*sizeof(complex_t));
         complex_t* y = (complex_t*) simd_malloc(N*sizeof(complex_t));
-        // ��������...
+        // 何かする...
         OTFFT::FFT0 fft(N);
-        fft.fwd(x, y); // x �����Ϥ��Ľ��ϡ�y ������ΰ�
-        // ��������...
-        fft.inv(x, y); // x �����Ϥ��Ľ��ϡ�y ������ΰ�
-        // ��������...
+        fft.fwd(x, y); // x が入力かつ出力、y が作業領域
+        // 何かする...
+        fft.inv(x, y); // x が入力かつ出力、y が作業領域
+        // 何かする...
         simd_free(y);
         simd_free(x);
     }
 </PRE>
 <P>
-��<code>OTFFT::FFT</code> ���ä��Ȥ����� <code>OTFFT::FFT0</code>
-�ˤʤäƤ��뤳�Ȥ����դ��Ƥ���������
+　<code>OTFFT::FFT</code> だったところが <code>OTFFT::FFT0</code>
+になっていることに注意してください。
 </P>
 
-<H3>�ڼ�Υ���ա��ꥨ�Ѵ���</H3>
+<H3>【実離散フーリエ変換】</H3>
 <P>
-���С������ 3.0 �����Υ���ա��ꥨ�Ѵ���Υ�����������Ѵ�(DCT-II)��
-Bluestein's FFT(Ǥ�ե������� FFT) �⥵�ݡ��Ȥ���褦�ˤʤ�ޤ�����
-������ <code>N</code> �μ�Υ���ա��ꥨ�Ѵ���¹Ԥ���ˤϰʲ��Τ褦�ˤ��ޤ���
+　バージョン 3.0 から実離散フーリエ変換、離散コサイン変換(DCT-II)、
+Bluestein's FFT(任意サイズの FFT) もサポートするようになりました。
+サイズ <code>N</code> の実離散フーリエ変換を実行するには以下のようにします。
 </P>
 <PRE>
     #include "otfft/otfft.h"
@@ -287,46 +281,46 @@ Bluestein's FFT(Ǥ�ե������� FFT) �⥵�ݡ��Ȥ���褦�ˤʤ�ޤ�����
     {
         double*    x = (double*)    simd_malloc(N*sizeof(double));
         complex_t* y = (complex_t*) simd_malloc(N*sizeof(complex_t));
-        // ��������...
+        // 何かする...
         OTFFT::RFFT rfft(N);
-        rfft.fwd(x, y); // ��Υ���ա��ꥨ�Ѵ���¹ԡ�x �����ϡ�y ������
-        // ��������...
+        rfft.fwd(x, y); // 実離散フーリエ変換を実行。x が入力、y が出力
+        // 何かする...
         simd_free(y);
         simd_free(x);
     }
 </PRE>
 <P>
-����Υ���ա��ꥨ�Ѵ��ˤϰʲ��Τ褦�ʥ��дؿ����Ѱդ���Ƥ��ޤ���
+　実離散フーリエ変換には以下のようなメンバ関数が用意されています。
 </P>
 <PRE>
-    fwd0(x, y) ��Υ���ա��ꥨ�Ѵ�(������̵��)           x:���ϡ�y:����
-    fwd(x, y)  ��Υ���ա��ꥨ�Ѵ�(1/N �ˤ���������դ�) x:���ϡ�y:����
-    fwdn(x, y) ��Υ���ա��ꥨ�Ѵ�(1/N �ˤ���������դ�) x:���ϡ�y:����
+    fwd0(x, y) 実離散フーリエ変換(正規化無し)           x:入力、y:出力
+    fwd(x, y)  実離散フーリエ変換(1/N による正規化付き) x:入力、y:出力
+    fwdn(x, y) 実離散フーリエ変換(1/N による正規化付き) x:入力、y:出力
 
-    inv0(y, x) �ռ�Υ���ա��ꥨ�Ѵ�(������̵��)           y:���ϡ�x:����
-    inv(y, x)  �ռ�Υ���ա��ꥨ�Ѵ�(������̵��)           y:���ϡ�x:����
-    invn(y, x) �ռ�Υ���ա��ꥨ�Ѵ�(1/N �ˤ���������դ�) y:���ϡ�x:����
+    inv0(y, x) 逆実離散フーリエ変換(正規化無し)           y:入力、x:出力
+    inv(y, x)  逆実離散フーリエ変換(正規化無し)           y:入力、x:出力
+    invn(y, x) 逆実離散フーリエ変換(1/N による正規化付き) y:入力、x:出力
 </PRE>
 <P>
-���ռ�Υ���ա��ꥨ�Ѵ���ʣ�Ƿ��� <code>y</code> �������äơ�
-�·��� <code>x</code> ���֤��ޤ���<code>y</code> �����оΡ�
-���ʤ�� <code>y[N-k] == conj(y[k])</code> �Ǥʤ�����������̤��֤��ޤ���
-�ޤ����ռ�Υ���ա��ꥨ�Ѵ������� <code>y</code> ���˲����ޤ���
-��¸���Ƥ����������ϡ����ԡ����äƤ���ɬ�פ�����ޤ���
-����Ǥ��륵�����ϣ��Τ٤���� \(2^{25}\) �ʲ��Ǥ���
-����Ū�ˤ� <code>N/2</code> �Υ�������ʣ�� FFT �Ǽ�������Ƥ��ޤ���
+　逆実離散フーリエ変換は複素系列 <code>y</code> を受け取って、
+実系列 <code>x</code> を返します。<code>y</code> が斜対称、
+すなわち <code>y[N-k] == conj(y[k])</code> でないと正しい結果を返しません。
+また、逆実離散フーリエ変換は入力 <code>y</code> を破壊します。
+保存しておきたい場合は、コピーを取っておく必要があります。
+指定できるサイズは２のべき乗で \(2^{25}\) 以下です。
+内部的には <code>N/2</code> のサイズの複素 FFT で実装されています。
 </P>
 <P>
-����Υ���ա��ꥨ�Ѵ��ϡ�����ΰ�Ȥ��ƽ��Ϸ����Ȥ��ޤ���
-�����Ƶռ�Υ���ա��ꥨ�Ѵ��ϡ�����ΰ�Ȥ������Ϸ����Ȥ��ޤ���
-�ޥ������åɤǥץ�����ह����⡢
-���줾��Υ���å����Ѥ����ϤȽ��Ϥ�Ϳ���Ƥ��� OK �Ǥ���
+　実離散フーリエ変換は、作業領域として出力系列を使います。
+そして逆実離散フーリエ変換は、作業領域として入力系列を使います。
+マルチスレッドでプログラムする場合も、
+それぞれのスレッド専用の入力と出力を与えてやれば OK です。
 </P>
 
-<H3>��Υ�����������Ѵ�(DCT-II)��</H3>
+<H3>【離散コサイン変換(DCT-II)】</H3>
 <P>
-�������� <code>N</code>
-��Υ�����������Ѵ�(DCT-II)��¹Ԥ���ˤϰʲ��Τ褦�ˤ��ޤ���
+　サイズ <code>N</code>
+の離散コサイン変換(DCT-II)を実行するには以下のようにします。
 </P>
 <PRE>
     #include "otfft/otfft.h"
@@ -337,31 +331,31 @@ Bluestein's FFT(Ǥ�ե������� FFT) �⥵�ݡ��Ȥ���褦�ˤʤ�ޤ�����
     void f(int N)
     {
         double* x = (double*) simd_malloc(N*sizeof(double));
-        // ��������...
+        // 何かする...
         OTFFT::DCT dct(N);
-        dct.fwd(x); // DCT-II ��¹Ԥ��롣x �����Ϥ��Ľ���
-        // ��������...
+        dct.fwd(x); // DCT-II を実行する。x が入力かつ出力
+        // 何かする...
         simd_free(x);
     }
 </PRE>
 <P>
-��Υ�����������Ѵ��ˤϰʲ��Τ褦�ʥ��дؿ����Ѱդ���Ƥ��ޤ���
+　離散コサイン変換には以下のようなメンバ関数が用意されています。
 </P>
 <PRE>
-    fwd0(x) Υ�����������Ѵ�(������̵��)
-    fwd(x)  Υ�����������Ѵ�(1/N �ˤ���������դ�)
-    fwdn(x) Υ�����������Ѵ�(1/N �ˤ���������դ�)
+    fwd0(x) 離散コサイン変換(正規化無し)
+    fwd(x)  離散コサイン変換(1/N による正規化付き)
+    fwdn(x) 離散コサイン変換(1/N による正規化付き)
 
-    inv0(x) ��Υ�����������Ѵ�(������̵��)
-    inv(x)  ��Υ�����������Ѵ�(������̵��)
-    invn(x) ��Υ�����������Ѵ�(1/N �ˤ���������դ�)
+    inv0(x) 逆離散コサイン変換(正規化無し)
+    inv(x)  逆離散コサイン変換(正規化無し)
+    invn(x) 逆離散コサイン変換(1/N による正規化付き)
 </PRE>
 <P>
-��Υ�����������Ѵ��� DCT-II ����Ѥ��Ƥ��ޤ�����������ľ�򲽤Ϥ��Ƥ��ޤ���
-����Ǥ��륵�����ϣ��Τ٤���� \(2^{25}\) �ʲ��Ǥ���
-����Ū�ˤ� <code>N/2</code> �Υ�������ʣ�� FFT �Ǽ�������Ƥ��ޤ���
-�ޥ������åɤǻȤ����κ���ΰ��������Ϳ����С������⤢��ޤ���
-�ʲ��Τ褦�˻Ȥ��ޤ���
+　離散コサイン変換は DCT-II を採用しています。ただし、直交化はしていません。
+指定できるサイズは２のべき乗で \(2^{25}\) 以下です。
+内部的には <code>N/2</code> のサイズの複素 FFT で実装されています。
+マルチスレッドで使う場合の作業領域を外部から与えるバージョンもあります。
+以下のように使います。
 </P>
 <PRE>
     #include "otfft/otfft.h"
@@ -374,24 +368,24 @@ Bluestein's FFT(Ǥ�ե������� FFT) �⥵�ݡ��Ȥ���褦�ˤʤ�ޤ�����
         double*    x = (double*)    simd_malloc(N*sizeof(double));
         double*    y = (double*)    simd_malloc(N*sizeof(double));
         complex_t* z = (complex_t*) simd_malloc(N*sizeof(complex_t));
-        // ��������...
+        // 何かする...
         OTFFT::DCT0 dct(N);
-        dct.fwd(x, y, z); // DCT-II ��¹Ԥ��롣x �����Ϥ��Ľ��ϡ�y,z ������ΰ�
-        // ��������...
+        dct.fwd(x, y, z); // DCT-II を実行する。x が入力かつ出力、y,z が作業領域
+        // 何かする...
         simd_free(z);
         simd_free(y);
         simd_free(x);
     }
 </PRE>
 <P>
-��<code>OTFFT::DCT</code> ���ä��Ȥ����� <code>OTFFT::DCT0</code>
-�ˤʤäƤ��뤳�Ȥ����դ��Ƥ���������
+　<code>OTFFT::DCT</code> だったところが <code>OTFFT::DCT0</code>
+になっていることに注意してください。
 </P>
 
-<H3>��Bluestein's FFT��</H3>
+<H3>【Bluestein's FFT】</H3>
 <P>
-��Bluestein's FFT(Ǥ�ե����� <code>N</code> �� FFT)
-��¹Ԥ���ˤϰʲ��Τ褦�ˤ��ޤ���
+　Bluestein's FFT(任意サイズ <code>N</code> の FFT)
+を実行するには以下のようにします。
 </P>
 <PRE>
     #include "otfft/otfft.h"
@@ -402,76 +396,76 @@ Bluestein's FFT(Ǥ�ե������� FFT) �⥵�ݡ��Ȥ���褦�ˤʤ�ޤ�����
     void f(int N)
     {
         complex_t* x = (complex_t*) simd_malloc(N*sizeof(complex_t));
-        // ��������...
-        OTFFT::Bluestein bst(N); // N ��Ǥ�դμ���������������2^23 ��꾮������
-        bst.fwd(x); // Bluestein's FFT ��¹Ԥ��롣x �����Ϥ��Ľ���
-        // ��������...
+        // 何かする...
+        OTFFT::Bluestein bst(N); // N は任意の自然数。ただし、2^23 より小さい。
+        bst.fwd(x); // Bluestein's FFT を実行する。x が入力かつ出力
+        // 何かする...
         simd_free(x);
     }
 </PRE>
 <P>
-��Bluestein's FFT �Ǥϡ�
-Υ���ա��ꥨ�Ѵ��Υ������򣲤Τ٤���˸¤�ɬ�פϤ���ޤ���
-�㤨���礭���ǿ��Υ������Ǥ�׻��̤� \(O(N\log N)\) �ˤʤ�ޤ���
-�������륵�����ξ�¤� \(2^{23}\) �Ǥ�����������
-�ޥ������å��ѤΥ��дؿ����Ѱդ���Ƥ��ޤ���
-�ɤ����Ƥ�ޥ������åɤǻȤ��������ϡ�
-ư���ǧ�Ϥ��Ƥ��ޤ��󤬡�����åɤο����� Bluestein ���֥������Ȥ���������
-�ƥ���åɤǤ�����Ȥ�ʬ���������פȻפ��ޤ���������
-����򥴡����㥹�˻ȤäƤ��ޤ��ޤ���
+　Bluestein's FFT では、
+離散フーリエ変換のサイズを２のべき乗に限る必要はありません。
+例えば大きな素数のサイズでも計算量は \(O(N\log N)\) になります。
+指定出来るサイズの上限は \(2^{23}\) です。だたし、
+マルチスレッド用のメンバ関数は用意されていません。
+どうしてもマルチスレッドで使いたい場合は、
+動作確認はしていませんが、スレッドの数だけ Bluestein オブジェクトを生成し、
+各スレッドでそれらを使い分ければ大丈夫と思います。当然、
+メモリをゴージャスに使ってしまいます。
 </P>
 <P>
-��Bluestein's FFT �ˤϰʲ��Τ褦�ʥ��дؿ����Ѱդ���Ƥ��ޤ���
+　Bluestein's FFT には以下のようなメンバ関数が用意されています。
 </P>
 <PRE>
-    fwd0(x) Υ���ա��ꥨ�Ѵ�(������̵��)
-    fwd(x)  Υ���ա��ꥨ�Ѵ�(1/N �ˤ���������դ�)
-    fwdn(x) Υ���ա��ꥨ�Ѵ�(1/N �ˤ���������դ�)
+    fwd0(x) 離散フーリエ変換(正規化無し)
+    fwd(x)  離散フーリエ変換(1/N による正規化付き)
+    fwdn(x) 離散フーリエ変換(1/N による正規化付き)
 
-    inv0(x) ��Υ���ա��ꥨ�Ѵ�(������̵��)
-    inv(x)  ��Υ���ա��ꥨ�Ѵ�(������̵��)
-    invn(x) ��Υ���ա��ꥨ�Ѵ�(1/N �ˤ���������դ�)
+    inv0(x) 逆離散フーリエ変換(正規化無し)
+    inv(x)  逆離散フーリエ変換(正規化無し)
+    invn(x) 逆離散フーリエ変換(1/N による正規化付き)
 </PRE>
 
-<H3>�ڥ٥���ޡ�����</H3>
+<H3>【ベンチマーク】</H3>
 <P>
-���Ǹ�ˡ�OTFFT �ˤϥ٥���ޡ����ץ�����ब��°���Ƥ��ޤ�����������
-���Υ٥���ޡ����ˤ� FFTW3 ���籺����Υץ��������Ѥ��Ƥ��뤿�ᡢ
-ñ�ȤǤ�ư��ޤ��󡣤ޤ��� FFTW3 �򥤥󥹥ȡ��뤷��
+　最後に、OTFFT にはベンチマークプログラムが付属しています。しかし、
+このベンチマークには FFTW3 と大浦さんのプログラムを用いているため、
+単独では動作しません。まずは FFTW3 をインストールし、
 <A HREF="http://www.kurims.kyoto-u.ac.jp/~ooura/fft-j.html">
-�籺����Υڡ���
+大浦さんのページ
 </A>
-�����籺����� FFT �饤�֥������������ɤ��Ƥ���������
-�����Ƥ������ fftsg.c �Ȥ����ե������
-fftbench1.cpp ��Ʊ���ե����������Ƥ���������
-���ξ�ǰʲ��Τ褦�� fftbench1 ���ޥ�ɤ� fftbench2 ���ޥ�ɤ� make ���ޤ���
+から大浦さんの FFT ライブラリをダウンロードしてください。
+そしてその中の fftsg.c というファイルを
+fftbench1.cpp と同じフォルダに入れてください。
+その上で以下のように fftbench1 コマンドと fftbench2 コマンドを make します。
 </P>
 <PRE>
     make fftbench1 fftbench2
 </PRE>
 <P>
-Visual Studio �ξ�� nmake ���ޤ���
+Visual Studio の場合 nmake します。
 </P>
 <PRE>
     nmake fftbench1 fftbench2
 </PRE>
 <P>
-fftbench1 ����¬���֤� FFT ���֥������Ȥν������ޤޤʤ��٥���ޡ�����
-fftbench2 ���������ޤ�٥���ޡ����Ǥ����ʲ��Τ褦�˼¹Ԥ��Ƥ���������
+fftbench1 が計測時間に FFT オブジェクトの初期化を含まないベンチマーク、
+fftbench2 が初期化を含むベンチマークです。以下のように実行してください。
 </P>
 <PRE>
     ./fftbench1
     ./fftbench2
 </PRE>
 <P>
-���뤤�� Windows �ξ�硢
+あるいは Windows の場合、
 </P>
 <PRE>
     fftbench1
     fftbench2
 </PRE>
 <P>
-�Ȥ��ޤ���
+とします。
 </P>
 <HR>
 <A NAME="tex2html61"
@@ -484,11 +478,11 @@ fftbench2 ���������ޤ�٥���ޡ����Ǥ����ʲ��Τ褦�˼¹Ԥ��Ƥ���������
   HREF="node4.html">
 <IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous" SRC="prev.png"></A>   <BR>
 <B> Next:</B> <A NAME="tex2html62"
-  HREF="node6.html">���Ȥ���</A>
+  HREF="node6.html">あとがき</A>
 <B>Up:</B> <A NAME="tex2html60"
   HREF="stockham.html">stockham</A>
 <B> Previous:</B> <A NAME="tex2html54"
-  HREF="node4.html">4 FFTW3 ���®�� FFT</A>
+  HREF="node4.html">4 FFTW3 より速い FFT</A>
 <!--End of Navigation Panel-->
 </BODY>
 </HTML>

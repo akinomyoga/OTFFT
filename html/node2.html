@@ -2,9 +2,9 @@
 <HTML>
 <HEAD>
 
-<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=EUC-JP">
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=utf-8">
 <META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
-<META NAME="description" CONTENT="�Ƶ��Ǥ� Stockham FFT ��롼�פǽ񤭴�����">
+<META NAME="description" CONTENT="再帰版の Stockham FFT をループで書き換える">
 <META NAME="keywords" CONTENT="Stockham FFT,FFT,C++">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -14,7 +14,7 @@
 <LINK REL="up" HREF="stockham.html">
 <LINK REL="next" HREF="node3.html">
 
-<TITLE>2 Stockham �Υ��르�ꥺ��δ���</TITLE>
+<TITLE>2 Stockham のアルゴリズムの完成</TITLE>
 
 <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
 <script type="text/javascript" src="ga.js"></script>
@@ -31,70 +31,69 @@
   HREF="node1.html">
 <IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous" SRC="prev.png"></A>   <BR>
 <B> Next:</B> <A NAME="tex2html32"
-  HREF="node3.html">3 4����� Stockham FFT</A>
+  HREF="node3.html">3 4基底の Stockham FFT</A>
 <B>Up:</B> <A NAME="tex2html30"
   HREF="stockham.html">stockham</A>
 <B> Previous:</B> <A NAME="tex2html24"
-  HREF="node1.html">1 Stockham FFT ����</A>
-<IMG SRC="http://www.sannet.ne.jp/counter/c0.gif" ALT="0"><IMG SRC="http://www.sannet.ne.jp/counter/c2.gif" ALT="2"><IMG SRC="http://www.sannet.ne.jp/counter/c1.gif" ALT="1"><IMG SRC="http://www.sannet.ne.jp/counter/c2.gif" ALT="2"><IMG SRC="http://www.sannet.ne.jp/counter/c1.gif" ALT="1">
+  HREF="node1.html">1 Stockham FFT 入門</A>
 
 <H1><A NAME="SECTION00020000000000000000"></A><A NAME="stockham-speedup"></A>
-2 Stockham �Υ��르�ꥺ��δ���
+2 Stockham のアルゴリズムの完成
 </H1>
 <P>
-�����ϡ�<A HREF="node1.html#stockham-intro">���������1</A>�Ǥ�
-Cooley-Tukey �Υ��르�ꥺ�फ��ñ����ѷ��� Stockham
-�Υ��르�ꥺ���Ƴ���ޤ����������������κƵ��ǤΥ��르�ꥺ���®��Ū��
-Cooley-Tukey ��ͭ�������Ϥʤ������ΤޤޤǤ��Ѥ�����ͤϤ���ޤ���
-�����Ǥ��ξϤǤϤ���ʤ�񤭴�����Ԥä��̾�ι�®�� Stockham
-�Υ��르�ꥺ���Ƴ���ޤ��礦��
+　前章、<A HREF="node1.html#stockham-intro">セクション1</A>では
+Cooley-Tukey のアルゴリズムから単純な変形で Stockham
+のアルゴリズムを導きました。しかし、この再帰版のアルゴリズムは速度的に
+Cooley-Tukey に有利な点はなく、そのままでは用いる価値はありません。
+そこでこの章ではさらなる書き換えを行って通常の高速な Stockham
+のアルゴリズムを導きましょう。
 </P>
 <P>
-���ؿ����ץ�����ߥ󥰸���ο��Ԥ����ϡ�
-���Ǥ�Ƶ��ǽ񤯤Τ����֤ߤ����˻פäƤ��뤫�⤷��ޤ��󤬡�
-������Ƶ��ǽ񤤤Ƥ���ȵ����Ĥ��ʤ����Ȥ⤢��ޤ���
-�Ƶ��Х�Х�ǽ񤫤�Ƥ���
-<A HREF="node1.html#list:selfsort1">�ꥹ��3</A>
-�Υ��르�ꥺ�������롼�פ˽񤭴����Ƥߤޤ��礦��
-��İ�ĥա��ꥨ�Ѵ���ƤӽФ��Ƥ�����ʬ��롼�פǷ����֤��褦�ˤ��ޤ���
+　関数型プログラミング言語の信者の方は、
+何でも再帰で書くのが一番みたいに思っているかもしれませんが、
+世の中再帰で書いてあると気がつかないこともあります。
+再帰バリバリで書かれている
+<A HREF="node1.html#list:selfsort1">リスト3</A>
+のアルゴリズムを一部ループに書き換えてみましょう。
+一つ一つフーリエ変換を呼び出していた部分をループで繰り返すようにします。
 </P>
 <P>
-��<A HREF="node1.html#list:selfsort1">�ꥹ��3</A> �δؿ�
+　<A HREF="node1.html#list:selfsort1">リスト3</A> の関数
 <code>fft0(n,s,q,x,y), fft1(n,s,q,x,y)</code>
-��
-<code>x[q + s*p]</code> �򥢥��������ƽ������ޤ���
-<A HREF="node1.html#list:selfsort1">�ꥹ��3</A> �ϣ�ʬ�����Ƥ����Ƶ��Ǥ��Τǡ�
-�Ƶ����ʿ����ʤ�ȼ��Τ褦�ˤʤ�ޤ���
+は
+<code>x[q + s*p]</code> をアクセスして処理します。
+<A HREF="node1.html#list:selfsort1">リスト3</A> は２分岐していく再帰ですので、
+再帰の段数が進むと次のようになります。
 </P>
 <PRE>
-    �Ƶ�0����
+    再帰0段目
     fft0(8,1,0,x,y)
          x[p]
 
-    �Ƶ�1����
+    再帰1段目
     fft1(4,2,0,x,y)                 fft1(4,2,1,x,y)
         x[2p+0]                         x[2p+1]
 
-    �Ƶ�2����
+    再帰2段目
     fft0(2,4,0,x,y) fft0(2,4,2,x,y) fft0(2,4,1,x,y) fft0(2,4,3,x,y)
         x[4p+0]         x[4p+2]         x[4p+1]         x[4p+3]
 </PRE>
 <P>
-������Ĺ 8 ����ˤȤꡢ�ؿ��β��˥��������������Ǥ�ɽ�����Ƥ��ޤ���
-�Ƶ������� <code>n = 2, s = 4</code> �ΤȤ��� <code>q = 0,2,1,3</code>
-�ǽ������뤳�Ȥˤʤ�ޤ���
-����������֤� <code>0,1,2,3</code> �ǤϤʤ��Ǥ�����
-��� <code>x[4p],x[4p+1],x[4p+2],x[4p+3]</code>
-���Ƥ�������뤳�Ȥˤ��Ѥ��Ϥ���ޤ���<code>n, s</code> �϶��̤Ǥ�����
-<code>q</code> ��롼���ѿ��Ȥ��� <code>fft0(n,s,q,x,y)</code> ��
-<code>0</code> ���� <code>s-1</code> �ޤ�(�Ĥޤꡢ3 �ޤ�)�󤷤Ƥ��С�
-�Ƶ������ܤȥ롼�פ������ˤʤ뤳�Ȥ�ʬ����ޤ���
-���λ��¤˴�Ť��� <A HREF="node1.html#list:selfsort1">�ꥹ��3</A>
-�κƵ��ΰ�����롼�פ˽񤭴����Ƥ��Ȱʲ��Τ褦�ˤʤ�ޤ���
+　系列長 8 を例にとり、関数の下にアクセスする要素を表示しています。
+再帰２段目 <code>n = 2, s = 4</code> のときは <code>q = 0,2,1,3</code>
+で処理することになります。
+処理する順番が <code>0,1,2,3</code> ではないですが、
+結局 <code>x[4p],x[4p+1],x[4p+2],x[4p+3]</code>
+全てを処理することには変わりはありません。<code>n, s</code> は共通ですから
+<code>q</code> をループ変数として <code>fft0(n,s,q,x,y)</code> を
+<code>0</code> から <code>s-1</code> まで(つまり、3 まで)回してやれば、
+再帰２段目とループが等価になることが分かります。
+この事実に基づいて <A HREF="node1.html#list:selfsort1">リスト3</A>
+の再帰の一部をループに書き換えてやると以下のようになります。
 </P>
 <A NAME="list:selfsort2"></A>
 <DIV ALIGN="CENTER">
-�ꥹ��5:�Ƶ��Υ롼�פˤ��񤭴���
+リスト5:再帰のループによる書き換え
 </DIV>
 <PRE>
 #include &lt;complex&gt;
@@ -105,17 +104,17 @@ typedef std::complex&lt;double&gt; complex_t;
 void fft1(int n, int s, complex_t* x, complex_t* y);
 
 void fft0(int n, int s, complex_t* x, complex_t* y)
-// n : ����Ĺ
-// s : ���ȥ饤��
-// x : �ա��ꥨ�Ѵ��������(������)
-// y : ���������
+// n : 系列長
+// s : ストライド
+// x : フーリエ変換する系列(入出力)
+// y : 作業用配列
 {
     const int m = n/2;
     const double theta0 = 2*M_PI/n;
 
     if (n == 1) {}
     else {
-        for (int q = 0; q &lt; s; q++) { // �Ƶ��������Ƴ�������롼��
+        for (int q = 0; q &lt; s; q++) { // 再帰の代わりに導入したループ
             for (int p = 0; p &lt; m; p++) {
                 const complex_t wp = complex_t(cos(p*theta0), -sin(p*theta0));
                 const complex_t a = x[q + s*(p + 0)];
@@ -124,22 +123,22 @@ void fft0(int n, int s, complex_t* x, complex_t* y)
                 y[q + s*(2*p + 1)] = (a - b) * wp;
             }
         }
-        fft1(n/2, 2*s, y, x); // �Ƶ���롼�פ�«�ͤ��ΤǸƤӽФ���1��
+        fft1(n/2, 2*s, y, x); // 再帰をループで束ねたので呼び出しは1つ
     }
 }
 
 void fft1(int n, int s, complex_t* x, complex_t* y)
-// n : ����Ĺ
-// s : ���ȥ饤��
-// x : �ա��ꥨ�Ѵ��������(����)
-// y : �����������������(����)
+// n : 系列長
+// s : ストライド
+// x : フーリエ変換する系列(入力)
+// y : 作業用配列兼出力配列(出力)
 {
     const int m = n/2;
     const double theta0 = 2*M_PI/n;
 
     if (n == 1) { for (int q = 0; q &lt; s; q++) y[q] = x[q]; }
     else {
-        for (int q = 0; q &lt; s; q++) { // �Ƶ��������Ƴ�������롼��
+        for (int q = 0; q &lt; s; q++) { // 再帰の代わりに導入したループ
             for (int p = 0; p &lt; m; p++) {
                 const complex_t wp = complex_t(cos(p*theta0), -sin(p*theta0));
                 const complex_t a = x[q + s*(p + 0)];
@@ -148,50 +147,50 @@ void fft1(int n, int s, complex_t* x, complex_t* y)
                 y[q + s*(2*p + 1)] = (a - b) * wp;
             }
         }
-        fft0(n/2, 2*s, y, x); // �Ƶ���롼�פ�«�ͤ��ΤǸƤӽФ���1��
+        fft0(n/2, 2*s, y, x); // 再帰をループで束ねたので呼び出しは1つ
     }
 }
 
-void fft(int n, complex_t* x) // �ա��ꥨ�Ѵ�
-// n : ����Ĺ
-// x : �ա��ꥨ�Ѵ��������(������)
+void fft(int n, complex_t* x) // フーリエ変換
+// n : 系列長
+// x : フーリエ変換する系列(入出力)
 {
-    complex_t* y = new complex_t[n]; // �¤��ؤ��Ѻ������γ���
+    complex_t* y = new complex_t[n]; // 並べ替え用作業配列の確保
     fft0(n, 1, x, y);
     delete[] y;
     for (int k = 0; k &lt; n; k++) x[k] /= n;
 }
 
-void ifft(int n, complex_t* x) // �եա��ꥨ�Ѵ�
-// n : ����Ĺ
-// x : �եա��ꥨ�Ѵ��������(������)
+void ifft(int n, complex_t* x) // 逆フーリエ変換
+// n : 系列長
+// x : 逆フーリエ変換する系列(入出力)
 {
     for (int p = 0; p &lt; n; p++) x[p] = conj(x[p]);
-    complex_t* y = new complex_t[n]; // �¤��ؤ��Ѻ������γ���
+    complex_t* y = new complex_t[n]; // 並べ替え用作業配列の確保
     fft0(n, 1, x, y);
     delete[] y;
     for (int k = 0; k &lt; n; k++) x[k] = conj(x[k]);
 }
 </PRE>
 <P>
-���ɤ��Ǥ��礦��
-��ʬ�����Ƥ����Ƶ���ʬ�����ʤ��Ƶ��ˤʤäƤ��ʤꥹ�å��ꤷ�ޤ����͡�
-����Ǥ⤦���ʡ��Ƶ���롼�פ˽񤭴������뤳�Ȥ�ʬ����Ȼפ��ޤ�����������
-���פ����Ϥ����ǤϤ���ޤ��󡣤��������ɤ��ͤϤ⤦�����Ĥ����Ȼפ��ޤ�����
-�ѿ� <code>p</code> �Υ롼�פ��ѿ� <code>q</code> �Υ롼�פ������ؤ���ǽ�Ǥ���
-�¤Ϥ��Υ롼�פ������ؤ���ȷ���Ū��®�٤κ�������ޤ���
+　どうでしょう。
+２分岐していく再帰が分岐しない再帰になってかなりスッキリしましたね。
+これでもう一段、再帰をループに書き換えられることが分かると思います。しかし、
+重要な点はそこではありません。そう、勘の良い人はもう気がついたと思いますが、
+変数 <code>p</code> のループと変数 <code>q</code> のループは入れ替え可能です。
+実はこのループを入れ替えると決定的な速度の差が現れます。
 </P>
 <P>
-���Ƶ��� Stockham �Υ��르�ꥺ�ब�٤��Τϡ��Ƶ����ʿ��������ʤ��
-���ȥ饤�� <code>s</code> ���礭���ʤäơ�
-������礭���������Ӥ˥����������뤳�Ȥˤʤ뤫��Ǥ���
-�Ƕ�Υ���ԥ塼���Ϥ�����������Υ��������򤹤��®�٤��㲼���ޤ���
-�����륭��å���������ڤ�ʤ��ʤ�ȸ�����ĤǤ�������Ǥϡ�
-�롼�פ������ؤ��Ƥߤޤ��礦�����Τ褦�ˤʤ�ޤ���
+　再帰版 Stockham のアルゴリズムが遅いのは、再帰の段数が深くなると
+ストライド <code>s</code> が大きくなって、
+配列を大きく飛び飛びにアクセスすることになるからです。
+最近のコンピュータはこういうメモリのアクセスをすると速度が低下します。
+いわゆるキャッシュに入り切らなくなると言うやつです。それでは、
+ループを入れ替えてみましょう。次のようになります。
 </P>
 <A NAME="list:selfsort3"></A>
 <DIV ALIGN="CENTER">
-�ꥹ��6:�롼�פ������ؤ��� Stockham �Υ��르�ꥺ��
+リスト6:ループを入れ替えた Stockham のアルゴリズム
 </DIV>
 <PRE>
 #include &lt;complex&gt;
@@ -202,10 +201,10 @@ typedef std::complex&lt;double&gt; complex_t;
 void fft1(int n, int s, complex_t* x, complex_t* y);
 
 void fft0(int n, int s, complex_t* x, complex_t* y)
-// n : ����Ĺ
-// s : ���ȥ饤��
-// x : �ա��ꥨ�Ѵ��������(������)
-// y : ���������
+// n : 系列長
+// s : ストライド
+// x : フーリエ変換する系列(入出力)
+// y : 作業用配列
 {
     const int m = n/2;
     const double theta0 = 2*M_PI/n;
@@ -226,10 +225,10 @@ void fft0(int n, int s, complex_t* x, complex_t* y)
 }
 
 void fft1(int n, int s, complex_t* x, complex_t* y)
-// n : ����Ĺ
-// s : ���ȥ饤��
-// x : �ա��ꥨ�Ѵ��������(����)
-// y : �����������������(����)
+// n : 系列長
+// s : ストライド
+// x : フーリエ変換する系列(入力)
+// y : 作業用配列兼出力配列(出力)
 {
     const int m = n/2;
     const double theta0 = 2*M_PI/n;
@@ -249,9 +248,9 @@ void fft1(int n, int s, complex_t* x, complex_t* y)
     }
 }
 
-void fft(int n, complex_t* x) // �ա��ꥨ�Ѵ�
-// n : ����Ĺ
-// x : �ա��ꥨ�Ѵ��������(������)
+void fft(int n, complex_t* x) // フーリエ変換
+// n : 系列長
+// x : フーリエ変換する系列(入出力)
 {
     complex_t* y = new complex_t[n];
     fft0(n, 1, x, y);
@@ -259,9 +258,9 @@ void fft(int n, complex_t* x) // �ա��ꥨ�Ѵ�
     for (int k = 0; k &lt; n; k++) x[k] /= n;
 }
 
-void ifft(int n, complex_t* x) // �եա��ꥨ�Ѵ�
-// n : ����Ĺ
-// x : �եա��ꥨ�Ѵ��������(������)
+void ifft(int n, complex_t* x) // 逆フーリエ変換
+// n : 系列長
+// x : 逆フーリエ変換する系列(入出力)
 {
     for (int p = 0; p &lt; n; p++) x[p] = conj(x[p]);
     complex_t* y = new complex_t[n];
@@ -271,20 +270,20 @@ void ifft(int n, complex_t* x) // �եա��ꥨ�Ѵ�
 }
 </PRE>
 <P>
-������Ȥ����Ի׵ġ�����ؤΥ������������ȥ饤�� 1 �ˤʤäƤ��ޤ��ޤ�����
-�Ĥ��Ǥ˻��Ѵؿ��μ������ĳ�¦�Υ롼�פ˰�ư�Ǥ��ơ�
-����˸�Ψ���夬�äƤ��ޤ���
-���������줳�������̤˸����� Stockham �Υ��르�ꥺ��ʤΤǤ���
+　するとあら不思議、配列へのアクセスがストライド 1 になってしまいました。
+ついでに三角関数の取得も一つ外側のループに移動できて、
+さらに効率が上がっています。
+そう、これこそが一般に言われる Stockham のアルゴリズムなのです。
 </P>
 <P>
-�����ơ����ΤޤޤǤ��ɤ��ΤǤ�����
-��ߺƵ��ǤۤȤ��Ʊ�����Ȥ�2��񤯤ΤϷ��ʴ����Ǥ���͡�
-�����Ǻ��ɤ���δؿ��ʤΤ���ɽ���ե饰 <code>eo</code>
-��Ƴ�������̾�κƵ��˽񤭴����Ƥߤޤ��礦���ʲ��Τ褦�ˤʤ�ޤ���
+　さて、このままでも良いのですが、
+相互再帰でほとんど同じことを2回書くのは嫌な感じですよね。
+そこで今どちらの関数なのかを表すフラグ <code>eo</code>
+を導入して通常の再帰に書き換えてみましょう。以下のようになります。
 </P>
 <A NAME="list:selfsort4"></A>
 <DIV ALIGN="CENTER">
-�ꥹ��7:������ Stockham �Υ��르�ꥺ��
+リスト7:完成版 Stockham のアルゴリズム
 </DIV>
 <PRE>
 #include &lt;complex&gt;
@@ -293,11 +292,11 @@ void ifft(int n, complex_t* x) // �եա��ꥨ�Ѵ�
 typedef std::complex&lt;double&gt; complex_t;
 
 void fft0(int n, int s, bool eo, complex_t* x, complex_t* y)
-// n  : ����Ĺ
-// s  : ���ȥ饤��
-// eo : eo == false �� 0 �ʤ� x �����ϡ�eo == true �� 1 �ʤ� y ������
-// x  : �ա��ꥨ�Ѵ��������(���Ϸ� eo == false �ΤȤ�����)
-// y  : ���������(eo == true �ΤȤ�����)
+// n  : 系列長
+// s  : ストライド
+// eo : eo == false か 0 なら x が出力、eo == true か 1 なら y が出力
+// x  : フーリエ変換する系列(入力兼 eo == false のとき出力)
+// y  : 作業用配列(eo == true のとき出力)
 {
     const int m = n/2;
     const double theta0 = 2*M_PI/n;
@@ -317,9 +316,9 @@ void fft0(int n, int s, bool eo, complex_t* x, complex_t* y)
     }
 }
 
-void fft(int n, complex_t* x) // �ա��ꥨ�Ѵ�
-// n : ����Ĺ
-// x : �ա��ꥨ�Ѵ��������(������)
+void fft(int n, complex_t* x) // フーリエ変換
+// n : 系列長
+// x : フーリエ変換する系列(入出力)
 {
     complex_t* y = new complex_t[n];
     fft0(n, 1, 0, x, y);
@@ -327,9 +326,9 @@ void fft(int n, complex_t* x) // �ա��ꥨ�Ѵ�
     for (int k = 0; k &lt; n; k++) x[k] /= n;
 }
 
-void ifft(int n, complex_t* x) // �եա��ꥨ�Ѵ�
-// n : ����Ĺ
-// x : �եա��ꥨ�Ѵ��������(������)
+void ifft(int n, complex_t* x) // 逆フーリエ変換
+// n : 系列長
+// x : 逆フーリエ変換する系列(入出力)
 {
     for (int p = 0; p &lt; n; p++) x[p] = conj(x[p]);
     complex_t* y = new complex_t[n];
@@ -339,9 +338,9 @@ void ifft(int n, complex_t* x) // �եա��ꥨ�Ѵ�
 }
 </PRE>
 <P>
-�����ϡ�<A HREF="node3.html#stockham4">���������3</A>�ǡ�
-��������Ȥ���4����� Stockham �Υ��르�ꥺ���
-Cooley-Tukey �Υ��르�ꥺ�फ��Ƴ���Ƥߤޤ��礦��
+　次章、<A HREF="node3.html#stockham4">セクション3</A>で、
+応用問題として4基底の Stockham のアルゴリズムを
+Cooley-Tukey のアルゴリズムから導いてみましょう。
 </P>
 <HR>
 <A NAME="tex2html31"
@@ -354,10 +353,10 @@ Cooley-Tukey �Υ��르�ꥺ�फ��Ƴ���Ƥߤޤ��礦��
   HREF="node1.html">
 <IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous" SRC="prev.png"></A>   <BR>
 <B> Next:</B> <A NAME="tex2html32"
-  HREF="node3.html">3 4����� Stockham FFT</A>
+  HREF="node3.html">3 4基底の Stockham FFT</A>
 <B>Up:</B> <A NAME="tex2html30"
   HREF="stockham.html">stockham</A>
 <B> Previous:</B> <A NAME="tex2html24"
-  HREF="node1.html">1 Stockham FFT ����</A>
+  HREF="node1.html">1 Stockham FFT 入門</A>
 </BODY>
 </HTML>

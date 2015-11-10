@@ -11,10 +11,10 @@ original version by:  Nikos Drakos, CBLU, University of Leeds
 <HTML>
 <HEAD>
 
-<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=EUC-JP">
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=utf-8">
 <META NAME="Generator" CONTENT="jLaTeX2HTML v2008 JA patch-2.1beta1.13">
 <META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
-<META NAME="description" CONTENT="3 4����� Stockham FFT">
+<META NAME="description" CONTENT="3 4基底の Stockham FFT">
 <META NAME="keywords" CONTENT="stockham">
 <META NAME="resource-type" CONTENT="document">
 <META NAME="distribution" CONTENT="global">
@@ -25,7 +25,7 @@ original version by:  Nikos Drakos, CBLU, University of Leeds
 <LINK REL="previous" HREF="node2.html">
 <LINK REL="up" HREF="stockham.html">
 <LINK REL="next" HREF="node4.html">
-<TITLE>3 4����� Stockham FFT</TITLE>
+<TITLE>3 4基底の Stockham FFT</TITLE>
 
 <script type="text/javascript" src="ga.js"></script>
 </HEAD>
@@ -42,46 +42,45 @@ original version by:  Nikos Drakos, CBLU, University of Leeds
   HREF="node2.html">
 <IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous" SRC="prev.png"></A>   <BR>
 <B> Next:</B> <A NAME="tex2html42"
-  HREF="node4.html">4 FFTW3 ���®�� FFT</A>
+  HREF="node4.html">4 FFTW3 より速い FFT</A>
 <B>Up:</B> <A NAME="tex2html40"
   HREF="stockham.html">stockham</A>
 <B> Previous:</B> <A NAME="tex2html34"
-  HREF="node2.html">2 Stockham �Υ��르�ꥺ��δ���</A>
+  HREF="node2.html">2 Stockham のアルゴリズムの完成</A>
 <BR> <P>
-<IMG SRC="http://www.sannet.ne.jp/counter/c0.gif" ALT="0"><IMG SRC="http://www.sannet.ne.jp/counter/c1.gif" ALT="1"><IMG SRC="http://www.sannet.ne.jp/counter/c6.gif" ALT="6"><IMG SRC="http://www.sannet.ne.jp/counter/c8.gif" ALT="8"><IMG SRC="http://www.sannet.ne.jp/counter/c9.gif" ALT="9">
 <!--End of Navigation Panel-->
 
 <H1><A NAME="SECTION00030000000000000000"></A><A NAME="stockham4"></A>
 <BR>
-3 4����� Stockham FFT
+3 4基底の Stockham FFT
 </H1>
-�����ơ��ߤʤ����4����� Cooley-Tukey �Υ��르�ꥺ���¸�ΤǤ��礦����
-FFT �ˤ����뾮���ʥ������Υա��ꥨ�Ѵ��ؤ�ʬ��򥵥���2�ǹԤ��ΤǤϤʤ���
-������4�ǹԤ��Τ�4����Υ��르�ꥺ��Ǥ���2����Υ��르�ꥺ����׻��̤�
-���ʤ��ʤ뤳�Ȥ��Τ��Ƥ��ޤ���
+　さて、みなさんは4基底の Cooley-Tukey のアルゴリズムをご存知でしょうか。
+FFT における小さなサイズのフーリエ変換への分解をサイズ2で行うのではなく、
+サイズ4で行うのが4基底のアルゴリズムです。2基底のアルゴリズムより計算量が
+少なくなることが知られています。
 <BR>
 <P>
-���Ȥ����ǡ�Cooley-Tukey ��4����Υ��르�ꥺ���ͤ���Τϴ�ñ�Ǥ�����
-���� Stockham ������������4�����ͤ���Τ�¿�������ޤ�ޤ����ºݡ�
-�Ȥ��륵���ȤǤ� Stockham �����������鶯����4����Υ��르�ꥺ���Ƴ����
-���뤻����;ʬ�ʥ��ƥåפ�Ƨ�ॢ�르�ꥺ�ब�Ҳ𤵤�Ƥ��ޤ�����
+　ところで、Cooley-Tukey で4基底のアルゴリズムを考えるのは簡単ですが、
+あの Stockham の漸化式から4基底を考えるのは多少骨が折れます。実際、
+とあるサイトでは Stockham の漸化式から強引に4基底のアルゴリズムを導いて
+いるせいで余分なステップを踏むアルゴリズムが紹介されていました。
 <BR>
 <P>
-����������Stockham �Υ��르�ꥺ�ब Cooley-Tukey �Υ��르�ꥺ��δ�ñ��
-�ѷ��Ǥ��뤳�Ȥ��ΤäƤ���С�4����� Cooley-Tukey �Υ��르�ꥺ�फ�顢
-4����� Stockham �Υ��르�ꥺ����ñ��Ƴ�����Ȥ��Ǥ��ޤ���
+　しかし、Stockham のアルゴリズムが Cooley-Tukey のアルゴリズムの簡単な
+変形であることを知っていれば、4基底の Cooley-Tukey のアルゴリズムから、
+4基底の Stockham のアルゴリズムを簡単に導くことができます。
 <BR>
 <P>
-���ǤϤޤ���4����� Cooley-Tukey(DIF) �Υ��르�ꥺ��򼨤��ޤ��礦�������
-���Ѵ��� Cooley-Tukey �Υ��르�ꥺ�फ���ñ��Ƴ���뤳�Ȥ򼨤����ᡢ
-<code>ifft()</code> �� <code>fft0()</code> �Ƿ��Ѥ����ꤻ����Cooley-Tukey �Υա��ꥨ
-���Ѵ���Ʊ���˼����ޤ���
+　ではまず、4基底の Cooley-Tukey(DIF) のアルゴリズムを示しましょう。今回は
+逆変換も Cooley-Tukey のアルゴリズムから簡単に導けることを示すため、
+<code>ifft()</code> を <code>fft0()</code> で兼用したりせず、Cooley-Tukey のフーリエ
+逆変換も同時に示します。
 
 <P>
 <BR>
 <A NAME="list:cooley-tukey4"></A>
 <DIV ALIGN="CENTER">
-�ꥹ��8:4����� Cooley-Tukey(DIF) ���르�ꥺ��
+リスト8:4基底の Cooley-Tukey(DIF) アルゴリズム
 
 </DIV>
 <BR>
@@ -202,16 +201,16 @@ void ifft(int n, complex_t* x)
 <BR>
 
 <P>
-�����Ϥ����ʽ�����¤٤뤿��ˡ�4���ܿ���ʬ��4�ǳ���1;����ʬ��
-4�ǳ���2;����ʬ��4�ǳ���3;����ʬ���������褦�ˤ��Ƥ���ޤ���
-������ˡ����������<A HREF="node1.html#stockham-intro">1</A>,<A HREF="node2.html#stockham-speedup">2</A>�����Τ�
-�ѷ����Ƥ���4����� Stockham(DIF) �Υ��르�ꥺ��ϰʲ��Τ褦�ˤʤ�ޤ���
+　出力を自然な順序で並べるために、4の倍数成分、4で割ると1余る成分、
+4で割ると2余る成分、4で割ると3余る成分を合成するようにしてあります。
+これを基に、セクション<A HREF="node1.html#stockham-intro">1</A>,<A HREF="node2.html#stockham-speedup">2</A>の要領で
+変形してやると4基底の Stockham(DIF) のアルゴリズムは以下のようになります。
 
 <P>
 <BR>
 <A NAME="list:stockham4"></A>
 <DIV ALIGN="CENTER">
-�ꥹ��9:4����� Stockham(DIF) ���르�ꥺ��
+リスト9:4基底の Stockham(DIF) アルゴリズム
 
 </DIV>
 <BR>
@@ -324,8 +323,8 @@ void ifft(int n, complex_t* x)
 <BR>
 
 <P>
-�����ϡ����������<A HREF="node4.html#otfft">4</A>�Ǥϡ�Stockham �Υ��르�ꥺ���Ȥä���FFTW
-���®�� FFT �饤�֥��򼨤��ޤ����ޥ���
+　次章、セクション<A HREF="node4.html#otfft">4</A>では、Stockham のアルゴリズムを使った、FFTW
+より速い FFT ライブラリを示します。マジ？
 <HR>
 <A NAME="tex2html41"
   HREF="node4.html">
@@ -337,11 +336,11 @@ void ifft(int n, complex_t* x)
   HREF="node2.html">
 <IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous" SRC="prev.png"></A>   <BR>
 <B> Next:</B> <A NAME="tex2html42"
-  HREF="node4.html">4 FFTW ���®�� FFT</A>
+  HREF="node4.html">4 FFTW より速い FFT</A>
 <B>Up:</B> <A NAME="tex2html40"
   HREF="stockham.html">stockham</A>
 <B> Previous:</B> <A NAME="tex2html34"
-  HREF="node2.html">2 Stockham �Υ��르�ꥺ��δ���</A>
+  HREF="node2.html">2 Stockham のアルゴリズムの完成</A>
 
 <!--End of Navigation Panel-->
 

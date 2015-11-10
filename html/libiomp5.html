@@ -3,7 +3,7 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=euc-jp">
 <meta http-equiv="Content-Style-Type" content="text/css">
-<meta name="description" content="OS X �ؤ� GCC �� Intel OpenMP Runtime ��Ƴ��">
+<meta name="description" content="OS X への GCC と Intel OpenMP Runtime の導入">
 <meta name="keywords" content="Intel OpenMP,GCC,OS X">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -12,111 +12,110 @@
 
 <script type="text/javascript" src="ga.js"></script>
 
-<title>OS X �ؤ� GCC �� Intel OpenMP Runtime ��Ƴ��</title>
+<title>OS X への GCC と Intel OpenMP Runtime の導入</title>
 </head>
 <body>
-��Ϣ��󥯡�<a href="node4.html">4 FFTW ���®�� FFT �饤�֥�� OTFFT</a>
+関連リンク：<a href="node4.html">4 FFTW より速い FFT ライブラリ OTFFT</a>
 <hr>
 
-<h1>OS X �ؤ� GCC �� Intel OpenMP Runtime ��Ƴ��</h1>
+<h1>OS X への GCC と Intel OpenMP Runtime の導入</h1>
 <p>
-��������� Mac �� <a href="node4.html">OTFFT</a> �γ�ȯ����ԤäƤ��ޤ���
-Mac �� MacPorts �ʤɤ�Ȥ��д�ñ�˺ǿ��� GCC ��Ƴ���Ǥ����ꤷ�������ʤΤǤ�����
-AVX �� AVX2 ��Ȥ����Ȥ���Ȥ��ΤޤޤǤϥ��顼�ˤʤäƤ��ޤ��ޤ���
-�ޤ���GCC �� OpenMP �Ϥɤ���� Linux �˺�Ŭ������Ƥ���褦�ǡ�
-OS X �� GCC �ǥե���Ȥ� libgomp ��Ȥ��� Linux �ۤ���ǽ���Фޤ���
+　私は普段 Mac で <a href="node4.html">OTFFT</a> の開発等を行っています。
+Mac は MacPorts などを使えば簡単に最新の GCC を導入できたりして便利なのですが、
+AVX や AVX2 を使おうとするとそのままではエラーになってしまいます。
+また、GCC の OpenMP はどうやら Linux に最適化されているようで、
+OS X で GCC デフォルトの libgomp を使うと Linux ほど性能が出ません。
 </p>
 <p>
-�������ǡ����Υڡ����Ǥ� OS X �� GCC �� AVX/AVX2 ��Ȥ����������䡢
-OS X �� libgomp �����ǽ���夬��
+　そこで、このページでは OS X の GCC で AVX/AVX2 を使うための設定や、
+OS X で libgomp より性能が上がる
 <a href="https://www.openmprtl.org/download#stable-releases">Intel OpenMP Runtime</a>
-��Ƴ�����ˤĤ����������ޤ���
+の導入方について説明します。
 </p>
 
-<h2>��OS X �� GCC �� AVX/AVX2 ��Ȥ���</h2>
+<h2>【OS X の GCC で AVX/AVX2 を使う】</h2>
 <p>
-��OS X �� GCC ��Ƴ�����Ȥ� MacPorts ��Ȥ�����������ޤǤ�ʤ���ñ�ˤǤ��ޤ���
-����ϡ�����ѥ��륪�ץ����� -march=native �� -mtune=native ��Ĥ��ơ�
-AVX �� AVX2 ���Ȥ��� CPU ���Ф��ƺ�Ŭ�����褦�Ȥ���ȥ��顼�ˤʤ뤳�ȤǤ���
-�������򤹤�ˤϰʲ��������Ԥ��ޤ���
+　OS X で GCC の導入自身は MacPorts を使えば説明するまでもなく簡単にできます。
+問題は、コンパイルオプションに -march=native や -mtune=native をつけて、
+AVX や AVX2 が使える CPU に対して最適化しようとするとエラーになることです。
+これを回避するには以下の設定を行います。
 </p>
 <pre>
     cd /opt/local/bin
     sudo ln -s /usr/bin/clang
 </pre>
 <p>
-����������򤷤Ƥ��� g++ ���ǥ���ѥ��뤹��Ȥ�
--Wa,-q ���ץ�����Ĥ���Х��顼�ϽФʤ��ʤ�ޤ���
-����Ū�ˤϰʲ��Τ褦�ˤ��ޤ���
+　この設定をしてから g++ 等でコンパイルするとき
+-Wa,-q オプションをつければエラーは出なくなります。
+具体的には以下のようにします。
 </p>
 <pre>
     g++-mp-5 -Ofast -Wa,-q -march=native -mtune=native hello.cpp -o hello
 </pre>
 
-<h2>��OS X �� Intel OpenMP Runtime  ��Ȥ���</h2>
+<h2>【OS X で Intel OpenMP Runtime  を使う】</h2>
 <p>
-���ޤ��ϡ�
-<a href="https://www.openmprtl.org/download#stable-releases">������Υڡ���</a>
-���� Intel OpenMP Runtime �����������ɤ��Ƥ����ޤ��礦��
+　まずは、
+<a href="https://www.openmprtl.org/download#stable-releases">こちらのページ</a>
+から Intel OpenMP Runtime をダウンロードしておきましょう。
 </p>
 <p>
-�����ˡ�Intel OpenMP Runtime ��ӥ�ɤ��뤿��� cmake �򥤥󥹥ȡ��뤷�ޤ���
-MacPorts �ˤ���ޤ��Τǥ��󥹥ȡ��뤷�Ƥ���������³���ơ�
-��ۤɥ���������ɤ��� Intel OpenMP Runtime ��Ÿ�������ե�����˰�ư���ơ�
-�ʲ��Υ��ޥ�ɤ�¹Ԥ��ޤ���
+　次に、Intel OpenMP Runtime をビルドするために cmake をインストールします。
+MacPorts にありますのでインストールしてください。続いて、
+先ほどダウンロードした Intel OpenMP Runtime を展開したフォルダに移動して、
+以下のコマンドを実行します。
 </p>
 <pre>
     cmake CMakeLists.txt
     make
 </pre>
 <p>
-�����֤������ˤϡ����θ� make install ����Ԥäƥ��󥹥ȡ��뤹��ΤǤ��礦����
-��� Mac �Υǥե���ȴĶ���Ǥ���������������ʤ��ΤǤ��ޤ���Ǥ�����
-�����ǡ�
-��ư�Ǽ�ʬ����ȯ�Τ���˽��������ե������ɬ�פʥե���������֤��ޤ�����
+　たぶん正式には、この後 make install 等を行ってインストールするのでしょうが、
+私は Mac のデフォルト環境をできるだけ汚したくないのでやりませんでした。
+そこで、
+手動で自分が開発のために準備したフォルダに必要なファイルを配置しました。
 </p>
 <p>
-���ӥ�ɤ��줿�饤�֥�� libiomp5.dylib �ϡ�
-Intel OpenMP Runtime ��Ÿ�������ե������ $iomp5 ���Ȥ���С�
-$iomp5/exports/mac_32e/lib.thin �ե���������äƤ��ޤ���
-mac_32e ����ʬ�ϥ������ƥ�����ˤ�ä��Ѳ�����褦�Ǥ���
-����¾��$iomp5/src �ˤ����äƤ��ޤ���
-�����ʬ�λȤ��ե�����إ��ԡ����Ƥ����ޤ��礦��
-��� $HOME/lib �ե���������֤��ޤ�����
-���Υե��������ˡ�Υե�����Ǥ���
-�ܤ����� man dyld �� DYLD_FALLBACK_LIBRARY_PATH �������򻲾Ȥ��Ƥ���������
+　ビルドされたライブラリ libiomp5.dylib は、
+Intel OpenMP Runtime を展開したフォルダが $iomp5 だとすれば、
+$iomp5/exports/mac_32e/lib.thin フォルダに入っています。
+mac_32e の部分はアーキテクチャによって変化するようです。
+その他、$iomp5/src にも入っています。
+これを自分の使うフォルダへコピーしておきましょう。
+私は $HOME/lib フォルダに配置しました。
+このフォルダは魔法のフォルダです。
+詳しくは man dyld の DYLD_FALLBACK_LIBRARY_PATH の説明を参照してください。
 </p>
 <p>
-��OpenMP �Υإå��ե�����ϡ�$iomp5/exports/common/include
-�����äƤ��ޤ�������⼫ʬ�λȤ��ե�����إ��ԡ����Ƥ����ޤ��礦��
-����� GCC �� libgomp ������� libiomp5 ��Ȥ������������ޤ�����
+　OpenMP のヘッダファイルは、$iomp5/exports/common/include
+に入っています。これも自分の使うフォルダへコピーしておきましょう。
+これで GCC で libgomp の代わりに libiomp5 を使う準備が整いました。
 </p>
 <p>
-���Ǹ�˥���ѥ������ˤĤ��ƤǤ������ʲ��Τ褦�ˣ��ʳ��ǥ���ѥ��뤷�ޤ���
-$iomp5include �� Intel OpenMP Runtime �Υإå��ե���������֤����ե�����Ǥ���
+　最後にコンパイル方についてですが、以下のように２段階でコンパイルします。
+$iomp5include は Intel OpenMP Runtime のヘッダファイルを配置したフォルダです。
 </p>
 <pre>
     g++-mp-5 -Ofast -fopenmp -I$iomp5include -c hello.cpp
     g++-mp-5 hello.o -L$HOME/lib -liomp5 -o hello
 </pre>
 <p>
-��;�̤Ǥ�����Intel OpenMP Runtime �� OS X �ξ�硢
-�ǥե���ȤǤ� clang �ǥӥ�ɤ���ޤ���GCC �ǥӥ�ɤ��������ϡ�
-cmake ���ޥ�ɤ�¹Ԥ���Ȥ��ʲ��Τ褦�ˤ��ޤ���
+　余談ですが、Intel OpenMP Runtime は OS X の場合、
+デフォルトでは clang でビルドされます。GCC でビルドしたい場合は、
+cmake コマンドを実行するとき以下のようにします。
 </p>
 <pre>
     cmake -DCMAKE_C_COMPILER=gcc-mp-5 -DCMAKE_CXX_COMPILER=g++-mp-5 CMakeLists.txt
 </pre>
 <p>
-���ޤ�������ѥ��륪�ץ������ѹ����������ʤɤ� ccmake ���ޥ�ɤ�Ȥ��ޤ���
-�ʲ��Τ褦�ˤ��ޤ���
+　また、コンパイルオプションを変更したい場合などは ccmake コマンドを使います。
+以下のようにします。
 </p>
 <pre>
     ccmake .
 </pre>
 
 <hr>
-��Ϣ��󥯡�<a href="node4.html">4 FFTW ���®�� FFT �饤�֥�� OTFFT</a>
+関連リンク：<a href="node4.html">4 FFTW より速い FFT ライブラリ OTFFT</a>
 </body>
-<IMG SRC="http://www.sannet.ne.jp/counter/c0.gif" ALT="0"><IMG SRC="http://www.sannet.ne.jp/counter/c0.gif" ALT="0"><IMG SRC="http://www.sannet.ne.jp/counter/c0.gif" ALT="0"><IMG SRC="http://www.sannet.ne.jp/counter/c4.gif" ALT="4"><IMG SRC="http://www.sannet.ne.jp/counter/c7.gif" ALT="7">
 </html>

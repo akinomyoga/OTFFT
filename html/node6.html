@@ -11,10 +11,10 @@ original version by:  Nikos Drakos, CBLU, University of Leeds
 <HTML>
 <HEAD>
 
-<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=EUC-JP">
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=utf-8">
 <META NAME="Generator" CONTENT="jLaTeX2HTML v2008 JA patch-2.1beta1.13">
 <META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
-<META NAME="description" CONTENT="���Ȥ���">
+<META NAME="description" CONTENT="あとがき">
 <META NAME="keywords" CONTENT="stockham">
 <META NAME="resource-type" CONTENT="document">
 <META NAME="distribution" CONTENT="global">
@@ -25,7 +25,7 @@ original version by:  Nikos Drakos, CBLU, University of Leeds
 <LINK REL="previous" HREF="node5.html">
 <LINK REL="up" HREF="stockham.html">
 <LINK REL="next" HREF="node7.html">
-<TITLE>���Ȥ���</TITLE>
+<TITLE>あとがき</TITLE>
 
 <script type="text/javascript" src="ga.js"></script>
 </HEAD>
@@ -42,40 +42,39 @@ original version by:  Nikos Drakos, CBLU, University of Leeds
   HREF="node5.html">
 <IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous" SRC="prev.png"></A>   <BR>
 <B> Next:</B> <A NAME="tex2html72"
-  HREF="node7.html">A. �����������</A>
+  HREF="node7.html">A. ダウンロード</A>
 <B>Up:</B> <A NAME="tex2html70"
   HREF="stockham.html">stockham</A>
 <B> Previous:</B> <A NAME="tex2html64"
-  HREF="node5.html">5 OTFFT �λȤ���</A>
+  HREF="node5.html">5 OTFFT の使い方</A>
 <BR> <P>
-<IMG SRC="http://www.sannet.ne.jp/counter/c0.gif" ALT="0"><IMG SRC="http://www.sannet.ne.jp/counter/c1.gif" ALT="1"><IMG SRC="http://www.sannet.ne.jp/counter/c0.gif" ALT="0"><IMG SRC="http://www.sannet.ne.jp/counter/c0.gif" ALT="0"><IMG SRC="http://www.sannet.ne.jp/counter/c5.gif" ALT="5">
 <!--End of Navigation Panel-->
 
 <H1><A NAME="SECTION00060000000000000000">
-���Ȥ���</A>
+あとがき</A>
 </H1>
-���ɤ����Ƥ��Υڡ�����񤳤��Ȼפä����ȸ����ȡ��Ȥ��� Stockham �Υ��르�ꥺ��
-��Ҳ𤷤Ƥ���ڡ����ǡ��ա��ꥨ���Ѵ��䣴����� Stockham �Υ��르�ꥺ���
-�������Ƥ�����ʬ�����ˤ�䤳�����񤫤�Ƥ��ꡢ���οͤҤ�äȤ��� Stockham ��
-���르�ꥺ�ब Cooley-Tukey �Υ��르�ꥺ�फ���ñ��Ƴ���뤳�Ȥ��Τ�ʤ��󤸤�
-�ʤ����ʤȻפä�����Ǥ������������ͤ��ճ���¿���ΤǤϡ��Ȼפä��ΤǤ���
+　どうしてこのページを書こうと思ったかと言うと。とある Stockham のアルゴリズム
+を紹介してあるページで、フーリエ逆変換や４基底の Stockham のアルゴリズムを
+説明してある部分が非常にややこしく書かれており、この人ひょっとして Stockham の
+アルゴリズムが Cooley-Tukey のアルゴリズムから簡単に導けることを知らないんじゃ
+ないかなと思ったからです。そういう人が意外に多いのでは？と思ったのです。
 <BR>
 <P>
-���ºݡ����󥿡��ͥåȤ򸡺����Ƥ� Stockham �Υ��르�ꥺ��������������
-ŷ���꼰��Ϳ�����Ƥ����礬¿���Ǥ���
+　実際、インターネットを検索しても Stockham のアルゴリズムは例の漸化式が
+天下り式に与えられている場合が多いです。
 <BR>
 <P>
-��Cooley-Tukey ��ñ����ѷ��Ǥ��뤳�Ȥ�ʬ����С����Ѵ��� Cooley-Tukey ����
-�ѷ����Ƥ����ɤ�����������Υ��르�ꥺ��⣴����� Cooley-Tukey ��
-���르�ꥺ�फ���ѷ����Ƥ��д�ñ�˵�ޤ�ޤ��������ɤ����Ƥ���������
-���ФƤ����Ρ��Ȥ���������������å��ꤷ�ʤ��ޤޤ��Υ��르�ꥺ���Ȥ鷺��
-�Ѥߤޤ����¿����ƻפ�¸ʬ�Ȥ��ޤ���͡�
+　Cooley-Tukey の単純な変形であることが分かれば、逆変換も Cooley-Tukey から
+変形してやれば良いし、４基底のアルゴリズムも４基底の Cooley-Tukey の
+アルゴリズムから変形してやれば簡単に求まります。何よりどうしてこの漸化式
+が出てきたの？という疑問を抱えスッキリしないままこのアルゴリズムを使わずに
+済みます。安心して思う存分使えますよね。
 <BR>
 <P>
-����⤳���ѷ���פ��Ĥ����Ȥ���Ĺǯ�ΰ��ä����꤬�����äȾä��Ƥ���������
-���ޤ����������¾�οͤˤ�������٤������Ȥ��λפ����餳�Υڡ�������������
-���������Υڡ�����������ε�����褹�뤪���������Ǥ����ʤ顢ɮ��OK��������
-�β����δ�ӤǤ���
+　私もこの変形を思いついたとき、長年の引っかかりがスーッと消えていく感じが
+しました。これは他の人にも伝えるべきだ！とその思いからこのページは誕生しま
+した。このページが皆さんの疑問を解決するお手伝いができたなら、筆者OKおじさん
+の何よりの喜びです。
 
 <HR>
 <A NAME="tex2html71"
@@ -88,11 +87,11 @@ original version by:  Nikos Drakos, CBLU, University of Leeds
   HREF="node5.html">
 <IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous" SRC="prev.png"></A>   <BR>
 <B> Next:</B> <A NAME="tex2html72"
-  HREF="node7.html">A. �����������</A>
+  HREF="node7.html">A. ダウンロード</A>
 <B>Up:</B> <A NAME="tex2html70"
   HREF="stockham.html">stockham</A>
 <B> Previous:</B> <A NAME="tex2html64"
-  HREF="node5.html">5 OTFFT �λȤ���</A>
+  HREF="node5.html">5 OTFFT の使い方</A>
 
 <!--End of Navigation Panel-->
 
