@@ -8,8 +8,8 @@
 PREFIX=/usr/local
 make all
 sudo make install INSDIR=$PREFIX
-g++ -I $PREFIX/include -c prog.cpp
-g++ -o prog prog.o -L $PREFIX/lib -lotfft -Wl,-R,$PREFIX/lib
+g++ -march=native -I $PREFIX/include -c prog.cpp
+g++ -march=native -o prog prog.o -L $PREFIX/lib -lotfft -Wl,-R,$PREFIX/lib
 ```
 
 以下はオリジナル OTFFT の README です。
