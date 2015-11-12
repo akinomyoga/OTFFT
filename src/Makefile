@@ -117,11 +117,19 @@ $(OUTDIR)/libotfft.a: $(OUTDIR)/otfft.o
 libotfft_FullName:=libotfft.so.$(VERSION)
 libotfft_MajorName:=libotfft.so.$(VERSION_MAJOR)
 libotfft_shared_LDFLAGS:=-shared -Wl,-soname=$(libotfft_MajorName)
+
+libotfft_object+=$(OUTDIR)/otfft_shared.o
 $(OUTDIR)/otfft_shared.o: otfft.cpp $(HEADERS1) otfft/otfft.h $(HEADERS2)
 	@echo NOTE: This compilation may take several minutes.
 	$(CXX) $(CXXFLAGS) -fPIC -I $(OUTINC) -c -o $@ $<
-$(OUTDIR)/$(libotfft_FullName): $(OUTDIR)/otfft_shared.o | $(OUTDIR)
-	$(CXX) $(libotfft_shared_LDFLAGS) -o $@ $<
+
+libotfft_object+=$(OUTDIR)/util.o
+-include $(OUTDIR)/util.d
+$(OUTDIR)/util.o: util.cpp otfft/otfft.h
+	$(CXX) $(CXXFLAGS) -fPIC -I $(OUTINC) -I . -c -o $@ -MD -MF $(OUTDIR)/util.d $<
+
+$(OUTDIR)/$(libotfft_FullName): $(libotfft_object) | $(OUTDIR)
+	$(CXX) $(libotfft_shared_LDFLAGS) -o $@ $^
 $(OUTDIR)/libotfft.so $(OUTDIR)/$(libotfft_MajorName): $(OUTDIR)/$(libotfft_FullName)
 	ln -sf $(libotfft_FullName) $@
 all: $(OUTDIR)/$(libotfft_FullName) $(OUTDIR)/$(libotfft_MajorName) $(OUTDIR)/libotfft.so
@@ -143,3 +151,15 @@ $(INSDIR)/lib/$(libotfft_MajorName) $(INSDIR)/lib/libotfft.so: $(INSDIR)/lib/$(l
 # 	$(CXX) $(CXXFLAGS) -shared -Wl,-soname=$(libotfft_MajorName) -o $@ $^
 # otfft_shared.o: otfft.cpp otfft.h $(HEADERS1) $(HEADERS2)
 # 	$(CXX) $(CXXFLAGS) -fPIC -c -o $@ $<
+
+
+# check
+.PHONY: utilcheck
+
+utilcheck: $(OUTDIR)/utilcheck.exe
+	$<
+$(OUTDIR)/utilcheck.exe: $(OUTDIR)/utilcheck.o | $(OUTDIR)/libotfft.so
+	g++ -o $@ $^ -L $(OUTDIR) -Wl,-R,$(OUTDIR) -lotfft
+-include $(OUTDIR)/utilcheck.d
+$(OUTDIR)/utilcheck.o: utilcheck.cpp util.h
+	g++ $(CXXFLAGS) -c -o $@ -MD -MF $(OUTDIR)/utilcheck.d -I $(OUTINC) -I . $<
