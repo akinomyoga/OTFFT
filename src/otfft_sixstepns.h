@@ -1,5 +1,5 @@
 /******************************************************************************
-*  OTFFT Sixstep of Normalized Square Version 5.3
+*  OTFFT Sixstep of Normalized Square Version 5.4
 ******************************************************************************/
 
 #ifndef otfft_sixstepns_h

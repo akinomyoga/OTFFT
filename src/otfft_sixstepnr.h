@@ -1,5 +1,5 @@
 /******************************************************************************
-*  OTFFT Sixstep of Normalized Rectangle Version 5.3
+*  OTFFT Sixstep of Normalized Rectangle Version 5.4
 ******************************************************************************/
 
 #ifndef otfft_sixstepnr_h

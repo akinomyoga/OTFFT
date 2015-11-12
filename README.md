@@ -30,7 +30,7 @@ g++ -march=native -o prog prog.o -L $PREFIX/lib -lotfft -Wl,-R,$PREFIX/lib
 
 ##必要なファイル
 
-　`otfft-5.3.tar.gz` を展開すると、いくつかのファイルができますが、OTFFT を使うのに必要なファイルはその中の `otfft` フォルダとその中身です。このうち、
+　`otfft-5.4.tar.gz` を展開すると、いくつかのファイルができますが、OTFFT を使うのに必要なファイルはその中の `otfft` フォルダとその中身です。このうち、
 
     otfft_setup.h
     otfft_fwd.h

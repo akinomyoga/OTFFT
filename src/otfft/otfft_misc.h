@@ -1,5 +1,5 @@
 /******************************************************************************
-*  FFT Miscellaneous Routines Version 5.3
+*  FFT Miscellaneous Routines Version 5.4
 ******************************************************************************/
 
 #ifndef otfft_misc_h
@@ -94,7 +94,7 @@ struct complex_t
     complex_t(const double& x) : Re(x), Im(0) {}
     complex_t(const double& x, const double& y) : Re(x), Im(y) {}
     complex_t(const std::complex<double>& z) : Re(z.real()), Im(z.imag()) {}
-    operator std::complex<double>() { return std::complex<double>(Re, Im); }
+    operator std::complex<double>() const { return std::complex<double>(Re, Im); }
 
     complex_t& operator+=(const complex_t& z) {
         Re += z.Re;
