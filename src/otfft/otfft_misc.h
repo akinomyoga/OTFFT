@@ -322,9 +322,13 @@ static inline xmm xorpd(const xmm a, const xmm b) { return _mm_xor_pd(a, b); }
 
 #if defined(__SSE3__) && defined(USE_INTRINSIC)
 
+} // namespace OTFFT_MISC
+
 extern "C" {
 #include <pmmintrin.h>
 }
+
+namespace OTFFT_MISC {
 
 static inline xmm haddpz(const xmm ab, const xmm xy) force_inline;
 static inline xmm haddpz(const xmm ab, const xmm xy)
