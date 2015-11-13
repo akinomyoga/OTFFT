@@ -1,6 +1,30 @@
 #include "util.h"
+#include <cassert>
+#include <cmath>
 
 namespace otfft{
+
+  inline void otfft_real::initialize_psi(){
+    int const Nq=this->size/4;
+    this->psi_fwd.setup(Nq);
+    this->psi_inv.setup(Nq);
+
+    double const theta0=2.0*M_PI/this->size;
+    for(int p=0;p<Nq;p++){
+      double const theta=p*theta0;
+      double const hfcos=0.5*std::cos(theta);
+      double const hfsin=0.5*std::sin(theta);
+      this->psi_fwd[p]=complex_t(0.5+hfsin,hfcos);
+      this->psi_inv[p]=complex_t(0.5-hfsin,hfcos);
+    }
+  }
+
+  void otfft_real::resize(std::size_t n){
+    assert(n%2==0);
+    this->size=n;
+    this->instance.setup((int)n/2);
+    this->initialize_psi();
+  }
 
   inline void otfft_real::c2r_encode_half(complex_vector half,const_complex_vector src,const_complex_vector psi) const{
     int const Nh=this->size/2;

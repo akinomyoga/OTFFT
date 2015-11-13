@@ -11,3 +11,6 @@
 /check/*.exe
 /check/fftbench?.txt
 /check/*.o
+
+# for edit
+/COMMIT

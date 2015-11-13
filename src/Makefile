@@ -135,8 +135,11 @@ $(OUTDIR)/libotfft.so $(OUTDIR)/$(libotfft_MajorName): $(OUTDIR)/$(libotfft_Full
 all: $(OUTDIR)/$(libotfft_FullName) $(OUTDIR)/$(libotfft_MajorName) $(OUTDIR)/libotfft.so
 
 # install headers
-install: $(INSDIR)/include/otfft/otfft.h $(INSDIR)/include/otfft/otfft_misc.h
-$(INSDIR)/include/otfft/%.h: otfft/%.h | $(INSDIR)/include/otfft
+INSINC:=$(INSDIR)/include/otfft
+install: $(INSINC)/otfft.h $(INSINC)/otfft_misc.h $(INSINC)/util.h
+$(INSINC)/%.h: otfft/%.h | $(INSINC)
+	cp $< $@
+$(INSINC)/util.h: util.h | $(INSINC)
 	cp $< $@
 
 # install library files
