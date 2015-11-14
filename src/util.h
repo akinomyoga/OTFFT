@@ -98,6 +98,37 @@ namespace otfft{
     }
   };
 
+  enum dft_flags{
+    _normalization_mask = 0x0F,
+
+    normalization_none  = 0x00,
+    normalization_size  = 0x01,
+    normalization_sqrt  = 0x02,
+
+    _rfft_complex_mask   = 0xF0,
+
+    /**@var rfft_compact_complex
+     * 実FFTおよび実逆FFT (次数n) において、
+     * - 0 番目の複素係数の実部を、複素配列の第0要素実部に格納するとします。虚部は常に0なので省略します。
+     * - n/2 番目の複素係数の実部を、複素配列の第0要素虚部に格納するとします。虚部は常に0なので省略します。
+     * - 1, ..., n/2-1 番目の複素係数は、そのまま複素配列の 1, ..., n/2-1 番目に格納するとします。
+     * - 後半の複素係数 n/2, ..., n-1 番目は、n/2-1, ..., 1 番目の係数の複素共役なので省略します。
+     */
+    rfft_compact_complex = 0x00,
+
+    /**@var rfft_half_complex
+     * 実FFTにおいて複素係数を初めの n/2+1 個 (n はFFTの次数) だけ計算します。
+     * 実逆FFTは初めの n/2+1 個のみを用いて計算します。
+     */
+    rfft_half_complex    = 0x10,
+
+    /**@var rfft_full_complex
+     * 実FFTにおいて複素係数の n 個全てを計算します。
+     * 実逆FFTは初めの n/2+1 個のみを用いて計算します。
+     */
+    rfft_full_complex    = 0x20,
+  };
+
   /**@class otfft_real
    * 実離散フーリエ変換を行う為のクラスです。
    */
@@ -133,8 +164,8 @@ namespace otfft{
   private:
     void initialize_psi();
 
-    void c2r_encode_half(complex_vector half,const_complex_vector src,const_complex_vector psi) const;
-    void r2c_decode_half(const_complex_vector half,complex_vector dst,const_complex_vector psi) const;
+    void c2r_encode_half(complex_vector half,const_complex_vector src,const_complex_vector psi,dft_flags type) const;
+    void r2c_decode_half(const_complex_vector half,complex_vector dst,const_complex_vector psi,dft_flags type) const;
 
     void r2c_extend_complex(complex_vector dst){
       int const Nh=this->size/2;
@@ -153,7 +184,7 @@ namespace otfft{
      * @param[out] work 作業用バッファを指定します。
      * @param[in]  isFullComplex フーリエ変換後の複素係数の後半も計算するかどうかを指定します。
      */
-    void r2c_fwd(double const* src,std::complex<double>* _dst,otfft_buffer& work,bool isFullComplex=false);
+    void r2c_fwd(double const* src,std::complex<double>* _dst,otfft_buffer& work,dft_flags type=rfft_compact_complex);
 
     /**@fn r2c_inv
      *   exp(+i*k/N) による実数から複素数への変換、規格化なし。
@@ -165,7 +196,7 @@ namespace otfft{
      * @param[out] work 作業用バッファを指定します。
      * @param[in]  isFullComplex フーリエ変換後の複素係数の後半も計算するかどうかを指定します。
      */
-    void r2c_inv(double const* src,std::complex<double>* _dst,otfft_buffer& work,bool isFullComplex=false);
+    void r2c_inv(double const* src,std::complex<double>* _dst,otfft_buffer& work,dft_flags type=rfft_compact_complex);
 
     /**@fn c2r_fwd
      *   \f$\exp(-2\pi i jk/N)\f$ による複素数から実数への変換、規格化なし。
@@ -176,7 +207,7 @@ namespace otfft{
      * @param[out] dst 変換結果を格納する実数配列を指定します。
      * @param[out] work 作業用バッファを指定します。
      */
-    void c2r_fwd(std::complex<double> const* src,double* dst,otfft_buffer& work) const;
+    void c2r_fwd(std::complex<double> const* src,double* dst,otfft_buffer& work,dft_flags type=rfft_compact_complex) const;
 
     /**@fn c2r_fwd
      *   \f$\exp(+2\pi i jk/N)\f$ による複素数から実数への変換、規格化なし。
@@ -187,7 +218,7 @@ namespace otfft{
      * @param[out] dst 変換結果を格納する実数配列を指定します。
      * @param[out] work 作業用バッファを指定します。
      */
-    void c2r_inv(std::complex<double> const* src,double* dst,otfft_buffer& work) const;
+    void c2r_inv(std::complex<double> const* src,double* dst,otfft_buffer& work,dft_flags type=rfft_compact_complex) const;
 
   };
 

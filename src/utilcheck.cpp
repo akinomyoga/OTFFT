@@ -22,9 +22,9 @@ bool test_otfft_real(){
   double err2 = 0.0;
 
   otfft::simd_array<std::complex<double> > r2cdata(size/2+1);
-  rfft.r2c_fwd(&rdata,&r2cdata,work);
+  rfft.r2c_fwd(&rdata,&r2cdata,work,otfft::rfft_half_complex);
   otfft::simd_array<double> c2rdata(size);
-  rfft.c2r_inv(&r2cdata,&c2rdata,work);
+  rfft.c2r_inv(&r2cdata,&c2rdata,work,otfft::rfft_half_complex);
 
   for(int i=0;i<size;i++){
     std::complex<double> const c   = cdata[i];
