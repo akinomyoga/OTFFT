@@ -1,48 +1,11 @@
 # -*- makefile-gmake -*-
 # otfft/src/Makefile
 
-# configurations
-
-#USE_OPENMP := yes
-USE_OPENMP := no
-
 VERSION:=5.4
 VERSION_MAJOR:=5
 #------------------------------------------------------------------------------
 
-#CXX = icpc
-#CXX = g++-mp-5# for Mac with MacPorts and Xcode
-#CXX = g++-5
-#CXX = clang++-mp-3.7                                                                                                                                                                                           
-#CXX = x86_64-w64-mingw32-g++
-
-CXXFLAGS:=
-
-ifeq ($(CXX),icpc)
-  CXX = icpc
-  CXXFLAGS = -O3 -march=native -xHost
-else
-  #CXXFLAGS += -Ofast
-  CXXFLAGS += -O3
-endif
-
-#CXXFLAGS += -Wa,-q# for Mac (required: cd /opt/local/bin; ln -s /usr/bin/clang)
-#CXXFLAGS += -std=c++11
-CXXFLAGS += -msse2 -mfpmath=sse#+387
-CXXFLAGS += -march=native -mtune=native# -mno-fma
-#CXXFLAGS += -march=core-avx-i -mtune=core-avx-i
-#CXXFLAGS += -Xclang -fopenmp
-#CXXFLAGS += -Xclang -fopenmp=libiomp5
-CXXFLAGS += -ffast-math
-#CXXFLAGS += -funroll-loops
-CXXFLAGS += -funroll-all-loops
-#CXXFLAGS += -fpeel-loops
-#CXXFLAGS += -floop-flatten
-#CXXFLAGS += -floop-optimize
-#CXXFLAGS += -funswitch-loops
-#CXXFLAGS += -fomit-frame-pointer
-#CXXFLAGS += -fforce-addr
-#CXXFLAGS += -ftree-vectorize
+include config.mk
 
 ffttune_LDLIBS:=
 
