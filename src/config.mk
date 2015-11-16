@@ -6,6 +6,7 @@
 USE_OPENMP := no
 
 CXXFLAGS:=
+LDFLAGS:=
 
 #CXX = icpc
 #CXX = g++-mp-5# for Mac with MacPorts and Xcode
@@ -15,6 +16,8 @@ CXXFLAGS:=
 
 ifeq ($(HOSTNAME),bessel)
   CXX := /home/murase/opt/gcc/4.9.2/bin/g++-4.9
+  CXXFLAGS += -Ofast
+  LDFLAGS += -Ofast
 else
   ifeq ($(CXX),icpc)
     CXX = icpc
