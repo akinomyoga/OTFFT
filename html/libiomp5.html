@@ -35,7 +35,7 @@ OS X で libgomp より性能が上がる
 
 <h2>【OS X の GCC で AVX/AVX2 を使う】</h2>
 <p>
-　OS X で GCC の導入自身は MacPorts を使えば説明するまでもなく簡単にできます。
+　OS X での GCC の導入自身は MacPorts を使えば説明するまでもなく簡単にできます。
 問題は、コンパイルオプションに -march=native や -mtune=native をつけて、
 AVX や AVX2 が使える CPU に対して最適化しようとするとエラーになることです。
 これを回避するには以下の設定を行います。
@@ -50,7 +50,7 @@ AVX や AVX2 が使える CPU に対して最適化しようとするとエラ�
 具体的には以下のようにします。
 </p>
 <pre>
-    g++-mp-5 -Ofast -Wa,-q -march=native -mtune=native hello.cpp -o hello
+    g++-mp-5 -Ofast -Wa,-q -march=native hello.cpp -o hello
 </pre>
 
 <h2>【OS X で Intel OpenMP Runtime  を使う】</h2>

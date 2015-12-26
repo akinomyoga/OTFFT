@@ -47,8 +47,7 @@ OTFFT の使い方について説明しておきましょう。
 </P>
 <H3>【使用上の注意】</H3>
 <P>
-　GCC で -march=native -mtune=native オプション付きでコンパイルする場合、
-OTFFT はコンパイルする環境に最適化されます。
+　OTFFT は、GCC でコンパイルする場合、コンパイルする環境に最適化されます。
 つまり、AVX が有効な環境でコンパイルすれば、AVX を使うようになります。
 このバイナリを AVX をサポートしない環境で動かせば、
 当然、例外を起こして落ちます。そのため、コンパイルしたバイナリを、
@@ -57,8 +56,8 @@ OTFFT はコンパイルする環境に最適化されます。
 </P>
 <H3>【必要なファイル】</H3>
 <P>
-　<A HREF="node7.html#download">ダウンロードのページA</A>
-から otfft-5.4.tar.gz(もしくは otfft-5.4.zip)
+　<A HREF="node7.html#download">ダウンロードのページ</A>
+から otfft-6.0.tar.gz(もしくは otfft-6.0.zip)
 をダウンロードし展開すると、いくつかのファイルができますが、
 OTFFT を使うのに必要なファイルはその中の otfft フォルダとその中身です。
 このうち、
@@ -150,18 +149,24 @@ otfft.o あるいは otfft.obj ファイルを目的のバイナリにリンク�
 OTFFT は使えます。
 </P>
 <P>
-　g++ でコンパイルするには -march=native -mtune=native -fopenmp
-オプションを付けてください。さらに、-lgomp や -liomp5 など
-OpenMP のランタイムをリンクする必要があります。
+　g++ でコンパイルするには、
+-lgomp や -liomp5 など OpenMP のランタイムをリンクする必要があります。
+例えば、カレントフォルダに
+otfft フォルダがあるなら以下のようにコンパイルします。
 </P>
+<PRE>
+    g++ -c -Ofast hello.cpp
+    g++ hello.o otfft/otfft.o -lgomp -o hello
+</PRE>
 <P>
 　Visual C++ の場合、
 AVX を使うには、/arch:AVX /DUSE_AVX を指定してください。
 AVX2 も使う場合は /arch:AVX2 /DUSE_AVX2 も指定してください。
 OpenMP も使うには /openmp を指定してください。
-お分かりとは思いますが、otfft.o あるいは otfft.obj のコンパイル時点で、
+お分かりとは思いますが、otfft.obj のコンパイル時点で、
 これらのオプションを付けておかないと有効にはなりません。
 必要なら OTFFT の Makefile に記載してください。
+(OTFFT のコンパイルが終われば、これらのオプションは必要ないかもしれません)
 Visual Studio 用のデフォルトの Makefile は、
 AVX と OpenMP を使うよう指定されています。
 </P>
