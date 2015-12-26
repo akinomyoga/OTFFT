@@ -1,50 +1,13 @@
 # -*- makefile-gmake -*-
 # otfft/src/Makefile
 
-# configurations
-
-#USE_OPENMP := yes
-USE_OPENMP := no
-
 VERSION:=5.4
 VERSION_MAJOR:=5
 #------------------------------------------------------------------------------
 
-#CXX = icpc
-#CXX = g++-mp-5# for Mac with MacPorts and Xcode
-#CXX = g++-5
-#CXX = clang++-mp-3.7                                                                                                                                                                                           
-#CXX = x86_64-w64-mingw32-g++
+include config.mk
 
-CXXFLAGS:=
-
-ifeq ($(CXX),icpc)
-  CXX = icpc
-  CXXFLAGS = -O3 -march=native -xHost
-else
-  #CXXFLAGS += -Ofast
-  CXXFLAGS += -O3
-endif
-
-#CXXFLAGS += -Wa,-q# for Mac (required: cd /opt/local/bin; ln -s /usr/bin/clang)
-#CXXFLAGS += -std=c++11
-CXXFLAGS += -msse2 -mfpmath=sse#+387
-CXXFLAGS += -march=native -mtune=native# -mno-fma
-#CXXFLAGS += -march=core-avx-i -mtune=core-avx-i
-#CXXFLAGS += -Xclang -fopenmp
-#CXXFLAGS += -Xclang -fopenmp=libiomp5
-CXXFLAGS += -ffast-math
-#CXXFLAGS += -funroll-loops
-CXXFLAGS += -funroll-all-loops
-#CXXFLAGS += -fpeel-loops
-#CXXFLAGS += -floop-flatten
-#CXXFLAGS += -floop-optimize
-#CXXFLAGS += -funswitch-loops
-#CXXFLAGS += -fomit-frame-pointer
-#CXXFLAGS += -fforce-addr
-#CXXFLAGS += -ftree-vectorize
-
-ffttune_LDLIBS:=
+ffttune_LIBS:=
 
 ifeq ($(USE_OPENMP),yes)
   ifeq ($(CXX),icpc)
@@ -52,10 +15,10 @@ ifeq ($(USE_OPENMP),yes)
   else
     CXXFLAGS += -fopenmp
   endif
-  ffttune_LDLIBS = -lgomp
-  #ffttune_LDLIBS = -L/alt/lib -liomp5
-  #ffttune_LDLIBS = -L$(HOME)/lib -liomp5
-  #ffttune_LDLIBS = -L/opt/local/lib/libomp -lomp
+  ffttune_LIBS = -lgomp
+  #ffttune_LIBS = -L/alt/lib -liomp5
+  #ffttune_LIBS = -L$(HOME)/lib -liomp5
+  #ffttune_LIBS = -L/opt/local/lib/libomp -lomp
 endif
 
 HEADERS1 = \
@@ -103,20 +66,20 @@ $(OUTDIR)/ffttune.o: ffttune.cpp $(HEADERS1) otfft/stopwatch.h | $(OUTDIR)
 	@echo NOTE: This compilation may take several minutes.
 	$(CXX) -c $(CXXFLAGS) $< -o $@
 $(OUTDIR)/ffttune: $(OUTDIR)/ffttune.o
-	$(CXX) $^ $(ffttune_LDLIBS) -o $@
+	$(CXX) $^ $(LDFLAGS) $(ffttune_LIBS) -o $@
 $(OUTDIR)/ffttune.log: $(OUTDIR)/ffttune | $(OUTINC)
 	cd $(OUTINC) && ../ffttune | tee ../ffttune.log
 $(HEADERS2): $(OUTDIR)/ffttune.log
 
 $(OUTDIR)/otfft.o: otfft.cpp $(HEADERS1) otfft/otfft.h $(HEADERS2)
 	@echo NOTE: This compilation may take several minutes.
-	$(CXX) $(CXXFLAGS)       -I $(OUTINC) -c -o $@ $<
+	$(CXX) $(CXXFLAGS) -I $(OUTINC) -c -o $@ $<
 $(OUTDIR)/libotfft.a: $(OUTDIR)/otfft.o
 	ar cru $@ $<
 
 libotfft_FullName:=libotfft.so.$(VERSION)
 libotfft_MajorName:=libotfft.so.$(VERSION_MAJOR)
-libotfft_shared_LDFLAGS:=-shared -Wl,-soname=$(libotfft_MajorName)
+libotfft_shared_LIBS:=-shared -Wl,-soname=$(libotfft_MajorName)
 
 libotfft_object+=$(OUTDIR)/otfft_shared.o
 $(OUTDIR)/otfft_shared.o: otfft.cpp $(HEADERS1) otfft/otfft.h $(HEADERS2)
@@ -129,7 +92,7 @@ $(OUTDIR)/util.o: util.cpp otfft/otfft.h
 	$(CXX) $(CXXFLAGS) -fPIC -I $(OUTINC) -I . -c -o $@ -MD -MF $(OUTDIR)/util.d $<
 
 $(OUTDIR)/$(libotfft_FullName): $(libotfft_object) | $(OUTDIR)
-	$(CXX) $(libotfft_shared_LDFLAGS) -o $@ $^
+	$(CXX) $(LDFLAGS) $(libotfft_shared_LIBS) -o $@ $^
 $(OUTDIR)/libotfft.so $(OUTDIR)/$(libotfft_MajorName): $(OUTDIR)/$(libotfft_FullName)
 	ln -sf $(libotfft_FullName) $@
 all: $(OUTDIR)/$(libotfft_FullName) $(OUTDIR)/$(libotfft_MajorName) $(OUTDIR)/libotfft.so
