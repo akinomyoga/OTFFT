@@ -1,5 +1,9 @@
 /******************************************************************************
 *  C++ Wrapper for FFTW3
+*
+*  Copyright (c) 2015 OK Ojisan(Takuya OKAHISA)
+*  Released under the MIT license
+*  http://opensource.org/licenses/mit-license.php
 ******************************************************************************/
 
 #ifndef cpp_fftw3_h

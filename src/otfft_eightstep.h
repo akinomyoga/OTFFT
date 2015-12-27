@@ -1,5 +1,9 @@
 /******************************************************************************
-*  OTFFT Eightstep Version 5.4
+*  OTFFT Eightstep Version 6.0
+*
+*  Copyright (c) 2015 OK Ojisan(Takuya OKAHISA)
+*  Released under the MIT license
+*  http://opensource.org/licenses/mit-license.php
 ******************************************************************************/
 
 #ifndef otfft_eightstep_h

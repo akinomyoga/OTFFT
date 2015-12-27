@@ -1,5 +1,9 @@
 /******************************************************************************
-*  OTFFT AVXDIF8 of OpenMP Version 5.4
+*  OTFFT AVXDIF(Radix-8) of OpenMP Version 6.0
+*
+*  Copyright (c) 2015 OK Ojisan(Takuya OKAHISA)
+*  Released under the MIT license
+*  http://opensource.org/licenses/mit-license.php
 ******************************************************************************/
 
 #ifndef otfft_avxdif8omp_h
@@ -22,12 +26,12 @@ template <int n, int s> struct fwdcore
     static const int N  = n*s;
     static const int N0 = 0;
     static const int N1 = N/8;
-    static const int N2 = N/4;
-    static const int N3 = N1 + N2;
-    static const int N4 = N/2;
-    static const int N5 = N1 + N4;
-    static const int N6 = N3 + N3;
-    static const int N7 = N3 + N4;
+    static const int N2 = N1*2;
+    static const int N3 = N1*3;
+    static const int N4 = N1*4;
+    static const int N5 = N1*5;
+    static const int N6 = N1*6;
+    static const int N7 = N1*7;
 
     void operator()(
             complex_vector x, complex_vector y, const_complex_vector W) const
@@ -90,12 +94,12 @@ template <int N> struct fwdcore<N,1>
 {
     static const int N0 = 0;
     static const int N1 = N/8;
-    static const int N2 = N/4;
-    static const int N3 = N1 + N2;
-    static const int N4 = N/2;
-    static const int N5 = N1 + N4;
-    static const int N6 = N3 + N3;
-    static const int N7 = N3 + N4;
+    static const int N2 = N1*2;
+    static const int N3 = N1*3;
+    static const int N4 = N1*4;
+    static const int N5 = N1*5;
+    static const int N6 = N1*6;
+    static const int N7 = N1*7;
 
     void operator()(
             complex_vector x, complex_vector y, const_complex_vector W) const
@@ -424,12 +428,12 @@ template <> struct fwdnend<8,1,1>
 {
     inline void operator()(complex_vector x, complex_vector y) const
     {
+        static const xmm rN = { 1.0/8, 1.0/8 };
 #ifdef _OPENMP
         #pragma omp single
 #endif
         {
             zeroupper();
-            static const xmm rN = { 1.0/8, 1.0/8 };
             const xmm x0 = mulpd(rN, getpz(x[0]));
             const xmm x1 = mulpd(rN, getpz(x[1]));
             const xmm x2 = mulpd(rN, getpz(x[2]));
@@ -520,12 +524,12 @@ template <> struct fwdnend<8,1,0>
 {
     inline void operator()(complex_vector x, complex_vector) const
     {
+        static const xmm rN = { 1.0/8, 1.0/8 };
 #ifdef _OPENMP
         #pragma omp single
 #endif
         {
             zeroupper();
-            static const xmm rN = { 1.0/8, 1.0/8 };
             const xmm x0 = mulpd(rN, getpz(x[0]));
             const xmm x1 = mulpd(rN, getpz(x[1]));
             const xmm x2 = mulpd(rN, getpz(x[2]));
@@ -652,12 +656,12 @@ template <int n, int s> struct invcore
     static const int N  = n*s;
     static const int N0 = 0;
     static const int N1 = N/8;
-    static const int N2 = N/4;
-    static const int N3 = N1 + N2;
-    static const int N4 = N/2;
-    static const int N5 = N1 + N4;
-    static const int N6 = N3 + N3;
-    static const int N7 = N3 + N4;
+    static const int N2 = N1*2;
+    static const int N3 = N1*3;
+    static const int N4 = N1*4;
+    static const int N5 = N1*5;
+    static const int N6 = N1*6;
+    static const int N7 = N1*7;
 
     void operator()(
             complex_vector x, complex_vector y, const_complex_vector W) const
@@ -720,12 +724,12 @@ template <int N> struct invcore<N,1>
 {
     static const int N0 = 0;
     static const int N1 = N/8;
-    static const int N2 = N/4;
-    static const int N3 = N1 + N2;
-    static const int N4 = N/2;
-    static const int N5 = N1 + N4;
-    static const int N6 = N3 + N3;
-    static const int N7 = N3 + N4;
+    static const int N2 = N1*2;
+    static const int N3 = N1*3;
+    static const int N4 = N1*4;
+    static const int N5 = N1*5;
+    static const int N6 = N1*6;
+    static const int N7 = N1*7;
 
     void operator()(
             complex_vector x, complex_vector y, const_complex_vector W) const
@@ -1056,12 +1060,12 @@ template <> struct invnend<8,1,1>
 {
     inline void operator()(complex_vector x, complex_vector y) const
     {
+        static const xmm rN = { 1.0/8, 1.0/8 };
 #ifdef _OPENMP
         #pragma omp single
 #endif
         {
             zeroupper();
-            static const xmm rN = { 1.0/8, 1.0/8 };
             const xmm x0 = mulpd(rN, getpz(x[0]));
             const xmm x1 = mulpd(rN, getpz(x[1]));
             const xmm x2 = mulpd(rN, getpz(x[2]));
@@ -1152,12 +1156,12 @@ template <> struct invnend<8,1,0>
 {
     inline void operator()(complex_vector x, complex_vector) const
     {
+        static const xmm rN = { 1.0/8, 1.0/8 };
 #ifdef _OPENMP
         #pragma omp single
 #endif
         {
             zeroupper();
-            static const xmm rN = { 1.0/8, 1.0/8 };
             const xmm x0 = mulpd(rN, getpz(x[0]));
             const xmm x1 = mulpd(rN, getpz(x[1]));
             const xmm x2 = mulpd(rN, getpz(x[2]));

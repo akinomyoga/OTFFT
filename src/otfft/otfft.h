@@ -1,5 +1,9 @@
 /******************************************************************************
-*  OTFFT Header Version 5.4
+*  OTFFT Header Version 6.0
+*
+*  Copyright (c) 2015 OK Ojisan(Takuya OKAHISA)
+*  Released under the MIT license
+*  http://opensource.org/licenses/mit-license.php
 ******************************************************************************/
 
 #ifndef otfft_h
@@ -13,7 +17,8 @@ namespace OTFFT_AVXDIT4 { struct FFT0; }
 namespace OTFFT_AVXDIF8 { struct FFT0; }
 namespace OTFFT_AVXDIT8 { struct FFT0; }
 namespace OTFFT_Sixstep { struct FFT0; }
-//namespace OTFFT_Sixstep { struct FFT1; }
+namespace OTFFT_AVXDIF16 { struct FFT0; }
+namespace OTFFT_AVXDIT16 { struct FFT0; }
 
 namespace OTFFT { /////////////////////////////////////////////////////////////
 
@@ -31,7 +36,8 @@ struct FFT0
     OTFFT_AVXDIF8::FFT0* fft3;
     OTFFT_AVXDIT8::FFT0* fft4;
     OTFFT_Sixstep::FFT0* fft5;
-    //OTFFT_Sixstep::FFT1* fft6;
+    OTFFT_AVXDIF16::FFT0* fft6;
+    OTFFT_AVXDIT16::FFT0* fft7;
 
     FFT0();
     FFT0(int n);

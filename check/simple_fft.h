@@ -1,5 +1,9 @@
 /******************************************************************************
-* Simple FFT (Cooley Tukey 4 radix)
+*  Simple FFT (Cooley Tukey Radix-4)
+*
+*  Copyright (c) 2015 OK Ojisan(Takuya OKAHISA)
+*  Released under the MIT license
+*  http://opensource.org/licenses/mit-license.php
 ******************************************************************************/
 
 #ifndef simple_fft_h
@@ -46,7 +50,9 @@ void fwdbut(int N, complex_t* const x, const complex_t* const W)
             }
         }
         else {
+#ifdef _OPENMP
             #pragma omp parallel for schedule(static)
+#endif
             for (int q = 0; q < N; q += n) {
                 complex_t* const xq = x + q;
                 for (int p = 0; p < n1; p++) {
@@ -81,7 +87,9 @@ void fwdbut(int N, complex_t* const x, const complex_t* const W)
             }
         }
         else {
+#ifdef _OPENMP
             #pragma omp parallel for schedule(static)
+#endif
             for (int q = 0; q < N; q += 2) {
                 complex_t* const xq = x + q;
                 const complex_t a = xq[0];
@@ -125,7 +133,9 @@ void invbut(int N, complex_t* const x, const complex_t* const W)
             }
         }
         else {
+#ifdef _OPENMP
             #pragma omp parallel for schedule(static)
+#endif
             for (int q = 0; q < N; q += n) {
                 complex_t* const xq = x + q;
                 for (int p = 0; p < n1; p++) {
@@ -160,7 +170,9 @@ void invbut(int N, complex_t* const x, const complex_t* const W)
             }
         }
         else {
+#ifdef _OPENMP
             #pragma omp parallel for schedule(static)
+#endif
             for (int q = 0; q < N; q += 2) {
                 complex_t* const xq = x + q;
                 const complex_t a = xq[0];
@@ -204,14 +216,20 @@ struct FFT
             }
         }
         else
+#ifdef _OPENMP
         #pragma omp parallel
+#endif
         {
+#ifdef _OPENMP
             #pragma omp for schedule(static)
+#endif
             for (int p = 0; p < N; p++) {
                 const int q = bitrev[p];
                 if (p > q) std::swap(x[p], x[q]);
             }
-            #pragma omp for schedule(static)
+#ifdef _OPENMP
+            #pragma omp for schedule(static) nowait
+#endif
             for (int p = 0; p < N; p++) x[p] *= rN;
         }
     }
@@ -226,7 +244,9 @@ struct FFT
             }
         }
         else {
+#ifdef _OPENMP
             #pragma omp parallel for schedule(static)
+#endif
             for (int p = 0; p < N; p++) {
                 const int q = bitrev[p];
                 if (p > q) std::swap(x[p], x[q]);
@@ -248,7 +268,9 @@ struct FFT
             }
         }
         else {
+#ifdef _OPENMP
             #pragma omp parallel for schedule(static)
+#endif
             for (int p = 0; p < N; p++) {
                 const int q = bitrev[p];
                 if (p > q) std::swap(x[p], x[q]);
@@ -270,14 +292,20 @@ struct FFT
             }
         }
         else
+#ifdef _OPENMP
         #pragma omp parallel
+#endif
         {
+#ifdef _OPENMP
             #pragma omp for schedule(static)
+#endif
             for (int p = 0; p < N; p++) {
                 const int q = bitrev[p];
                 if (p > q) std::swap(x[p], x[q]);
             }
-            #pragma omp for schedule(static)
+#ifdef _OPENMP
+            #pragma omp for schedule(static) nowait
+#endif
             for (int p = 0; p < N; p++) x[p] *= rN;
         }
     }

@@ -1,13 +1,19 @@
 # -*- makefile-gmake -*-
 # otfft/src/Makefile
 
-VERSION:=5.4
-VERSION_MAJOR:=5
+VERSION:=6.0
+VERSION_MAJOR:=6
 #------------------------------------------------------------------------------
 
 include config.mk
 
 ffttune_LIBS:=
+
+ifeq ($(CXX),icpc)
+  CXXFLAGS+=-std=c++11
+else
+  CXXFLAGS+=-std=gnu++0x
+endif
 
 ifeq ($(USE_OPENMP),yes)
   ifeq ($(CXX),icpc)
@@ -27,11 +33,14 @@ HEADERS1 = \
   otfft_avxdif4omp.h \
   otfft_avxdif8.h \
   otfft_avxdif8omp.h \
-  otfft_avxdifx.h \
   otfft_avxdit4.h \
   otfft_avxdit4omp.h \
   otfft_avxdit8.h \
   otfft_avxdit8omp.h \
+  otfft_avxdit16.h \
+  otfft_avxdit16omp.h \
+  otfft_avxdif16.h \
+  otfft_avxdif16omp.h \
   otfft_sixstep.h \
   otfft_sixstep0r.h \
   otfft_sixstepnr.h \
@@ -125,7 +134,7 @@ $(INSDIR)/lib/$(libotfft_MajorName) $(INSDIR)/lib/libotfft.so: $(INSDIR)/lib/$(l
 utilcheck: $(OUTDIR)/utilcheck.exe
 	$<
 $(OUTDIR)/utilcheck.exe: $(OUTDIR)/utilcheck.o | $(OUTDIR)/libotfft.so
-	g++ -o $@ $^ -L $(OUTDIR) -Wl,-R,$(OUTDIR) -lotfft
+	$(CXX) -o $@ $^ -L $(OUTDIR) -Wl,-R,$(OUTDIR) -lotfft
 -include $(OUTDIR)/utilcheck.d
 $(OUTDIR)/utilcheck.o: utilcheck.cpp util.h
-	g++ $(CXXFLAGS) -c -o $@ -MD -MF $(OUTDIR)/utilcheck.d -I $(OUTINC) -I . $<
+	$(CXX) $(CXXFLAGS) -c -o $@ -MD -MF $(OUTDIR)/utilcheck.d -I $(OUTINC) -I . $<

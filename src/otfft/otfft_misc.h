@@ -1,5 +1,9 @@
 /******************************************************************************
-*  FFT Miscellaneous Routines Version 5.4
+*  FFT Miscellaneous Routines Version 6.0
+*
+*  Copyright (c) 2015 OK Ojisan(Takuya OKAHISA)
+*  Released under the MIT license
+*  http://opensource.org/licenses/mit-license.php
 ******************************************************************************/
 
 #ifndef otfft_misc_h
@@ -19,6 +23,10 @@
 #ifndef M_SQRT1_2
 #define M_SQRT1_2 0.707106781186547524400844362104849039
 #endif
+
+#define RSQRT2PSQRT2 0.541196100146196984405268931572763336
+#define H1X ( 0.923879532511286762010323247995557949)
+#define H1Y (-0.382683432365089757574419179753100195)
 
 #if (__GNUC__ >= 3)
 //#define force_inline
@@ -321,7 +329,6 @@ static inline xmm xorpd(const xmm a, const xmm b) force_inline;
 static inline xmm xorpd(const xmm a, const xmm b) { return _mm_xor_pd(a, b); }
 
 #if defined(__SSE3__) && defined(USE_INTRINSIC)
-
 } // namespace OTFFT_MISC
 
 extern "C" {
@@ -369,6 +376,42 @@ static inline xmm w8xpz(const xmm xy)
     return _mm_mul_pd(rr, _mm_add_pd(xy, ymx));
 }
 
+static inline xmm h1xpz(const xmm xy) force_inline;
+static inline xmm h1xpz(const xmm xy)
+{
+    static const xmm rr = { RSQRT2PSQRT2, RSQRT2PSQRT2 };
+    const xmm w8xy = w8xpz(xy);
+    return _mm_mul_pd(rr, _mm_add_pd(xy, w8xy));
+}
+
+static inline xmm h3xpz(const xmm xy) force_inline;
+static inline xmm h3xpz(const xmm xy)
+{
+    static const xmm r1 = { M_SQRT1_2, M_SQRT1_2 };
+    static const xmm r2 = { RSQRT2PSQRT2, RSQRT2PSQRT2 };
+    const xmm ymx = cnjpz(_mm_shuffle_pd(xy, xy, 5));
+    const xmm w8xy = _mm_mul_pd(r1, _mm_add_pd(xy, ymx));
+    return _mm_mul_pd(r2, _mm_add_pd(ymx, w8xy));
+}
+
+static inline xmm hfxpz(const xmm xy) force_inline;
+static inline xmm hfxpz(const xmm xy)
+{
+    static const xmm rr = { RSQRT2PSQRT2, RSQRT2PSQRT2 };
+    const xmm v8xy = v8xpz(xy);
+    return _mm_mul_pd(rr, _mm_add_pd(xy, v8xy));
+}
+
+static inline xmm hdxpz(const xmm xy) force_inline;
+static inline xmm hdxpz(const xmm xy)
+{
+    static const xmm r1 = { M_SQRT1_2, M_SQRT1_2 };
+    static const xmm r2 = { RSQRT2PSQRT2, RSQRT2PSQRT2 };
+    const xmm myx = jxpz(xy);
+    const xmm v8xy = _mm_mul_pd(r1, _mm_add_pd(xy, myx));
+    return _mm_mul_pd(r2, _mm_add_pd(myx, v8xy));
+}
+
 #else // __SSE2__
 
 static inline xmm haddpz(const xmm ab, const xmm xy) force_inline;
@@ -411,6 +454,42 @@ static inline xmm w8xpz(const xmm xy)
     static const xmm rr = { M_SQRT1_2, M_SQRT1_2 };
     const xmm ymx = cnjpz(_mm_shuffle_pd(xy, xy, 1));
     return _mm_mul_pd(rr, _mm_add_pd(xy, ymx));
+}
+
+static inline xmm h1xpz(const xmm xy) force_inline;
+static inline xmm h1xpz(const xmm xy)
+{
+    static const xmm rr = { RSQRT2PSQRT2, RSQRT2PSQRT2 };
+    const xmm w8xy = w8xpz(xy);
+    return _mm_mul_pd(rr, _mm_add_pd(xy, w8xy));
+}
+
+static inline xmm h3xpz(const xmm xy) force_inline;
+static inline xmm h3xpz(const xmm xy)
+{
+    static const xmm r1 = { M_SQRT1_2, M_SQRT1_2 };
+    static const xmm r2 = { RSQRT2PSQRT2, RSQRT2PSQRT2 };
+    const xmm ymx = cnjpz(_mm_shuffle_pd(xy, xy, 1));
+    const xmm w8xy = _mm_mul_pd(r1, _mm_add_pd(xy, ymx));
+    return _mm_mul_pd(r2, _mm_add_pd(ymx, w8xy));
+}
+
+static inline xmm hfxpz(const xmm xy) force_inline;
+static inline xmm hfxpz(const xmm xy)
+{
+    static const xmm rr = { RSQRT2PSQRT2, RSQRT2PSQRT2 };
+    const xmm v8xy = v8xpz(xy);
+    return _mm_mul_pd(rr, _mm_add_pd(xy, v8xy));
+}
+
+static inline xmm hdxpz(const xmm xy) force_inline;
+static inline xmm hdxpz(const xmm xy)
+{
+    static const xmm r1 = { M_SQRT1_2, M_SQRT1_2 };
+    static const xmm r2 = { RSQRT2PSQRT2, RSQRT2PSQRT2 };
+    const xmm myx = jxpz(xy);
+    const xmm v8xy = _mm_mul_pd(r1, _mm_add_pd(xy, myx));
+    return _mm_mul_pd(r2, _mm_add_pd(myx, v8xy));
 }
 
 #endif // __SSE3__
@@ -531,6 +610,42 @@ static inline xmm haddpz(const xmm& ab, const xmm& xy)
 {
     const xmm x = { ab.Re + ab.Im, xy.Re + xy.Im };
     return x;
+}
+
+static inline xmm h1xpz(const xmm& z) force_inline;
+static inline xmm h1xpz(const xmm& z)
+{
+    static const xmm r = { RSQRT2PSQRT2, RSQRT2PSQRT2 };
+    const xmm w8z = w8xpz(z);
+    return mulpd(r, addpz(z, w8z));
+}
+
+static inline xmm h3xpz(const xmm& z) force_inline;
+static inline xmm h3xpz(const xmm& z)
+{
+    static const xmm r1 = { M_SQRT1_2, M_SQRT1_2 };
+    static const xmm r2 = { RSQRT2PSQRT2, RSQRT2PSQRT2 };
+    const xmm mjz = { z.Im, -z.Re };
+    const xmm w8z = mulpd(r1, addpz(z, mjz));
+    return mulpd(r2, addpz(mjz, w8z));
+}
+
+static inline xmm hfxpz(const xmm& z) force_inline;
+static inline xmm hfxpz(const xmm& z)
+{
+    static const xmm r = { RSQRT2PSQRT2, RSQRT2PSQRT2 };
+    const xmm v8z = v8xpz(z);
+    return mulpd(r, addpz(z, v8z));
+}
+
+static inline xmm hdxpz(const xmm& z) force_inline;
+static inline xmm hdxpz(const xmm& z)
+{
+    static const xmm r1 = { M_SQRT1_2, M_SQRT1_2 };
+    static const xmm r2 = { RSQRT2PSQRT2, RSQRT2PSQRT2 };
+    const xmm jz = jxpz(z);
+    const xmm v8z = mulpd(r1, addpz(z, jz));
+    return mulpd(r2, addpz(jz, v8z));
 }
 
 static inline void* simd_malloc(int ns) { return malloc(ns); }
@@ -663,6 +778,62 @@ static inline ymm divpz2(const ymm ab, const ymm xy)
     const ymm x2y2 = _mm256_mul_pd(xy, xy);
     const ymm r2r2 = _mm256_hadd_pd(x2y2, x2y2);
     return _mm256_div_pd(mulpz2(ab, cnjpz2(xy)), r2r2);
+}
+
+static inline ymm h1xpz2(const ymm xy) force_inline;
+static inline ymm h1xpz2(const ymm xy)
+{
+#if 1
+    static const ymm rr = { RSQRT2PSQRT2, RSQRT2PSQRT2, RSQRT2PSQRT2, RSQRT2PSQRT2 };
+    const ymm w8xy = w8xpz2(xy);
+    return _mm256_mul_pd(rr, _mm256_add_pd(xy, w8xy));
+#else
+    static const ymm h1 = { H1X, H1Y, H1X, H1Y };
+    return mulpz2(h1, xy);
+#endif
+}
+
+static inline ymm h3xpz2(const ymm xy) force_inline;
+static inline ymm h3xpz2(const ymm xy)
+{
+#if 1
+    static const ymm r1 = { M_SQRT1_2, M_SQRT1_2, M_SQRT1_2, M_SQRT1_2 };
+    static const ymm r2 = { RSQRT2PSQRT2, RSQRT2PSQRT2, RSQRT2PSQRT2, RSQRT2PSQRT2 };
+    const ymm ymx = cnjpz2(_mm256_shuffle_pd(xy, xy, 5));
+    const ymm w8xy = _mm256_mul_pd(r1, _mm256_add_pd(xy, ymx));
+    return _mm256_mul_pd(r2, _mm256_add_pd(ymx, w8xy));
+#else
+    static const ymm h3 = { -H1Y, -H1X, -H1Y, -H1X };
+    return mulpz2(h3, xy);
+#endif
+}
+
+static inline ymm hfxpz2(const ymm xy) force_inline;
+static inline ymm hfxpz2(const ymm xy)
+{
+#if 1
+    static const ymm rr = { RSQRT2PSQRT2, RSQRT2PSQRT2, RSQRT2PSQRT2, RSQRT2PSQRT2 };
+    const ymm v8xy = v8xpz2(xy);
+    return _mm256_mul_pd(rr, _mm256_add_pd(xy, v8xy));
+#else
+    static const ymm hf = { H1X, -H1Y, H1X, -H1Y };
+    return mulpz2(hf, xy);
+#endif
+}
+
+static inline ymm hdxpz2(const ymm xy) force_inline;
+static inline ymm hdxpz2(const ymm xy)
+{
+#if 1
+    static const ymm r1 = { M_SQRT1_2, M_SQRT1_2, M_SQRT1_2, M_SQRT1_2 };
+    static const ymm r2 = { RSQRT2PSQRT2, RSQRT2PSQRT2, RSQRT2PSQRT2, RSQRT2PSQRT2 };
+    const ymm myx = jxpz2(xy);
+    const ymm v8xy = _mm256_mul_pd(r1, _mm256_add_pd(xy, myx));
+    return _mm256_mul_pd(r2, _mm256_add_pd(myx, v8xy));
+#else
+    static const ymm hd = { -H1Y, H1X, -H1Y, H1X };
+    return mulpz2(hd, xy);
+#endif
 }
 
 static inline ymm duppz2(const xmm x) force_inline;
@@ -834,6 +1005,34 @@ static inline ymm w8xpz2(const ymm& xy) force_inline;
 static inline ymm w8xpz2(const ymm& xy)
 {
     const ymm y = { w8xpz(xy.lo), w8xpz(xy.hi) };
+    return y;
+}
+
+static inline ymm h1xpz2(const ymm& xy) force_inline;
+static inline ymm h1xpz2(const ymm& xy)
+{
+    const ymm y = { h1xpz(xy.lo), h1xpz(xy.hi) };
+    return y;
+}
+
+static inline ymm h3xpz2(const ymm& xy) force_inline;
+static inline ymm h3xpz2(const ymm& xy)
+{
+    const ymm y = { h3xpz(xy.lo), h3xpz(xy.hi) };
+    return y;
+}
+
+static inline ymm hfxpz2(const ymm& xy) force_inline;
+static inline ymm hfxpz2(const ymm& xy)
+{
+    const ymm y = { hfxpz(xy.lo), hfxpz(xy.hi) };
+    return y;
+}
+
+static inline ymm hdxpz2(const ymm& xy) force_inline;
+static inline ymm hdxpz2(const ymm& xy)
+{
+    const ymm y = { hdxpz(xy.lo), hdxpz(xy.hi) };
     return y;
 }
 

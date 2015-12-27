@@ -1,3 +1,9 @@
+/******************************************************************************
+*  Copyright (c) 2015 OK Ojisan(Takuya OKAHISA)
+*  Released under the MIT license
+*  http://opensource.org/licenses/mit-license.php
+******************************************************************************/
+
 #ifndef stopwatch_h
 #define stopwatch_h
 
@@ -44,16 +50,6 @@ inline double usec(const counter_t& dt)
 
 #endif // _MSC_VER || __WINNT__
 
-#ifdef _MSC_VER
-static inline void sleep(int n) { Sleep(1000 * n); }
-static inline void msleep(int n) { Sleep(n); }
-#elif defined(__WINNT__)
-#include <windows.h>
-static inline void sleep(int n) { Sleep(1000 * n); }
-static inline void msleep(int n) { Sleep(n); }
-#else
-#include <unistd.h>
-static inline void msleep(int n) { usleep(1000 * n); }
-#endif
+#include "msleep.h"
 
 #endif // stopwatch_h

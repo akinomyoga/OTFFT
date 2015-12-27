@@ -1,5 +1,9 @@
 /******************************************************************************
-*  FFT Tuning Command Version 5.4
+*  FFT Tuning Command Version 6.0
+*
+*  Copyright (c) 2015 OK Ojisan(Takuya OKAHISA)
+*  Released under the MIT license
+*  http://opensource.org/licenses/mit-license.php
 ******************************************************************************/
 
 #include <cstdio>
@@ -12,7 +16,16 @@
 #include "otfft_avxdif8.h"
 #include "otfft_avxdit8.h"
 #include "otfft_sixstep.h"
+#include "otfft_avxdif16.h"
+#include "otfft_avxdit16.h"
+
+#ifdef DONT_USE_chrono
 #include "otfft/stopwatch.h"
+#else
+#include <chrono>
+#include "otfft/msleep.h"
+#endif
+
 using namespace OTFFT_MISC;
 
 #ifdef __AVX__
@@ -26,6 +39,7 @@ using namespace OTFFT_MISC;
 #define DELAY1 1
 #define DELAY2 100
 
+#ifdef DONT_USE_chrono
 template <class FFT>
 double laptime(int LOOPS, int TRIES, const FFT& fft, complex_t *x, complex_t *y)
 {
@@ -55,16 +69,52 @@ double laptime(int LOOPS, int TRIES, const FFT& fft, complex_t *x, complex_t *y)
         const double d = dt[i] - m;
         if (d*d <= 2*ss) { sum += dt[i]; n++; }
     }
-    printf("%10.2f,", usec(sum)/n/LOOPS);
+    printf("%9.2f", usec(sum)/n/LOOPS);
     return double(sum)/n;
 }
+#else
+template <class FFT>
+double laptime(int LOOPS, int TRIES, const FFT& fft, complex_t *x, complex_t *y)
+{
+    using namespace std::chrono;
+    typedef long long counter_t;
+    counter_t sum = 0;
+    std::vector<counter_t> dt(TRIES);
+    for (int i = 0; i < TRIES; i++) {
+        speedup_magic();
+        const system_clock::time_point t1 = system_clock::now();
+        for (int j = 0; j < LOOPS; j++) {
+            fft.fwd(x, y);
+            fft.inv(x, y);
+        }
+        const system_clock::time_point t2 = system_clock::now();
+        sum += (dt[i] = duration_cast<microseconds>(t2 - t1).count());
+        msleep(DELAY1);
+    }
+    const double m = double(sum)/TRIES;
+    double sum_dd = 0;
+    for (int i = 0; i < TRIES; i++) {
+        const double d = dt[i] - m;
+        sum_dd += d*d;
+    }
+    const double ss = sum_dd/TRIES;
+    sum = 0;
+    int n = 0;
+    for (int i = 0; i < TRIES; i++) {
+        const double d = dt[i] - m;
+        if (d*d <= 2*ss) { sum += dt[i]; n++; }
+    }
+    printf("%9.2f", double(sum)/n/LOOPS);
+    return double(sum)/n;
+}
+#endif // DONT_USE_chrono
 
 int main() try
 {
     static const int n_min  = 1;
     static const int n_max  = N_MAX;
     static const int N_max  = 1 << n_max;
-    static const int Nn_max = N_max * n_max;
+    static const int nN_max = n_max * N_max;
 
     setbuf(stdout, NULL);
     FILE* fp1 = fopen("otfft_setup.h", "w");
@@ -81,7 +131,7 @@ int main() try
     complex_vector y = (complex_vector) simd_malloc(N_max*sizeof(complex_t));
     for (int n = n_min; n <= n_max; n++) {
         const int N = 1 << n;
-        const int LOOPS = Nn_max/(N*n);
+        const int LOOPS = nN_max/(n*N);
         const int TRIES = (std::min)(70, n*FACTOR);
         double lap, tmp;
         OTFFT_AVXDIF4::FFT0 fft1(N);
@@ -89,7 +139,8 @@ int main() try
         OTFFT_AVXDIF8::FFT0 fft3(N);
         OTFFT_AVXDIT8::FFT0 fft4(N);
         OTFFT_Sixstep::FFT0 fft5(N);
-        //OTFFT_Sixstep::FFT1 fft6(N);
+        OTFFT_AVXDIF16::FFT0 fft6(N);
+        OTFFT_AVXDIT16::FFT0 fft7(N);
         int fft_num = 1;
 
         for (int p = 0; p < N; p++) {
@@ -125,12 +176,15 @@ int main() try
 
         msleep(DELAY2);
 
-        /*
         tmp = laptime(LOOPS, TRIES, fft6, x, y);
         if (tmp < lap) { lap = tmp; fft_num = 6; }
 
         msleep(DELAY2);
-        */
+
+        tmp = laptime(LOOPS, TRIES, fft7, x, y);
+        if (tmp < lap) { lap = tmp; fft_num = 7; }
+
+        msleep(DELAY2);
 
         fprintf(fp1, "case %2d: fft%d->setup2(log_N); break;\n", n, fft_num);
         fprintf(fp2, "case %2d: fft%d->fwd(x, y); break;\n",     n, fft_num);

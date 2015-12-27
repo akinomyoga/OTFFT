@@ -1,5 +1,9 @@
 /******************************************************************************
-*  OOURA FFT 1
+*  C++ Wrapper 1 for OOURA FFT
+*
+*  Copyright (c) 2015 OK Ojisan(Takuya OKAHISA)
+*  Released under the MIT license
+*  http://opensource.org/licenses/mit-license.php
 ******************************************************************************/
 
 #ifndef ooura1_h

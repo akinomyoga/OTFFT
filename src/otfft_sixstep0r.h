@@ -1,5 +1,9 @@
 /******************************************************************************
-*  OTFFT Sixstep of Rectangle Version 5.4
+*  OTFFT Sixstep of Rectangle Version 6.0
+*
+*  Copyright (c) 2015 OK Ojisan(Takuya OKAHISA)
+*  Released under the MIT license
+*  http://opensource.org/licenses/mit-license.php
 ******************************************************************************/
 
 #ifndef otfft_sixstep0r_h

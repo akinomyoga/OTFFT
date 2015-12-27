@@ -1,5 +1,9 @@
 /******************************************************************************
-*  OTFFT Sixstep of Square Version 5.4
+*  OTFFT Sixstep of Square Version 6.0
+*
+*  Copyright (c) 2015 OK Ojisan(Takuya OKAHISA)
+*  Released under the MIT license
+*  http://opensource.org/licenses/mit-license.php
 ******************************************************************************/
 
 #ifndef otfft_sixstep0s_h

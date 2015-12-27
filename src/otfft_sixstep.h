@@ -1,5 +1,9 @@
 /******************************************************************************
-*  OTFFT Sixstep Version 5.4
+*  OTFFT Sixstep Version 6.0
+*
+*  Copyright (c) 2015 OK Ojisan(Takuya OKAHISA)
+*  Released under the MIT license
+*  http://opensource.org/licenses/mit-license.php
 ******************************************************************************/
 
 #ifndef otfft_sixstep_h
@@ -7,7 +11,7 @@
 
 #include "otfft/otfft_misc.h"
 #include "otfft_avxdif8.h"
-//#include "otfft_avxdifx.h"
+#include "otfft_avxdif16.h"
 
 namespace OTFFT_Sixstep { /////////////////////////////////////////////////////
 
@@ -57,7 +61,7 @@ struct FFT0
         weight.setup(N+1); W = &weight; init_W(N, W);
         if (n < 4) {}
         else if ((n & 1) == 1) {
-            const int m = 1 << n/2-1;
+            const int m = 1 << (n/2-1);
             weight_sub.setup(m+1); Ws = &weight_sub; init_W(m, Ws);
             index.setup(m/2*(m/2+1)/2); ip = &index;
             int i = 0;
@@ -88,9 +92,9 @@ struct FFT0
     {
         switch (log_N) {
             case  0: break;
-            case  1: OTFFT_AVXDIF8::fwdnfft<1<<1,1,0>()(x, y, W); break;
-            case  2: OTFFT_AVXDIF8::fwdnfft<1<<2,1,0>()(x, y, W); break;
-            case  3: OTFFT_AVXDIF8::fwdnfft<1<<3,1,0>()(x, y, W); break;
+            case  1: OTFFT_AVXDIF8::fwdnfft<(1<<1),1,0>()(x, y, W); break;
+            case  2: OTFFT_AVXDIF8::fwdnfft<(1<<2),1,0>()(x, y, W); break;
+            case  3: OTFFT_AVXDIF8::fwdnfft<(1<<3),1,0>()(x, y, W); break;
             case  4: fwdnffts< 4>()(ip, x, y, W, Ws); break;
             case  5: fwdnfftq< 5>()(ip, x, y, W, Ws); break;
             case  6: fwdnffts< 6>()(ip, x, y, W, Ws); break;
@@ -119,9 +123,9 @@ struct FFT0
     {
         switch (log_N) {
             case  0: break;
-            case  1: OTFFT_AVXDIF8::fwd0fft<1<<1,1,0>()(x, y, W); break;
-            case  2: OTFFT_AVXDIF8::fwd0fft<1<<2,1,0>()(x, y, W); break;
-            case  3: OTFFT_AVXDIF8::fwd0fft<1<<3,1,0>()(x, y, W); break;
+            case  1: OTFFT_AVXDIF8::fwd0fft<(1<<1),1,0>()(x, y, W); break;
+            case  2: OTFFT_AVXDIF8::fwd0fft<(1<<2),1,0>()(x, y, W); break;
+            case  3: OTFFT_AVXDIF8::fwd0fft<(1<<3),1,0>()(x, y, W); break;
             case  4: fwd0ffts< 4>()(ip, x, y, W, Ws); break;
             case  5: fwd0fftq< 5>()(ip, x, y, W, Ws); break;
             case  6: fwd0ffts< 6>()(ip, x, y, W, Ws); break;
@@ -152,9 +156,9 @@ struct FFT0
     {
         switch (log_N) {
             case  0: break;
-            case  1: OTFFT_AVXDIF8::inv0fft<1<<1,1,0>()(x, y, W); break;
-            case  2: OTFFT_AVXDIF8::inv0fft<1<<2,1,0>()(x, y, W); break;
-            case  3: OTFFT_AVXDIF8::inv0fft<1<<3,1,0>()(x, y, W); break;
+            case  1: OTFFT_AVXDIF8::inv0fft<(1<<1),1,0>()(x, y, W); break;
+            case  2: OTFFT_AVXDIF8::inv0fft<(1<<2),1,0>()(x, y, W); break;
+            case  3: OTFFT_AVXDIF8::inv0fft<(1<<3),1,0>()(x, y, W); break;
             case  4: inv0ffts< 4>()(ip, x, y, W, Ws); break;
             case  5: inv0fftq< 5>()(ip, x, y, W, Ws); break;
             case  6: inv0ffts< 6>()(ip, x, y, W, Ws); break;
@@ -185,9 +189,9 @@ struct FFT0
     {
         switch (log_N) {
             case  0: break;
-            case  1: OTFFT_AVXDIF8::invnfft<1<<1,1,0>()(x, y, W); break;
-            case  2: OTFFT_AVXDIF8::invnfft<1<<2,1,0>()(x, y, W); break;
-            case  3: OTFFT_AVXDIF8::invnfft<1<<3,1,0>()(x, y, W); break;
+            case  1: OTFFT_AVXDIF8::invnfft<(1<<1),1,0>()(x, y, W); break;
+            case  2: OTFFT_AVXDIF8::invnfft<(1<<2),1,0>()(x, y, W); break;
+            case  3: OTFFT_AVXDIF8::invnfft<(1<<3),1,0>()(x, y, W); break;
             case  4: invnffts< 4>()(ip, x, y, W, Ws); break;
             case  5: invnfftq< 5>()(ip, x, y, W, Ws); break;
             case  6: invnffts< 6>()(ip, x, y, W, Ws); break;

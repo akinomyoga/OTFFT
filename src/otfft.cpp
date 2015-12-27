@@ -1,5 +1,9 @@
 /******************************************************************************
-*  OTFFT Implementation Version 5.4
+*  OTFFT Implementation Version 6.0
+*
+*  Copyright (c) 2015 OK Ojisan(Takuya OKAHISA)
+*  Released under the MIT license
+*  http://opensource.org/licenses/mit-license.php
 ******************************************************************************/
 
 #include <stdint.h>
@@ -9,6 +13,8 @@
 #include "otfft_avxdif8.h"
 #include "otfft_avxdit8.h"
 #include "otfft_sixstep.h"
+#include "otfft_avxdif16.h"
+#include "otfft_avxdit16.h"
 
 namespace OTFFT { /////////////////////////////////////////////////////////////
 
@@ -17,26 +23,28 @@ namespace OTFFT { /////////////////////////////////////////////////////////////
 ******************************************************************************/
 
     FFT0::FFT0() try : N(0), log_N(0),
-        fft1(0), fft2(0), fft3(0), fft4(0), fft5(0) //, fft6(0)
+        fft1(0), fft2(0), fft3(0), fft4(0), fft5(0), fft6(0), fft7(0)
     {
         fft1 = new OTFFT_AVXDIF4::FFT0();
         fft2 = new OTFFT_AVXDIT4::FFT0();
         fft3 = new OTFFT_AVXDIF8::FFT0();
         fft4 = new OTFFT_AVXDIT8::FFT0();
         fft5 = new OTFFT_Sixstep::FFT0();
-        //fft6 = new OTFFT_Sixstep::FFT1();
+        fft6 = new OTFFT_AVXDIF16::FFT0();
+        fft7 = new OTFFT_AVXDIT16::FFT0();
     }
     catch (...) { this->~FFT0(); throw; }
 
     FFT0::FFT0(int n) try :
-        fft1(0), fft2(0), fft3(0), fft4(0), fft5(0) //, fft6(0)
+        fft1(0), fft2(0), fft3(0), fft4(0), fft5(0), fft6(0), fft7(0)
     {
         fft1 = new OTFFT_AVXDIF4::FFT0();
         fft2 = new OTFFT_AVXDIT4::FFT0();
         fft3 = new OTFFT_AVXDIF8::FFT0();
         fft4 = new OTFFT_AVXDIT8::FFT0();
         fft5 = new OTFFT_Sixstep::FFT0();
-        //fft6 = new OTFFT_Sixstep::FFT1();
+        fft6 = new OTFFT_AVXDIF16::FFT0();
+        fft7 = new OTFFT_AVXDIT16::FFT0();
         setup(n);
     }
     catch (...) { this->~FFT0(); throw; }
@@ -48,7 +56,8 @@ namespace OTFFT { /////////////////////////////////////////////////////////////
         delete fft3;
         delete fft4;
         delete fft5;
-        //delete fft6;
+        delete fft6;
+        delete fft7;
     }
 
     void FFT0::setup(int n)

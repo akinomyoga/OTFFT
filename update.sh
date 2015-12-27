@@ -23,15 +23,42 @@ function dispatch.modify-source {
     echo "$prog: the specified directory, $src, does not seem to be an original otfft directory." >&2
     return 1
   fi
+  if [[ -d $src/src ]]; then
+    echo "$prog: source has been already modified." >&2
+    return 1
+  fi
 
   #sed -i 's/^[[:space:]]*#pragma[[:space:]]\{1,\}omp[[:space:]]\{1,\}.*$/#ifdef _OPENMP\n&\n#endif/g' "$src"/*.h "$src"/*.cpp "$src"/otfft/*.h
-  refact '^[[:space:]]*#pragma[[:space:]]+omp[[:space:]]+.*$' '#ifdef _OPENMP\n&\n#endif' "$src"/*.h "$src"/*.cpp "$src"/otfft/*.h
-  refact '\b(otfft|otfft_misc|stopwatch)\.h\b' 'otfft/&' "$src"/otfft/*.h "$src"/otfft/*.cpp
+
+  mv "$src"/otfft "$src"/src
+  mkdir -p "$src"/src/otfft
+  mv "$src"/src/{stopwatch,otfft,otfft_misc}.h "$src"/src/otfft
+  mkdir -p "$src"/check
+  mv "$src"/{{fft,rfft,bst,dct}check.cpp,fftbench{1,2}.cpp,simple_fft.h,cpp_fftw3.h,ooura{1,2}.h} "$src"/check
+  mkdir -p "$src"/out/include
+  mv "$src"/src/otfft_{fwd,fwd0,inv,invn,setup}.h "$src"/out/include
+  refact '^[[:space:]]*#pragma[[:space:]]+omp[[:space:]]+.*$' '#ifdef _OPENMP\n&\n#endif' "$src"/{src,check}/*.{h,cpp} "$src"/src/otfft/*.h
+  refact '[[:space:]]+$' '' "$src"/{src,check}/*.{h,cpp} "$src"/src/otfft/*.h
+  refact '\b(otfft|otfft_misc|msleep|stopwatch)\.h\b' 'otfft/&' "$src"/{src,check}/*.{h,cpp}
+
+}
+
+function dispatch.diff {
+  local src=${1:-otfft-5.4.20151111}
+  local dst=${2:-otfft-6.0.20151226}
+  src=${src%/} dst=${dst%/}
+  find $src > $src.lst
+  find $dst > $dst.lst
+  sed -i s,[^/]*/,, $src.lst $dst.lst
+  diff -bwu $src.lst $dst.lst
 }
 
 function dispatch.help {
-  echo "usage: $prog help|original-web|modify-source"
+  local commands=($(declare -f | sed -n 's/^dispatch\.\([^[:space:]]*\) ()[[:space:]]*/\1/p'))
+  IFS="|" eval 'commands="${commands[*]}"'
+  echo "usage: $prog $commands"
 }
+
 
 prog="${0##*/}"
 

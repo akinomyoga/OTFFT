@@ -12,7 +12,15 @@
 #include "ooura1.h"
 #include "simple_fft.h"
 #include "otfft/otfft.h"
+
+#ifdef DONT_USE_chrono
 #include "otfft/stopwatch.h"
+#else
+#include <chrono>
+#include "otfft/msleep.h"
+typedef long long counter_t;
+#endif
+
 using OTFFT::complex_t;
 using OTFFT::simd_malloc;
 using OTFFT::simd_free;
@@ -49,7 +57,8 @@ double safe_avr(const std::vector<counter_t>& dt) // 異常値を含まない平
     return double(sum)/n;
 }
 
-template <class FFT, class IFFT>
+#ifdef DONT_USE_chrono
+template <typename FFT, typename IFFT>
 double laptime1(int LOOPS, int TRIES, const FFT& fft, const IFFT& ifft)
 {
     std::vector<counter_t> dt(TRIES);
@@ -66,7 +75,7 @@ double laptime1(int LOOPS, int TRIES, const FFT& fft, const IFFT& ifft)
     return usec(rint(safe_avr(dt)));
 }
 
-template <class FFT>
+template <typename FFT>
 double laptime2(int LOOPS, int TRIES, const FFT& fft, complex_t *x)
 {
     std::vector<counter_t> dt(TRIES);
@@ -82,6 +91,43 @@ double laptime2(int LOOPS, int TRIES, const FFT& fft, complex_t *x)
     }
     return usec(rint(safe_avr(dt)));
 }
+#else
+template <typename FFT, typename IFFT>
+double laptime1(int LOOPS, int TRIES, const FFT& fft, const IFFT& ifft)
+{
+    using namespace std::chrono;
+    std::vector<counter_t> dt(TRIES);
+    for (int i = 0; i < TRIES; i++) {
+        const system_clock::time_point t1 = system_clock::now();
+        for (int j = 0; j < LOOPS; j++) {
+            fft();
+            ifft();
+        }
+        const system_clock::time_point t2 = system_clock::now();
+        dt[i] = duration_cast<microseconds>(t2 - t1).count();
+        msleep(DELAY1);
+    }
+    return safe_avr(dt);
+}
+
+template <typename FFT>
+double laptime2(int LOOPS, int TRIES, const FFT& fft, complex_t *x)
+{
+    using namespace std::chrono;
+    std::vector<counter_t> dt(TRIES);
+    for (int i = 0; i < TRIES; i++) {
+        const system_clock::time_point t1 = system_clock::now();
+        for (int j = 0; j < LOOPS; j++) {
+            fft.fwd(x);
+            fft.inv(x);
+        }
+        const system_clock::time_point t2 = system_clock::now();
+        dt[i] = duration_cast<microseconds>(t2 - t1).count();
+        msleep(DELAY1);
+    }
+    return safe_avr(dt);
+}
+#endif // DONT_USE_chrono
 
 int main(int argc, char *argv[]) try
 {
