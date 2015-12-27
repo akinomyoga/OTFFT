@@ -3,6 +3,9 @@
 
 #####★★★OKおじさん様へ: この様な場にて失礼致します。御質問させていただきたいことがあるのですが、okahisa/ サイト内に連絡先を見つけることができませんでした。もしこちらにお気付きでしたら myoga.murase at gmail.com 宛てに連絡先を教えて頂けると幸いに存じます。★★★
 
+##ライセンス
+the MIT License
+
 ##使い方
 
 例:
@@ -14,6 +17,7 @@ g++ -march=native -I $PREFIX/include -c prog.cpp
 g++ -march=native -o prog prog.o -L $PREFIX/lib -lotfft -Wl,-R,$PREFIX/lib
 ```
 
+----
 以下はオリジナル OTFFT の README です。
 
 This software is released under the MIT License, see LICENSE.txt.
