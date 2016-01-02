@@ -46,7 +46,8 @@
 せっかく高速な Stockham FFT アルゴリズムを導いたのですから、
 実際にそれを使ったらどうなるか試してみたいですよね。
 そこで、Stockham のアルゴリズムを用いた FFT ライブラリを作ってみました。
-その名も OTFFT です。実はこっそり Sixstep FFT アルゴリズムも使ってます。
+その名も OTFFT です(OK おじさん Template FFT の略)。
+実はこっそり Sixstep FFT アルゴリズムも使ってます。
 Sixstep FFT に関しては適当にググってみてください。
 その他、アルゴリズムではありませんが、
 C++ の template によるメタプログラミング技法を駆使し、
@@ -59,23 +60,22 @@ C++ の template によるメタプログラミング技法を駆使し、
 でも、本当なんですよ。
 まあ、特定の CPU 特定の系列長に限っての話ですけどね<code>(^^;</code>
 </P>
-<H3 STYLE="color:green">※注</H3>
-<P STYLE="color:green">
-　OTFFT は、Linux Mint 17.2 など一部の Linux でベンチマークすると、
-OpenMP が謎の速度低下を起こすようです。
-この現象を回避するには、Core i7(4 コア 8 スレッド)の場合、
-環境変数 OMP_NUM_THREADS を 7 に設定すると良いようです。
-</P>
 <P>
 　ソースコードは <A HREF="node7.html#download">ダウンロードのページ</A>
 で公開するとして(MIT ライセンスです)、早速ベンチマーク結果を示しましょう。
 実行環境は
 MacBook Pro 15 inch Late 2013(Haswell Core i7 2GHz) 上の OS X Yosemite/GCC 5.2
 です。OpenMP は Intel OpenMP Runtime を使いました。
-比較した FFTW3 のバージョンは 3.3.4 の <code>FFTW_ESTIMATE</code> です。
+比較した FFTW3 はバージョン 3.3.4 の <code>FFTW_ESTIMATE</code> です。
 浮動小数点数の精度は倍精度です。
 (MacPorts の GCC で AVX/AVX2 および Intel OpenMP Runtime を使いたい人は、
 <a href="libiomp5.html">こちらのページ</a> をご参照ください)
+</P>
+<P STYLE="color:green">
+※注　OTFFT は、Linux Mint 17.2 など一部の Linux でベンチマークすると、
+OpenMP が謎の速度低下を起こすようです。
+この現象を回避するには、Core i7(4 コア 8 スレッド)の場合、
+環境変数 OMP_NUM_THREADS を 7 に設定すると良いようです。
 </P>
 <PRE>
 ------+-----------+-----------------+-----------------+-----------------+---
@@ -113,7 +113,7 @@ length|FFTW3[usec]|   OOURA   [usec]| SimpleFFT [usec]|   OTFFT   [usec]|err
 DFT と IDFT の実行時間の和を表示しています。
 OOURA の欄は大浦さんの FFT ライブラリ fftsg.c での実行時間です。
 SimpleFFT の欄はごく単純な4基底の Cooley-Tukey アルゴリズムの実行時間です。
-そして OTFFT の欄が私OKおじさんが提案する FFT ライブラリでの実行時間です。
+そして OTFFT の欄が私 OK おじさんが提案する FFT ライブラリでの実行時間です。
 実行時間の単位はマイクロ秒で、
 初期化の時間(FFTW3 のプランの作成等)は含まれていません。
 括弧の中の％付きの数字は
@@ -188,7 +188,7 @@ OTFFT がお得です。しかも、
 その場で FFT オブジェクトを作って１回だけ FFT を実行し、
 そのまま捨てるような使い方をするときに有利です。
 FFT を独立したコマンドにして、
-スクリプトで呼び出すみたいな使い方するとこの特徴がいきてきます。
+スクリプトで呼び出すみたいな使い方をするとこの特徴がいきてきます。
 </P>
 <P>
 　さて、FFT オブジェクトの初期化時間を含まないベンチマークの条件を、
