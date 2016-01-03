@@ -52,10 +52,10 @@ A. ダウンロード
 </P>
 <UL>
 <LI>OTFFT (OS X/Linux/Cygwin 用) - <A NAME="tex2html3"
-    HREF="otfft-6.1.tar.gz">otfft-6.1.tar.gz</A> <span style="color:red">(2016/1/1 new!)</span>
+    HREF="otfft-6.2.tar.gz">otfft-6.2.tar.gz</A> <span style="color:red">(2016/1/3 new!)</span>
 </LI>
 <LI>OTFFT (Visual Studio nmake 用) - <A NAME="tex2html4"
-    HREF="otfft-6.1.zip">otfft-6.1.zip</A> <span style="color:red">(2016/1/1 new!)</span>
+    HREF="otfft-6.2.zip">otfft-6.2.zip</A> <span style="color:red">(2016/1/3 new!)</span>
 </LI>
 </UL>
 <P>
@@ -70,9 +70,12 @@ OTFFT 自身のコンパイルには C++11 を使うようになりました。
 <P>
 　バージョン 6.1 では Makefile のバグを修正しています。その他、
 sleep 系関数を C++11 の sleep_for で実装しました。これで、
-C++11 以降の標準以外の関数は SSE2/AVX/AVX2 のイントリンシックと
-rint() のみとなりました。
+C++11 以降の標準以外の関数は SSE2/AVX/AVX2 のイントリンシックのみとなりました。
 個人的には、かな〜り気持ちいいですね。
+</P>
+<P>
+　バージョン6.2 では、四捨五入まわりのコードを整理しました。
+6.1 と実質的な違いはありません。
 </P>
 <HR>
 <A NAME="tex2html82"
