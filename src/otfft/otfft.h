@@ -1,5 +1,5 @@
 /******************************************************************************
-*  OTFFT Header Version 6.0
+*  OTFFT Header Version 6.4
 *
 *  Copyright (c) 2015 OK Ojisan(Takuya OKAHISA)
 *  Released under the MIT license
@@ -46,12 +46,12 @@ struct FFT0
     void setup(int n);
     void setup2(int n);
 
-    void fwd(complex_vector  x, complex_vector y) const;
-    void fwd0(complex_vector x, complex_vector y) const;
-    void fwdn(complex_vector x, complex_vector y) const;
-    void inv(complex_vector  x, complex_vector y) const;
-    void inv0(complex_vector x, complex_vector y) const;
-    void invn(complex_vector x, complex_vector y) const;
+    void fwd(complex_vector  x, complex_vector y) const noexcept;
+    void fwd0(complex_vector x, complex_vector y) const noexcept;
+    void fwdn(complex_vector x, complex_vector y) const noexcept;
+    void inv(complex_vector  x, complex_vector y) const noexcept;
+    void inv0(complex_vector x, complex_vector y) const noexcept;
+    void invn(complex_vector x, complex_vector y) const noexcept;
 };
 
 struct FFT
@@ -60,17 +60,17 @@ struct FFT
     simd_array<complex_t> work;
     complex_t* y;
 
-    FFT() : fft(), work(), y(0) {}
+    FFT() noexcept : fft(), work(), y(0) {}
     FFT(int n) : fft(n), work(n), y(&work) {}
 
     inline void setup(int n) { fft.setup(n); work.setup(n); y = &work; }
 
-    inline void fwd(complex_vector  x) const { fft.fwd(x, y);  }
-    inline void fwd0(complex_vector x) const { fft.fwd0(x, y); }
-    inline void fwdn(complex_vector x) const { fft.fwdn(x, y); }
-    inline void inv(complex_vector  x) const { fft.inv(x, y);  }
-    inline void inv0(complex_vector x) const { fft.inv0(x, y); }
-    inline void invn(complex_vector x) const { fft.invn(x, y); }
+    inline void fwd(complex_vector  x) const noexcept { fft.fwd(x, y);  }
+    inline void fwd0(complex_vector x) const noexcept { fft.fwd0(x, y); }
+    inline void fwdn(complex_vector x) const noexcept { fft.fwdn(x, y); }
+    inline void inv(complex_vector  x) const noexcept { fft.inv(x, y);  }
+    inline void inv0(complex_vector x) const noexcept { fft.inv0(x, y); }
+    inline void invn(complex_vector x) const noexcept { fft.invn(x, y); }
 };
 
 /******************************************************************************
@@ -79,8 +79,13 @@ struct FFT
 
 struct RFFT
 {
+#ifdef DO_SINGLE_THREAD
+    static const int OMP_THRESHOLD   = 1<<30;
+    static const int OMP_THRESHOLD_W = 1<<30;
+#else
     static const int OMP_THRESHOLD   = 1<<15;
     static const int OMP_THRESHOLD_W = 1<<16;
+#endif
 
     int N;
     FFT0 fft;
@@ -92,12 +97,12 @@ struct RFFT
 
     void setup(int n);
 
-    void fwd(const_double_vector  x, complex_vector y) const;
-    void fwd0(const_double_vector x, complex_vector y) const;
-    void fwdn(const_double_vector x, complex_vector y) const;
-    void inv(complex_vector  x, double_vector y) const;
-    void inv0(complex_vector x, double_vector y) const;
-    void invn(complex_vector x, double_vector y) const;
+    void fwd(const_double_vector  x, complex_vector y) const noexcept;
+    void fwd0(const_double_vector x, complex_vector y) const noexcept;
+    void fwdn(const_double_vector x, complex_vector y) const noexcept;
+    void inv(complex_vector  x, double_vector y) const noexcept;
+    void inv0(complex_vector x, double_vector y) const noexcept;
+    void invn(complex_vector x, double_vector y) const noexcept;
 };
 
 /******************************************************************************
@@ -106,8 +111,13 @@ struct RFFT
 
 struct DCT0
 {
+#ifdef DO_SINGLE_THREAD
+    static const int OMP_THRESHOLD   = 1<<30;
+    static const int OMP_THRESHOLD_W = 1<<30;
+#else
     static const int OMP_THRESHOLD   = 1<<15;
     static const int OMP_THRESHOLD_W = 1<<16;
+#endif
 
     int N;
     RFFT rfft;
@@ -119,12 +129,12 @@ struct DCT0
 
     void setup(int n);
 
-    void fwd(double_vector  x, double_vector y, complex_vector z) const;
-    void fwd0(double_vector x, double_vector y, complex_vector z) const;
-    void fwdn(double_vector x, double_vector y, complex_vector z) const;
-    void inv(double_vector  x, double_vector y, complex_vector z) const;
-    void inv0(double_vector x, double_vector y, complex_vector z) const;
-    void invn(double_vector x, double_vector y, complex_vector z) const;
+    void fwd(double_vector  x, double_vector y, complex_vector z) const noexcept;
+    void fwd0(double_vector x, double_vector y, complex_vector z) const noexcept;
+    void fwdn(double_vector x, double_vector y, complex_vector z) const noexcept;
+    void inv(double_vector  x, double_vector y, complex_vector z) const noexcept;
+    void inv0(double_vector x, double_vector y, complex_vector z) const noexcept;
+    void invn(double_vector x, double_vector y, complex_vector z) const noexcept;
 };
 
 struct DCT
@@ -147,12 +157,12 @@ struct DCT
         work2.setup(N); z = &work2;
     }
 
-    void fwd(double_vector  x) const { dct.fwd(x, y, z);  }
-    void fwd0(double_vector x) const { dct.fwd0(x, y, z); }
-    void fwdn(double_vector x) const { dct.fwdn(x, y, z); }
-    void inv(double_vector  x) const { dct.inv(x, y, z);  }
-    void inv0(double_vector x) const { dct.inv0(x, y, z); }
-    void invn(double_vector x) const { dct.invn(x, y, z); }
+    void fwd(double_vector  x) const noexcept { dct.fwd(x, y, z);  }
+    void fwd0(double_vector x) const noexcept { dct.fwd0(x, y, z); }
+    void fwdn(double_vector x) const noexcept { dct.fwdn(x, y, z); }
+    void inv(double_vector  x) const noexcept { dct.inv(x, y, z);  }
+    void inv0(double_vector x) const noexcept { dct.inv0(x, y, z); }
+    void invn(double_vector x) const noexcept { dct.invn(x, y, z); }
 };
 
 /******************************************************************************
@@ -161,8 +171,13 @@ struct DCT
 
 struct Bluestein
 {
+#ifdef DO_SINGLE_THREAD
+    static const int OMP_THRESHOLD   = 1<<30;
+    static const int OMP_THRESHOLD_W = 1<<30;
+#else
     static const int OMP_THRESHOLD   = 1<<15;
     static const int OMP_THRESHOLD_W = 1<<16;
+#endif
 
     int N, L;
     FFT fft;
@@ -178,12 +193,12 @@ struct Bluestein
 
     void setup(int n);
 
-    void fwd0(complex_vector x) const;
-    void fwd(complex_vector  x) const;
-    void fwdn(complex_vector x) const;
-    void inv0(complex_vector x) const;
-    void inv(complex_vector  x) const;
-    void invn(complex_vector x) const;
+    void fwd0(complex_vector x) const noexcept;
+    void fwd(complex_vector  x) const noexcept;
+    void fwdn(complex_vector x) const noexcept;
+    void inv0(complex_vector x) const noexcept;
+    void inv(complex_vector  x) const noexcept;
+    void invn(complex_vector x) const noexcept;
 };
 
 } /////////////////////////////////////////////////////////////////////////////

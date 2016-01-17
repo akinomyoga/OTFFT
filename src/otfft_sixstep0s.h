@@ -1,5 +1,5 @@
 /******************************************************************************
-*  OTFFT Sixstep of Square Version 6.0
+*  OTFFT Sixstep of Square Version 6.4
 *
 *  Copyright (c) 2015 OK Ojisan(Takuya OKAHISA)
 *  Released under the MIT license
@@ -18,7 +18,7 @@ template <int log_N, int s> struct fwd0ffts_body
     static const int n = 1 << log_n;
     static const int m = n/2*(n/2+1)/2;
 
-    static void transpose_kernel(const int k, const int p, complex_vector x)
+    static void transpose_kernel(const int k, const int p, complex_vector x) noexcept
     {
         if (k == p) {
             const int k_kn = k + k*n;
@@ -48,7 +48,7 @@ template <int log_N, int s> struct fwd0ffts_body
     }
 
     static void mult_twiddle_factor_kernel(
-            const int p, const int k, complex_vector x, weight_t W)
+            const int p, const int k, complex_vector x, weight_t W) noexcept
     {
         if (p == k) {
             const int pp = p*p;
@@ -85,7 +85,7 @@ template <int log_N, int s> struct fwd0ffts_body
     }
 
     void operator()(const_index_vector ip,
-            complex_vector x, complex_vector y, weight_t W, weight_t Ws) const
+            complex_vector x, complex_vector y, weight_t W, weight_t Ws) const noexcept
     {
         if (N < OMP_THRESHOLD1) {
             for (int i = 0; i < m; i++) {
@@ -95,7 +95,7 @@ template <int log_N, int s> struct fwd0ffts_body
             }
             for (int p = 0; p < n; p++) {
                 const int pn = p*n;
-                OTFFT_AVXDIF8::fwd0fft<n,1,0>()(x + pn, y + pn, Ws);
+                OTFFT_AVXDIF16::fwd0fft<n,1,0>()(x + pn, y + pn, Ws);
             }
             for (int i = 0; i < m; i++) {
                 const int p = ip[i].row;
@@ -104,7 +104,7 @@ template <int log_N, int s> struct fwd0ffts_body
             }
             for (int k = 0; k < n; k++) {
                 const int kn = k*n;
-                OTFFT_AVXDIF8::fwd0fft<n,1,0>()(x + kn, y + kn, Ws);
+                OTFFT_AVXDIF16::fwd0fft<n,1,0>()(x + kn, y + kn, Ws);
             }
             for (int i = 0; i < m; i++) {
                 const int k = ip[i].row;
@@ -130,7 +130,7 @@ template <int log_N, int s> struct fwd0ffts_body
 #endif
             for (int p = 0; p < n; p++) {
                 const int pn = p*n;
-                OTFFT_AVXDIF8::fwd0fft<n,1,0>()(x + pn, y + pn, Ws);
+                OTFFT_AVXDIF16::fwd0fft<n,1,0>()(x + pn, y + pn, Ws);
             }
 #ifdef _OPENMP
             #pragma omp for schedule(static)
@@ -145,7 +145,7 @@ template <int log_N, int s> struct fwd0ffts_body
 #endif
             for (int k = 0; k < n; k++) {
                 const int kn = k*n;
-                OTFFT_AVXDIF8::fwd0fft<n,1,0>()(x + kn, y + kn, Ws);
+                OTFFT_AVXDIF16::fwd0fft<n,1,0>()(x + kn, y + kn, Ws);
             }
 #ifdef _OPENMP
             #pragma omp for schedule(static) nowait
@@ -174,7 +174,7 @@ template <int log_N, int s> struct fwd0ffts_body
 #endif
             for (int p = 0; p < n; p++) {
                 const int pn = p*n;
-                OTFFT_AVXDIF8::fwd0fft<n,1,0>()(x + pn, y + pn, Ws);
+                OTFFT_AVXDIF16::fwd0fft<n,1,0>()(x + pn, y + pn, Ws);
             }
 #ifdef _OPENMP
             #pragma omp for schedule(guided)
@@ -189,7 +189,7 @@ template <int log_N, int s> struct fwd0ffts_body
 #endif
             for (int k = 0; k < n; k++) {
                 const int kn = k*n;
-                OTFFT_AVXDIF8::fwd0fft<n,1,0>()(x + kn, y + kn, Ws);
+                OTFFT_AVXDIF16::fwd0fft<n,1,0>()(x + kn, y + kn, Ws);
             }
 #ifdef _OPENMP
             #pragma omp for schedule(guided) nowait
@@ -206,7 +206,7 @@ template <int log_N, int s> struct fwd0ffts_body
 template <int log_N> struct fwd0ffts
 {
     inline void operator()(const_index_vector ip,
-            complex_vector x, complex_vector y, weight_t W, weight_t Ws) const
+            complex_vector x, complex_vector y, weight_t W, weight_t Ws) const noexcept
     {
         fwd0ffts_body<log_N,1>()(ip, x, y, W, Ws);
     }
@@ -215,7 +215,7 @@ template <int log_N> struct fwd0ffts
 template <int log_N> struct fwd0ffts2
 {
     inline void operator()(const_index_vector ip,
-            complex_vector x, complex_vector y, weight_t W, weight_t Ws) const
+            complex_vector x, complex_vector y, weight_t W, weight_t Ws) const noexcept
     {
         fwd0ffts_body<log_N,2>()(ip, x, y, W, Ws);
     }
@@ -224,7 +224,7 @@ template <int log_N> struct fwd0ffts2
 template <int log_N> struct fwd0ffts8
 {
     inline void operator()(const_index_vector ip,
-            complex_vector x, complex_vector y, weight_t W, weight_t Ws) const
+            complex_vector x, complex_vector y, weight_t W, weight_t Ws) const noexcept
     {
         fwd0ffts_body<log_N,8>()(ip, x, y, W, Ws);
     }
@@ -240,13 +240,13 @@ template <int log_N, int s> struct inv0ffts_body
     static const int m = n/2*(n/2+1)/2;
 
     static inline void transpose_kernel(
-            const int k, const int p, complex_vector x)
+            const int k, const int p, complex_vector x) noexcept
     {
         fwd0ffts_body<log_N,s>::transpose_kernel(k, p, x);
     }
 
     static void mult_twiddle_factor_kernel(
-            const int p, const int k, complex_vector x, weight_t W)
+            const int p, const int k, complex_vector x, weight_t W) noexcept
     {
         if (p == k) {
             const int pp = p*p;
@@ -283,7 +283,7 @@ template <int log_N, int s> struct inv0ffts_body
     }
 
     void operator()(const_index_vector ip,
-            complex_vector x, complex_vector y, weight_t W, weight_t Ws) const
+            complex_vector x, complex_vector y, weight_t W, weight_t Ws) const noexcept
     {
         if (N < OMP_THRESHOLD1) {
             for (int i = 0; i < m; i++) {
@@ -293,7 +293,7 @@ template <int log_N, int s> struct inv0ffts_body
             }
             for (int p = 0; p < n; p++) {
                 const int pn = p*n;
-                OTFFT_AVXDIF8::inv0fft<n,1,0>()(x + pn, y + pn, Ws);
+                OTFFT_AVXDIF16::inv0fft<n,1,0>()(x + pn, y + pn, Ws);
             }
             for (int i = 0; i < m; i++) {
                 const int p = ip[i].row;
@@ -302,7 +302,7 @@ template <int log_N, int s> struct inv0ffts_body
             }
             for (int k = 0; k < n; k++) {
                 const int kn = k*n;
-                OTFFT_AVXDIF8::inv0fft<n,1,0>()(x + kn, y + kn, Ws);
+                OTFFT_AVXDIF16::inv0fft<n,1,0>()(x + kn, y + kn, Ws);
             }
             for (int i = 0; i < m; i++) {
                 const int k = ip[i].row;
@@ -328,7 +328,7 @@ template <int log_N, int s> struct inv0ffts_body
 #endif
             for (int p = 0; p < n; p++) {
                 const int pn = p*n;
-                OTFFT_AVXDIF8::inv0fft<n,1,0>()(x + pn, y + pn, Ws);
+                OTFFT_AVXDIF16::inv0fft<n,1,0>()(x + pn, y + pn, Ws);
             }
 #ifdef _OPENMP
             #pragma omp for schedule(static)
@@ -343,7 +343,7 @@ template <int log_N, int s> struct inv0ffts_body
 #endif
             for (int k = 0; k < n; k++) {
                 const int kn = k*n;
-                OTFFT_AVXDIF8::inv0fft<n,1,0>()(x + kn, y + kn, Ws);
+                OTFFT_AVXDIF16::inv0fft<n,1,0>()(x + kn, y + kn, Ws);
             }
 #ifdef _OPENMP
             #pragma omp for schedule(static) nowait
@@ -372,7 +372,7 @@ template <int log_N, int s> struct inv0ffts_body
 #endif
             for (int p = 0; p < n; p++) {
                 const int pn = p*n;
-                OTFFT_AVXDIF8::inv0fft<n,1,0>()(x + pn, y + pn, Ws);
+                OTFFT_AVXDIF16::inv0fft<n,1,0>()(x + pn, y + pn, Ws);
             }
 #ifdef _OPENMP
             #pragma omp for schedule(guided)
@@ -387,7 +387,7 @@ template <int log_N, int s> struct inv0ffts_body
 #endif
             for (int k = 0; k < n; k++) {
                 const int kn = k*n;
-                OTFFT_AVXDIF8::inv0fft<n,1,0>()(x + kn, y + kn, Ws);
+                OTFFT_AVXDIF16::inv0fft<n,1,0>()(x + kn, y + kn, Ws);
             }
 #ifdef _OPENMP
             #pragma omp for schedule(guided) nowait
@@ -404,7 +404,7 @@ template <int log_N, int s> struct inv0ffts_body
 template <int log_N> struct inv0ffts
 {
     inline void operator()(const_index_vector ip,
-            complex_vector x, complex_vector y, weight_t W, weight_t Ws) const
+            complex_vector x, complex_vector y, weight_t W, weight_t Ws) const noexcept
     {
         inv0ffts_body<log_N,1>()(ip, x, y, W, Ws);
     }
@@ -413,7 +413,7 @@ template <int log_N> struct inv0ffts
 template <int log_N> struct inv0ffts2
 {
     inline void operator()(const_index_vector ip,
-            complex_vector x, complex_vector y, weight_t W, weight_t Ws) const
+            complex_vector x, complex_vector y, weight_t W, weight_t Ws) const noexcept
     {
         inv0ffts_body<log_N,2>()(ip, x, y, W, Ws);
     }
@@ -422,7 +422,7 @@ template <int log_N> struct inv0ffts2
 template <int log_N> struct inv0ffts8
 {
     inline void operator()(const_index_vector ip,
-            complex_vector x, complex_vector y, weight_t W, weight_t Ws) const
+            complex_vector x, complex_vector y, weight_t W, weight_t Ws) const noexcept
     {
         inv0ffts_body<log_N,8>()(ip, x, y, W, Ws);
     }

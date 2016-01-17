@@ -1,0 +1,36 @@
+*** otfft_misc.h	2016-01-18 04:00:07.689414195 +0900
+--- ../src/otfft/otfft_misc.h	2016-01-18 04:03:43.857387083 +0900
+***************
+*** 102,108 ****
+      complex_t(const double& x) : Re(x), Im(0) {}
+      complex_t(const double& x, const double& y) : Re(x), Im(y) {}
+      complex_t(const std::complex<double>& z) : Re(z.real()), Im(z.imag()) {}
+!     operator std::complex<double>() { return std::complex<double>(Re, Im); }
+  
+      complex_t& operator+=(const complex_t& z) {
+          Re += z.Re;
+--- 102,108 ----
+      complex_t(const double& x) : Re(x), Im(0) {}
+      complex_t(const double& x, const double& y) : Re(x), Im(y) {}
+      complex_t(const std::complex<double>& z) : Re(z.real()), Im(z.imag()) {}
+!     operator std::complex<double>() const { return std::complex<double>(Re, Im); }
+  
+      complex_t& operator+=(const complex_t& z) {
+          Re += z.Re;
+***************
+*** 330,339 ****
+--- 330,343 ----
+  
+  #if defined(__SSE3__) && defined(USE_INTRINSIC)
+  
++ } // namespace OTFFT_MISC
++ 
+  extern "C" {
+  #include <pmmintrin.h>
+  }
+  
++ namespace OTFFT_MISC {
++ 
+  static inline xmm haddpz(const xmm ab, const xmm xy) force_inline;
+  static inline xmm haddpz(const xmm ab, const xmm xy)
+  {

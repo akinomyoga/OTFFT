@@ -23,7 +23,12 @@ namespace CppFFTW3 { //////////////////////////////////////////////////////////
 
 using namespace OTFFT_MISC;
 
+#ifdef DO_SINGLE_THREAD
+static const int FFTW_MT_THRESHOLD = 1<<30;
+#else
 static const int FFTW_MT_THRESHOLD = 1<<14;
+#endif
+
 static const int FORWARD = FFTW_FORWARD;
 static const int INVERSE = FFTW_BACKWARD;
 
@@ -55,10 +60,8 @@ public:
         }
 #endif
         if (N >= FFTW_MT_THRESHOLD) {
-#ifdef USE_FFTW_THREADS
             fftw_plan_with_nthreads(omp_get_max_threads());
             //fftw_plan_with_nthreads(omp_get_num_procs());
-#endif
         }
         p = fftw_plan_dft_1d(N,
                 reinterpret_cast<fftw_complex*>(x),
@@ -96,6 +99,7 @@ public:
                 }
             }
         }
+        else return;
     }
 };
 

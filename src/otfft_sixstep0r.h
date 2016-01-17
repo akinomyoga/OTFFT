@@ -1,5 +1,5 @@
 /******************************************************************************
-*  OTFFT Sixstep of Rectangle Version 6.0
+*  OTFFT Sixstep of Rectangle Version 6.4
 *
 *  Copyright (c) 2015 OK Ojisan(Takuya OKAHISA)
 *  Released under the MIT license
@@ -20,7 +20,7 @@ template <int log_N> struct fwd0fftr
     static const int m = 1 << log_m;
 
     static void transpose_kernel(
-            const int k, complex_vector x, complex_vector y)
+            const int k, complex_vector x, complex_vector y) noexcept
     {
         for (int p = 0; p < m; p += 2) {
             complex_vector x_p_km = x + p + k*m;
@@ -35,7 +35,7 @@ template <int log_N> struct fwd0fftr
     }
 
     static void mult_twiddle_factor_kernel(const int p,
-            complex_vector x, complex_vector y, const_complex_vector W)
+            complex_vector x, complex_vector y, const_complex_vector W) noexcept
     {
         for (int k = 0; k < n; k += 2) {
             const int kp = k*p;
@@ -54,7 +54,7 @@ template <int log_N> struct fwd0fftr
 
     template <typename fft1_t, typename fft2_t>
     void operator()(const fft1_t& fft1, const fft2_t& fft2,
-            complex_vector x, complex_vector y, const_complex_vector W) const
+            complex_vector x, complex_vector y, const_complex_vector W) const noexcept
     {
         if (N < OMP_THRESHOLD1) {
             for (int k = 0; k < n; k += 2) {
@@ -165,13 +165,13 @@ template <int log_N> struct inv0fftr
     static const int m = 1 << log_m;
 
     static inline void transpose_kernel(
-            const int k, complex_vector x, complex_vector y)
+            const int k, complex_vector x, complex_vector y) noexcept
     {
         fwd0fftr<log_N>::transpose_kernel(k, x, y);
     }
 
     static void mult_twiddle_factor_kernel(const int p,
-            complex_vector x, complex_vector y, const_complex_vector W)
+            complex_vector x, complex_vector y, const_complex_vector W) noexcept
     {
         for (int k = 0; k < n; k += 2) {
             const int kp = k*p;
@@ -190,7 +190,7 @@ template <int log_N> struct inv0fftr
 
     template <typename fft1_t, typename fft2_t>
     void operator()(const fft1_t& fft1, const fft2_t& fft2,
-            complex_vector x, complex_vector y, const_complex_vector W) const
+            complex_vector x, complex_vector y, const_complex_vector W) const noexcept
     {
         if (N < OMP_THRESHOLD1) {
             for (int k = 0; k < n; k += 2) {

@@ -50,6 +50,15 @@ inline double usec(const counter_t& dt)
 
 #endif // _MSC_VER || __WINNT__
 
-#include "msleep.h"
+#ifdef _MSC_VER
+static inline void sleep(int n) { Sleep(1000 * n); }
+static inline void msleep(int n) { Sleep(n); }
+#elif defined(__WINNT__)
+static inline void sleep(int n) { Sleep(1000 * n); }
+static inline void msleep(int n) { Sleep(n); }
+#else
+#include <unistd.h>
+static inline void msleep(int n) { usleep(1000 * n); }
+#endif
 
 #endif // stopwatch_h

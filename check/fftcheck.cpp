@@ -22,7 +22,7 @@ void print_err(const char* name, int N, const complex_t* x, const complex_t* y)
     if (err == 0)
         printf("---\n");
     else if (err > 0)
-        printf("%3d\n", static_cast<int>(rint(log10(err))));
+        printf("%3ld\n", lrint(log10(err)));
     else
         printf("ERROR\n");
 }

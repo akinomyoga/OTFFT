@@ -1,5 +1,5 @@
 /******************************************************************************
-*  OTFFT Sixstep Version 6.0
+*  OTFFT Sixstep Version 6.4
 *
 *  Copyright (c) 2015 OK Ojisan(Takuya OKAHISA)
 *  Released under the MIT license
@@ -10,15 +10,19 @@
 #define otfft_sixstep_h
 
 #include "otfft/otfft_misc.h"
-#include "otfft_avxdif8.h"
 #include "otfft_avxdif16.h"
 
 namespace OTFFT_Sixstep { /////////////////////////////////////////////////////
 
 using namespace OTFFT_MISC;
 
+#ifdef DO_SINGLE_THREAD
+static const int OMP_THRESHOLD1 = 1<<30;
+static const int OMP_THRESHOLD2 = 1<<30;
+#else
 static const int OMP_THRESHOLD1 = 1<<13;
 static const int OMP_THRESHOLD2 = 1<<17;
+#endif
 
 typedef const_complex_vector weight_t;
 struct index_t { int row, col; };
@@ -46,7 +50,7 @@ struct FFT0
     simd_array<index_t> index;
     index_t* __restrict ip;
 
-    FFT0() : N(0), log_N(0), W(0), Ws(0), ip(0) {}
+    FFT0() noexcept : N(0), log_N(0), W(0), Ws(0), ip(0) {}
     FFT0(const int n) { setup(n); }
 
     void setup(int n)
@@ -88,13 +92,13 @@ struct FFT0
         }
     }
 
-    inline void fwd(complex_vector x, complex_vector y) const
+    inline void fwd(complex_vector x, complex_vector y) const noexcept
     {
         switch (log_N) {
             case  0: break;
-            case  1: OTFFT_AVXDIF8::fwdnfft<(1<<1),1,0>()(x, y, W); break;
-            case  2: OTFFT_AVXDIF8::fwdnfft<(1<<2),1,0>()(x, y, W); break;
-            case  3: OTFFT_AVXDIF8::fwdnfft<(1<<3),1,0>()(x, y, W); break;
+            case  1: OTFFT_AVXDIF16::fwdnfft<(1<<1),1,0>()(x, y, W); break;
+            case  2: OTFFT_AVXDIF16::fwdnfft<(1<<2),1,0>()(x, y, W); break;
+            case  3: OTFFT_AVXDIF16::fwdnfft<(1<<3),1,0>()(x, y, W); break;
             case  4: fwdnffts< 4>()(ip, x, y, W, Ws); break;
             case  5: fwdnfftq< 5>()(ip, x, y, W, Ws); break;
             case  6: fwdnffts< 6>()(ip, x, y, W, Ws); break;
@@ -119,13 +123,13 @@ struct FFT0
         }
     }
 
-    inline void fwd0(complex_vector x, complex_vector y) const
+    inline void fwd0(complex_vector x, complex_vector y) const noexcept
     {
         switch (log_N) {
             case  0: break;
-            case  1: OTFFT_AVXDIF8::fwd0fft<(1<<1),1,0>()(x, y, W); break;
-            case  2: OTFFT_AVXDIF8::fwd0fft<(1<<2),1,0>()(x, y, W); break;
-            case  3: OTFFT_AVXDIF8::fwd0fft<(1<<3),1,0>()(x, y, W); break;
+            case  1: OTFFT_AVXDIF16::fwd0fft<(1<<1),1,0>()(x, y, W); break;
+            case  2: OTFFT_AVXDIF16::fwd0fft<(1<<2),1,0>()(x, y, W); break;
+            case  3: OTFFT_AVXDIF16::fwd0fft<(1<<3),1,0>()(x, y, W); break;
             case  4: fwd0ffts< 4>()(ip, x, y, W, Ws); break;
             case  5: fwd0fftq< 5>()(ip, x, y, W, Ws); break;
             case  6: fwd0ffts< 6>()(ip, x, y, W, Ws); break;
@@ -150,15 +154,15 @@ struct FFT0
         }
     }
 
-    inline void fwdn(complex_vector x, complex_vector y) const { fwd(x, y); }
+    inline void fwdn(complex_vector x, complex_vector y) const noexcept { fwd(x, y); }
 
-    inline void inv(complex_vector x, complex_vector y) const
+    inline void inv(complex_vector x, complex_vector y) const noexcept
     {
         switch (log_N) {
             case  0: break;
-            case  1: OTFFT_AVXDIF8::inv0fft<(1<<1),1,0>()(x, y, W); break;
-            case  2: OTFFT_AVXDIF8::inv0fft<(1<<2),1,0>()(x, y, W); break;
-            case  3: OTFFT_AVXDIF8::inv0fft<(1<<3),1,0>()(x, y, W); break;
+            case  1: OTFFT_AVXDIF16::inv0fft<(1<<1),1,0>()(x, y, W); break;
+            case  2: OTFFT_AVXDIF16::inv0fft<(1<<2),1,0>()(x, y, W); break;
+            case  3: OTFFT_AVXDIF16::inv0fft<(1<<3),1,0>()(x, y, W); break;
             case  4: inv0ffts< 4>()(ip, x, y, W, Ws); break;
             case  5: inv0fftq< 5>()(ip, x, y, W, Ws); break;
             case  6: inv0ffts< 6>()(ip, x, y, W, Ws); break;
@@ -183,15 +187,15 @@ struct FFT0
         }
     }
 
-    inline void inv0(complex_vector x, complex_vector y) const { inv(x, y); }
+    inline void inv0(complex_vector x, complex_vector y) const noexcept { inv(x, y); }
 
-    inline void invn(complex_vector x, complex_vector y) const
+    inline void invn(complex_vector x, complex_vector y) const noexcept
     {
         switch (log_N) {
             case  0: break;
-            case  1: OTFFT_AVXDIF8::invnfft<(1<<1),1,0>()(x, y, W); break;
-            case  2: OTFFT_AVXDIF8::invnfft<(1<<2),1,0>()(x, y, W); break;
-            case  3: OTFFT_AVXDIF8::invnfft<(1<<3),1,0>()(x, y, W); break;
+            case  1: OTFFT_AVXDIF16::invnfft<(1<<1),1,0>()(x, y, W); break;
+            case  2: OTFFT_AVXDIF16::invnfft<(1<<2),1,0>()(x, y, W); break;
+            case  3: OTFFT_AVXDIF16::invnfft<(1<<3),1,0>()(x, y, W); break;
             case  4: invnffts< 4>()(ip, x, y, W, Ws); break;
             case  5: invnfftq< 5>()(ip, x, y, W, Ws); break;
             case  6: invnffts< 6>()(ip, x, y, W, Ws); break;
@@ -243,7 +247,7 @@ struct FFT1
         init_W(N, W);
     }
 
-    inline void fwd(complex_vector x, complex_vector y) const
+    inline void fwd(complex_vector x, complex_vector y) const noexcept
     {
         switch (log_N) {
             case  0: break;
@@ -274,7 +278,7 @@ struct FFT1
         }
     }
 
-    inline void fwd0(complex_vector x, complex_vector y) const
+    inline void fwd0(complex_vector x, complex_vector y) const noexcept
     {
         switch (log_N) {
             case  0: break;
@@ -305,9 +309,9 @@ struct FFT1
         }
     }
 
-    inline void fwdn(complex_vector x, complex_vector y) const { fwd(x, y); }
+    inline void fwdn(complex_vector x, complex_vector y) const noexcept { fwd(x, y); }
 
-    inline void inv(complex_vector x, complex_vector y) const
+    inline void inv(complex_vector x, complex_vector y) const noexcept
     {
         switch (log_N) {
             case  0: break;
@@ -338,9 +342,9 @@ struct FFT1
         }
     }
 
-    inline void inv0(complex_vector x, complex_vector y) const { inv(x, y); }
+    inline void inv0(complex_vector x, complex_vector y) const noexcept { inv(x, y); }
 
-    inline void invn(complex_vector x, complex_vector y) const
+    inline void invn(complex_vector x, complex_vector y) const noexcept
     {
         switch (log_N) {
             case  0: break;
@@ -385,12 +389,12 @@ struct FFT
 
     inline void setup(const int n) { fft.setup(n); work.setup(n); y = &work; }
 
-    inline void fwd(complex_vector  x) const { fft.fwd(x, y);  }
-    inline void fwd0(complex_vector x) const { fft.fwd0(x, y); }
-    inline void fwdn(complex_vector x) const { fft.fwdn(x, y); }
-    inline void inv(complex_vector  x) const { fft.inv(x, y);  }
-    inline void inv0(complex_vector x) const { fft.inv0(x, y); }
-    inline void invn(complex_vector x) const { fft.invn(x, y); }
+    inline void fwd(complex_vector  x) const noexcept { fft.fwd(x, y);  }
+    inline void fwd0(complex_vector x) const noexcept { fft.fwd0(x, y); }
+    inline void fwdn(complex_vector x) const noexcept { fft.fwdn(x, y); }
+    inline void inv(complex_vector  x) const noexcept { fft.inv(x, y);  }
+    inline void inv0(complex_vector x) const noexcept { fft.inv0(x, y); }
+    inline void invn(complex_vector x) const noexcept { fft.invn(x, y); }
 };
 #endif
 

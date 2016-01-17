@@ -12,11 +12,13 @@
 #include <cmath>
 #include "otfft/otfft_misc.h"
 
+#ifndef DO_SINGLE_THREAD
 #ifdef _MSC_VER
 #define USE_CDFT_WINTHREADS
 #else
 #define USE_CDFT_PTHREADS
 #endif
+#endif // DO_SINGLE_THREAD
 
 #include "fftsg.c"
 //#include "fft4g.c"
@@ -47,7 +49,7 @@ public:
     {
         cdft(2*N, -1, &x->Re, ip, w);
         const ymm rN = cmplx2(1.0/N, 1.0/N, 1.0/N, 1.0/N);
-        if (N > 1)
+        if (N >= 2)
             for (int k = 0; k < N; k += 2) setpz2(x+k, mulpd2(rN, getpz2(x+k)));
     }
 
@@ -71,7 +73,7 @@ public:
     {
         cdft(2*N, 1, &x->Re, ip, w);
         const ymm rN = cmplx2(1.0/N, 1.0/N, 1.0/N, 1.0/N);
-        if (N > 1)
+        if (N >= 2)
             for (int k = 0; k < N; k += 2) setpz2(x+k, mulpd2(rN, getpz2(x+k)));
     }
 };

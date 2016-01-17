@@ -7,17 +7,17 @@
 #ifndef msleep_h
 #define msleep_h
 
-#ifdef _MSC_VER
-#include <windows.h>
-static inline void sleep(int n) { Sleep(1000 * n); }
-static inline void msleep(int n) { Sleep(n); }
-#elif defined(__WINNT__)
-#include <windows.h>
-static inline void sleep(int n) { Sleep(1000 * n); }
-static inline void msleep(int n) { Sleep(n); }
-#else
-#include <unistd.h>
-static inline void msleep(int n) { usleep(1000 * n); }
-#endif
+#include <chrono>
+#include <thread>
+
+static inline void sleep(int n)
+{
+    std::this_thread::sleep_for(std::chrono::seconds(n));
+}
+
+static inline void msleep(int n)
+{
+    std::this_thread::sleep_for(std::chrono::milliseconds(n));
+}
 
 #endif // msleep_h

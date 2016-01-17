@@ -32,15 +32,21 @@ function dispatch.modify-source {
 
   mv "$src"/otfft "$src"/src
   mkdir -p "$src"/src/otfft
-  mv "$src"/src/{stopwatch,otfft,otfft_misc}.h "$src"/src/otfft
+  mv "$src"/src/{stopwatch,otfft,otfft_misc,msleep}.h "$src"/src/otfft
+  patch -lcf "$src"/src/otfft/otfft_misc.h < update/otfft_misc.patch
   mkdir -p "$src"/check
   mv "$src"/{{fft,rfft,bst,dct}check.cpp,fftbench{1,2}.cpp,simple_fft.h,cpp_fftw3.h,ooura{1,2}.h} "$src"/check
+
+  # #ifndef USE_FFT_THREADS
+  # patch -lcf "$src"/check/fftbench1.cpp < update/fftbench1.cpp.patch
+  # patch -lcf "$src"/check/fftbench2.cpp < update/fftbench2.cpp.patch
+  # patch -lcf "$src"/check/cpp_fftw3.h < update/cpp_fftw3.h.patch
+
   mkdir -p "$src"/out/include
   mv "$src"/src/otfft_{fwd,fwd0,inv,invn,setup}.h "$src"/out/include
   refact '^[[:space:]]*#pragma[[:space:]]+omp[[:space:]]+.*$' '#ifdef _OPENMP\n&\n#endif' "$src"/{src,check}/*.{h,cpp} "$src"/src/otfft/*.h
   refact '[[:space:]]+$' '' "$src"/{src,check}/*.{h,cpp} "$src"/src/otfft/*.h
-  refact '\b(otfft|otfft_misc|msleep|stopwatch)\.h\b' 'otfft/&' "$src"/{src,check}/*.{h,cpp}
-
+  refact '"\b(otfft|otfft_misc|msleep|stopwatch)\.h\b' '"otfft/\1.h' "$src"/{src,check}/*.{h,cpp}
 }
 
 function dispatch.diff {

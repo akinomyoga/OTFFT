@@ -1,5 +1,5 @@
 /******************************************************************************
-*  OTFFT AVXDIT(Radix-8) of OpenMP Version 6.0
+*  OTFFT AVXDIT(Radix-8) of OpenMP Version 6.4
 *
 *  Copyright (c) 2015 OK Ojisan(Takuya OKAHISA)
 *  Released under the MIT license
@@ -34,7 +34,7 @@ template <int n, int s> struct fwdcore
     static const int N7 = N1*7;
 
     void operator()(
-            complex_vector x, complex_vector y, const_complex_vector W) const
+            complex_vector x, complex_vector y, const_complex_vector W) const noexcept
     {
 #ifdef _OPENMP
         #pragma omp for schedule(static)
@@ -102,7 +102,7 @@ template <int N> struct fwdcore<N,1>
     static const int N7 = N1*7;
 
     void operator()(
-            complex_vector x, complex_vector y, const_complex_vector W) const
+            complex_vector x, complex_vector y, const_complex_vector W) const noexcept
     {
 #ifdef _OPENMP
         #pragma omp for schedule(static) nowait
@@ -180,7 +180,7 @@ template <int n, int s, bool eo> struct fwd0end;
 
 template <int s> struct fwd0end<8,s,1>
 {
-    void operator()(complex_vector x, complex_vector y) const
+    void operator()(complex_vector x, complex_vector y) const noexcept
     {
 #ifdef _OPENMP
         #pragma omp for schedule(static)
@@ -226,7 +226,7 @@ template <int s> struct fwd0end<8,s,1>
 
 template <> struct fwd0end<8,1,1>
 {
-    inline void operator()(complex_vector x, complex_vector y) const
+    inline void operator()(complex_vector x, complex_vector y) const noexcept
     {
 #ifdef _OPENMP
         #pragma omp single
@@ -273,7 +273,7 @@ template <> struct fwd0end<8,1,1>
 
 template <int s> struct fwd0end<8,s,0>
 {
-    void operator()(complex_vector x, complex_vector) const
+    void operator()(complex_vector x, complex_vector) const noexcept
     {
 #ifdef _OPENMP
         #pragma omp for schedule(static)
@@ -318,7 +318,7 @@ template <int s> struct fwd0end<8,s,0>
 
 template <> struct fwd0end<8,1,0>
 {
-    inline void operator()(complex_vector x, complex_vector) const
+    inline void operator()(complex_vector x, complex_vector) const noexcept
     {
 #ifdef _OPENMP
         #pragma omp single
@@ -371,7 +371,7 @@ template <int s> struct fwdnend<8,s,1>
 {
     static const int N = 8*s;
 
-    void operator()(complex_vector x, complex_vector y) const
+    void operator()(complex_vector x, complex_vector y) const noexcept
     {
         static const ymm rN = { 1.0/N, 1.0/N, 1.0/N, 1.0/N };
 #ifdef _OPENMP
@@ -418,7 +418,7 @@ template <int s> struct fwdnend<8,s,1>
 
 template <> struct fwdnend<8,1,1>
 {
-    inline void operator()(complex_vector x, complex_vector y) const
+    inline void operator()(complex_vector x, complex_vector y) const noexcept
     {
         static const xmm rN = { 1.0/8, 1.0/8 };
 #ifdef _OPENMP
@@ -468,7 +468,7 @@ template <int s> struct fwdnend<8,s,0>
 {
     static const int N = 8*s;
 
-    void operator()(complex_vector x, complex_vector) const
+    void operator()(complex_vector x, complex_vector) const noexcept
     {
         static const ymm rN = { 1.0/N, 1.0/N, 1.0/N, 1.0/N };
 #ifdef _OPENMP
@@ -514,7 +514,7 @@ template <int s> struct fwdnend<8,s,0>
 
 template <> struct fwdnend<8,1,0>
 {
-    inline void operator()(complex_vector x, complex_vector) const
+    inline void operator()(complex_vector x, complex_vector) const noexcept
     {
         static const xmm rN = { 1.0/8, 1.0/8 };
 #ifdef _OPENMP
@@ -565,7 +565,7 @@ template <> struct fwdnend<8,1,0>
 template <int n, int s, bool eo> struct fwd0fft
 {
     inline void operator()(
-        complex_vector x, complex_vector y, const_complex_vector W) const
+        complex_vector x, complex_vector y, const_complex_vector W) const noexcept
     {
         fwd0fft<n/8,8*s,!eo>()(y, x, W);
         fwdcore<n,s>()(x, y, W);
@@ -575,7 +575,7 @@ template <int n, int s, bool eo> struct fwd0fft
 template <int s, bool eo> struct fwd0fft<8,s,eo>
 {
     inline void operator()(
-        complex_vector x, complex_vector y, const_complex_vector) const
+        complex_vector x, complex_vector y, const_complex_vector) const noexcept
     {
         fwd0end<8,s,eo>()(x, y);
     }
@@ -584,7 +584,7 @@ template <int s, bool eo> struct fwd0fft<8,s,eo>
 template <int s, bool eo> struct fwd0fft<4,s,eo>
 {
     inline void operator()(
-        complex_vector x, complex_vector y, const_complex_vector) const
+        complex_vector x, complex_vector y, const_complex_vector) const noexcept
     {
         OTFFT_AVXDIT4omp::fwd0end<4,s,eo>()(x, y);
     }
@@ -593,7 +593,7 @@ template <int s, bool eo> struct fwd0fft<4,s,eo>
 template <int s, bool eo> struct fwd0fft<2,s,eo>
 {
     inline void operator()(
-        complex_vector x, complex_vector y, const_complex_vector) const
+        complex_vector x, complex_vector y, const_complex_vector) const noexcept
     {
         OTFFT_AVXDIT4omp::fwd0end<2,s,eo>()(x, y);
     }
@@ -604,7 +604,7 @@ template <int s, bool eo> struct fwd0fft<2,s,eo>
 template <int n, int s, bool eo> struct fwdnfft
 {
     inline void operator()(
-        complex_vector x, complex_vector y, const_complex_vector W) const
+        complex_vector x, complex_vector y, const_complex_vector W) const noexcept
     {
         fwdnfft<n/8,8*s,!eo>()(y, x, W);
         fwdcore<n,s>()(x, y, W);
@@ -614,7 +614,7 @@ template <int n, int s, bool eo> struct fwdnfft
 template <int s, bool eo> struct fwdnfft<8,s,eo>
 {
     inline void operator()(
-        complex_vector x, complex_vector y, const_complex_vector) const
+        complex_vector x, complex_vector y, const_complex_vector) const noexcept
     {
         fwdnend<8,s,eo>()(x, y);
     }
@@ -623,7 +623,7 @@ template <int s, bool eo> struct fwdnfft<8,s,eo>
 template <int s, bool eo> struct fwdnfft<4,s,eo>
 {
     inline void operator()(
-        complex_vector x, complex_vector y, const_complex_vector) const
+        complex_vector x, complex_vector y, const_complex_vector) const noexcept
     {
         OTFFT_AVXDIT4omp::fwdnend<4,s,eo>()(x, y);
     }
@@ -632,7 +632,7 @@ template <int s, bool eo> struct fwdnfft<4,s,eo>
 template <int s, bool eo> struct fwdnfft<2,s,eo>
 {
     inline void operator()(
-        complex_vector x, complex_vector y, const_complex_vector) const
+        complex_vector x, complex_vector y, const_complex_vector) const noexcept
     {
         OTFFT_AVXDIT4omp::fwdnend<2,s,eo>()(x, y);
     }
@@ -656,7 +656,7 @@ template <int n, int s> struct invcore
     static const int N7 = N1*7;
 
     void operator()(
-            complex_vector x, complex_vector y, const_complex_vector W) const
+            complex_vector x, complex_vector y, const_complex_vector W) const noexcept
     {
 #ifdef _OPENMP
         #pragma omp for schedule(static)
@@ -724,7 +724,7 @@ template <int N> struct invcore<N,1>
     static const int N7 = N1*7;
 
     void operator()(
-            complex_vector x, complex_vector y, const_complex_vector W) const
+            complex_vector x, complex_vector y, const_complex_vector W) const noexcept
     {
         //const_complex_vector WN = W + N;
 #ifdef _OPENMP
@@ -804,7 +804,7 @@ template <int n, int s, bool eo> struct inv0end;
 
 template <int s> struct inv0end<8,s,1>
 {
-    void operator()(complex_vector x, complex_vector y) const
+    void operator()(complex_vector x, complex_vector y) const noexcept
     {
 #ifdef _OPENMP
         #pragma omp for schedule(static)
@@ -850,7 +850,7 @@ template <int s> struct inv0end<8,s,1>
 
 template <> struct inv0end<8,1,1>
 {
-    inline void operator()(complex_vector x, complex_vector y) const
+    inline void operator()(complex_vector x, complex_vector y) const noexcept
     {
 #ifdef _OPENMP
         #pragma omp single
@@ -897,7 +897,7 @@ template <> struct inv0end<8,1,1>
 
 template <int s> struct inv0end<8,s,0>
 {
-    void operator()(complex_vector x, complex_vector) const
+    void operator()(complex_vector x, complex_vector) const noexcept
     {
 #ifdef _OPENMP
         #pragma omp for schedule(static)
@@ -942,7 +942,7 @@ template <int s> struct inv0end<8,s,0>
 
 template <> struct inv0end<8,1,0>
 {
-    inline void operator()(complex_vector x, complex_vector) const
+    inline void operator()(complex_vector x, complex_vector) const noexcept
     {
 #ifdef _OPENMP
         #pragma omp single
@@ -995,7 +995,7 @@ template <int s> struct invnend<8,s,1>
 {
     static const int N  = 8*s;
 
-    void operator()(complex_vector x, complex_vector y) const
+    void operator()(complex_vector x, complex_vector y) const noexcept
     {
         static const ymm rN = { 1.0/N, 1.0/N, 1.0/N, 1.0/N };
 #ifdef _OPENMP
@@ -1042,7 +1042,7 @@ template <int s> struct invnend<8,s,1>
 
 template <> struct invnend<8,1,1>
 {
-    inline void operator()(complex_vector x, complex_vector y) const
+    inline void operator()(complex_vector x, complex_vector y) const noexcept
     {
         static const xmm rN = { 1.0/8, 1.0/8 };
 #ifdef _OPENMP
@@ -1092,7 +1092,7 @@ template <int s> struct invnend<8,s,0>
 {
     static const int N = 8*s;
 
-    void operator()(complex_vector x, complex_vector) const
+    void operator()(complex_vector x, complex_vector) const noexcept
     {
         static const ymm rN = { 1.0/N, 1.0/N, 1.0/N, 1.0/N };
 #ifdef _OPENMP
@@ -1138,7 +1138,7 @@ template <int s> struct invnend<8,s,0>
 
 template <> struct invnend<8,1,0>
 {
-    inline void operator()(complex_vector x, complex_vector) const
+    inline void operator()(complex_vector x, complex_vector) const noexcept
     {
         static const xmm rN = { 1.0/8, 1.0/8 };
 #ifdef _OPENMP
@@ -1189,7 +1189,7 @@ template <> struct invnend<8,1,0>
 template <int n, int s, bool eo> struct inv0fft
 {
     inline void operator()(
-        complex_vector x, complex_vector y, const_complex_vector W) const
+        complex_vector x, complex_vector y, const_complex_vector W) const noexcept
     {
         inv0fft<n/8,8*s,!eo>()(y, x, W);
         invcore<n,s>()(x, y, W);
@@ -1199,7 +1199,7 @@ template <int n, int s, bool eo> struct inv0fft
 template <int s, bool eo> struct inv0fft<8,s,eo>
 {
     inline void operator()(
-        complex_vector x, complex_vector y, const_complex_vector) const
+        complex_vector x, complex_vector y, const_complex_vector) const noexcept
     {
         inv0end<8,s,eo>()(x, y);
     }
@@ -1208,7 +1208,7 @@ template <int s, bool eo> struct inv0fft<8,s,eo>
 template <int s, bool eo> struct inv0fft<4,s,eo>
 {
     inline void operator()(
-        complex_vector x, complex_vector y, const_complex_vector) const
+        complex_vector x, complex_vector y, const_complex_vector) const noexcept
     {
         OTFFT_AVXDIT4omp::inv0end<4,s,eo>()(x, y);
     }
@@ -1217,7 +1217,7 @@ template <int s, bool eo> struct inv0fft<4,s,eo>
 template <int s, bool eo> struct inv0fft<2,s,eo>
 {
     inline void operator()(
-        complex_vector x, complex_vector y, const_complex_vector) const
+        complex_vector x, complex_vector y, const_complex_vector) const noexcept
     {
         OTFFT_AVXDIT4omp::inv0end<2,s,eo>()(x, y);
     }
@@ -1228,7 +1228,7 @@ template <int s, bool eo> struct inv0fft<2,s,eo>
 template <int n, int s, bool eo> struct invnfft
 {
     inline void operator()(
-        complex_vector x, complex_vector y, const_complex_vector W) const
+        complex_vector x, complex_vector y, const_complex_vector W) const noexcept
     {
         invnfft<n/8,8*s,!eo>()(y, x, W);
         invcore<n,s>()(x, y, W);
@@ -1238,7 +1238,7 @@ template <int n, int s, bool eo> struct invnfft
 template <int s, bool eo> struct invnfft<8,s,eo>
 {
     inline void operator()(
-        complex_vector x, complex_vector y, const_complex_vector) const
+        complex_vector x, complex_vector y, const_complex_vector) const noexcept
     {
         invnend<8,s,eo>()(x, y);
     }
@@ -1247,7 +1247,7 @@ template <int s, bool eo> struct invnfft<8,s,eo>
 template <int s, bool eo> struct invnfft<4,s,eo>
 {
     inline void operator()(
-        complex_vector x, complex_vector y, const_complex_vector) const
+        complex_vector x, complex_vector y, const_complex_vector) const noexcept
     {
         OTFFT_AVXDIT4omp::invnend<4,s,eo>()(x, y);
     }
@@ -1256,7 +1256,7 @@ template <int s, bool eo> struct invnfft<4,s,eo>
 template <int s, bool eo> struct invnfft<2,s,eo>
 {
     inline void operator()(
-        complex_vector x, complex_vector y, const_complex_vector) const
+        complex_vector x, complex_vector y, const_complex_vector) const noexcept
     {
         OTFFT_AVXDIT4omp::invnend<2,s,eo>()(x, y);
     }
@@ -1267,7 +1267,7 @@ template <int s, bool eo> struct invnfft<2,s,eo>
 ///////////////////////////////////////////////////////////////////////////////
 
 inline void fwd(const int log_N,
-        complex_vector x, complex_vector y, const_complex_vector W)
+        complex_vector x, complex_vector y, const_complex_vector W) noexcept
 {
 #ifdef _OPENMP
     #pragma omp parallel firstprivate(x,y,W)
@@ -1302,7 +1302,7 @@ inline void fwd(const int log_N,
 }
 
 inline void fwd0(const int log_N,
-        complex_vector x, complex_vector y, const_complex_vector W)
+        complex_vector x, complex_vector y, const_complex_vector W) noexcept
 {
 #ifdef _OPENMP
     #pragma omp parallel firstprivate(x,y,W)
@@ -1337,13 +1337,13 @@ inline void fwd0(const int log_N,
 }
 
 inline void fwdn(const int log_N,
-        complex_vector x, complex_vector y, const_complex_vector W)
+        complex_vector x, complex_vector y, const_complex_vector W) noexcept
 {
     fwd(log_N, x, y, W);
 }
 
 inline void fwd0o(const int log_N,
-        complex_vector x, complex_vector y, const_complex_vector W)
+        complex_vector x, complex_vector y, const_complex_vector W) noexcept
 {
 #ifdef _OPENMP
     #pragma omp parallel firstprivate(x,y,W)
@@ -1378,7 +1378,7 @@ inline void fwd0o(const int log_N,
 }
 
 inline void fwdno(const int log_N,
-        complex_vector x, complex_vector y, const_complex_vector W)
+        complex_vector x, complex_vector y, const_complex_vector W) noexcept
 {
 #ifdef _OPENMP
     #pragma omp parallel firstprivate(x,y,W)
@@ -1415,7 +1415,7 @@ inline void fwdno(const int log_N,
 ///////////////////////////////////////////////////////////////////////////////
 
 inline void inv(const int log_N,
-        complex_vector x, complex_vector y, const_complex_vector W)
+        complex_vector x, complex_vector y, const_complex_vector W) noexcept
 {
 #ifdef _OPENMP
     #pragma omp parallel firstprivate(x,y,W)
@@ -1450,13 +1450,13 @@ inline void inv(const int log_N,
 }
 
 inline void inv0(const int log_N,
-        complex_vector x, complex_vector y, const_complex_vector W)
+        complex_vector x, complex_vector y, const_complex_vector W) noexcept
 {
     inv(log_N, x, y, W);
 }
 
 inline void invn(const int log_N,
-        complex_vector x, complex_vector y, const_complex_vector W)
+        complex_vector x, complex_vector y, const_complex_vector W) noexcept
 {
 #ifdef _OPENMP
     #pragma omp parallel firstprivate(x,y,W)
@@ -1491,7 +1491,7 @@ inline void invn(const int log_N,
 }
 
 inline void inv0o(const int log_N,
-        complex_vector x, complex_vector y, const_complex_vector W)
+        complex_vector x, complex_vector y, const_complex_vector W) noexcept
 {
 #ifdef _OPENMP
     #pragma omp parallel firstprivate(x,y,W)
@@ -1526,7 +1526,7 @@ inline void inv0o(const int log_N,
 }
 
 inline void invno(const int log_N,
-        complex_vector x, complex_vector y, const_complex_vector W)
+        complex_vector x, complex_vector y, const_complex_vector W) noexcept
 {
 #ifdef _OPENMP
     #pragma omp parallel firstprivate(x,y,W)

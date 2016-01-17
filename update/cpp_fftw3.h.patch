@@ -1,0 +1,15 @@
+*** cpp_fftw3.h.0	2016-01-18 04:15:43.179655940 +0900
+--- cpp_fftw3.h	2016-01-18 04:30:45.744043503 +0900
+*************** public:
+*** 55,62 ****
+--- 55,64 ----
+          }
+  #endif
+          if (N >= FFTW_MT_THRESHOLD) {
++ #ifdef USE_FFTW_THREADS
+              fftw_plan_with_nthreads(omp_get_max_threads());
+              //fftw_plan_with_nthreads(omp_get_num_procs());
++ #endif
+          }
+          p = fftw_plan_dft_1d(N,
+                  reinterpret_cast<fftw_complex*>(x),

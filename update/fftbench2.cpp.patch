@@ -1,0 +1,26 @@
+*** fftbench2.cpp.0	2016-01-18 04:15:43.176656052 +0900
+--- fftbench2.cpp	2016-01-18 04:30:57.499605942 +0900
+*************** int main(int argc, char *argv[]) try
+*** 143,149 ****
+--- 143,151 ----
+      if (n_max < 1 || 24 < n_max) throw "argv[2] must be 1..24";
+      if (n_min > n_max) throw "argv must be argv[1] <= argv[2]";
+  
++ #ifdef USE_FFTW_THREADS
+      fftw_init_threads();
++ #endif
+      setbuf(stdout, NULL);
+      printf("------+-----------+-----------------+-----------------+-----------------\n");
+      printf("length|FFTW3[usec]|   OOURA   [usec]| SimpleFFT [usec]|   OTFFT   [usec]\n");
+*************** int main(int argc, char *argv[]) try
+*** 210,216 ****
+--- 212,220 ----
+      printf("%11.2f(%3.0f%%)|",  sum3/(n_max-n_min+1), 100*sum3/sum1);
+      printf("%11.2f(%3.0f%%)\n", sum4/(n_max-n_min+1), 100*sum4/sum1);
+      printf("------+-----------+-----------------+-----------------+-----------------\n");
++ #ifdef USE_FFTW_THREADS
+      fftw_cleanup_threads();
++ #endif
+  
+      return 0;
+  }

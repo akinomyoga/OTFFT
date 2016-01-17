@@ -13,12 +13,12 @@
 #include "simple_fft.h"
 #include "otfft/otfft.h"
 
-#ifdef DONT_USE_chrono
+#if __cplusplus < 201103L
 #include "otfft/stopwatch.h"
 #else
 #include <chrono>
 #include "otfft/msleep.h"
-typedef long long counter_t;
+typedef std::chrono::microseconds::rep counter_t;
 #endif
 
 using OTFFT::complex_t;
@@ -38,26 +38,27 @@ using CppFFTW3::INVERSE;
 
 double safe_avr(const std::vector<counter_t>& dt) // 異常値を含まない平均
 {
-    const size_t TRIES = dt.size();
+    typedef std::vector<counter_t>::size_type size_type;
+    const size_type TRIES = dt.size();
     counter_t sum = 0;
-    for (int i = 0; i < TRIES; i++) sum += dt[i];
+    for (size_type i = 0; i < TRIES; i++) sum += dt[i];
     const double m = double(sum)/TRIES;
     double sum_dd = 0;
-    for (int i = 0; i < TRIES; i++) {
+    for (size_type i = 0; i < TRIES; i++) {
         const double d = dt[i] - m;
         sum_dd += d*d;
     }
     const double ss = sum_dd/TRIES;
     sum = 0;
-    int n = 0;
-    for (int i = 0; i < TRIES; i++) {
+    size_type n = 0;
+    for (size_type i = 0; i < TRIES; i++) {
         const double d = dt[i] - m;
         if (d*d <= 2*ss) { sum += dt[i]; n++; }
     }
     return double(sum)/n;
 }
 
-#ifdef DONT_USE_chrono
+#if __cplusplus < 201103L
 template <typename FFT, typename IFFT>
 double laptime1(int LOOPS, int TRIES, const FFT& fft, const IFFT& ifft)
 {
@@ -72,7 +73,7 @@ double laptime1(int LOOPS, int TRIES, const FFT& fft, const IFFT& ifft)
         dt[i] = t2 - t1;
         msleep(DELAY1);
     }
-    return usec(rint(safe_avr(dt)));
+    return usec(lrint(safe_avr(dt)));
 }
 
 template <typename FFT>
@@ -89,7 +90,7 @@ double laptime2(int LOOPS, int TRIES, const FFT& fft, complex_t *x)
         dt[i] = t2 - t1;
         msleep(DELAY1);
     }
-    return usec(rint(safe_avr(dt)));
+    return usec(lrint(safe_avr(dt)));
 }
 #else
 template <typename FFT, typename IFFT>
@@ -127,7 +128,7 @@ double laptime2(int LOOPS, int TRIES, const FFT& fft, complex_t *x)
     }
     return safe_avr(dt);
 }
-#endif // DONT_USE_chrono
+#endif // __cplusplus < 201103L
 
 int main(int argc, char *argv[]) try
 {
@@ -139,7 +140,7 @@ int main(int argc, char *argv[]) try
     if (n_max < 1 || 24 < n_max) throw "argv[2] must be 1..24";
     if (n_min > n_max) throw "argv must be argv[1] <= argv[2]";
 
-#ifdef USE_FFTW_THREADS
+#ifndef DO_SINGLE_THREAD
     fftw_init_threads();
 #endif
     setbuf(stdout, NULL);
@@ -236,7 +237,7 @@ int main(int argc, char *argv[]) try
     printf("%11.2f(%3.0f%%)|",   sum3/(n_max-n_min+1), 100*sum3/sum1);
     printf("%11.2f(%3.0f%%)|\n", sum4/(n_max-n_min+1), 100*sum4/sum1);
     printf("------+-----------+-----------------+-----------------+-----------------+---\n");
-#ifdef USE_FFTW_THREADS
+#ifndef DO_SINGLE_THREAD
     fftw_cleanup_threads();
 #endif
 

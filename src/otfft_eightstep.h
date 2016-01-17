@@ -1,5 +1,5 @@
 /******************************************************************************
-*  OTFFT Eightstep Version 6.0
+*  OTFFT Eightstep Version 6.4
 *
 *  Copyright (c) 2015 OK Ojisan(Takuya OKAHISA)
 *  Released under the MIT license
@@ -15,7 +15,11 @@ using namespace OTFFT_MISC;
 using OTFFT_Sixstep::weight_t;
 using OTFFT_Sixstep::const_index_vector;
 
+#ifdef DO_SINGLE_THREAD
+static const int OMP_THRESHOLD = 1<<30;
+#else
 static const int OMP_THRESHOLD = 1<<13;
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -32,7 +36,7 @@ template <int log_N> struct fwd0fftq
     static const int N7 = N3 + N4;
 
     static inline void transpose_kernel(
-            const int p, complex_vector x, complex_vector y)
+            const int p, complex_vector x, complex_vector y) noexcept
     {
         const ymm aA = getpz2(x+p+N0);
         const ymm bB = getpz2(x+p+N1);
@@ -61,7 +65,7 @@ template <int log_N> struct fwd0fftq
     }
 
     static inline void fft_and_mult_twiddle_factor_kernel(
-            const int p, complex_vector x, complex_vector y, weight_t W)
+            const int p, complex_vector x, complex_vector y, weight_t W) noexcept
     {
         const ymm w1p = getpz2(W+p);
         const ymm w2p = mulpz2(w1p, w1p);
@@ -105,7 +109,7 @@ template <int log_N> struct fwd0fftq
     }
 
     void operator()(const_index_vector ip,
-            complex_vector x, complex_vector y, weight_t W, weight_t Ws) const
+            complex_vector x, complex_vector y, weight_t W, weight_t Ws) const noexcept
     {
         if (N < OMP_THRESHOLD) {
             for (int p = 0; p < N1; p += 2) {
@@ -163,13 +167,13 @@ template <int log_N> struct inv0fftq
     static const int N7 = N3 + N4;
 
     static inline void transpose_kernel(
-            const int p, complex_vector x, complex_vector y)
+            const int p, complex_vector x, complex_vector y) noexcept
     {
         fwd0fftq<log_N>::transpose_kernel(p, x, y);
     }
 
     static inline void fft_and_mult_twiddle_factor_kernel(
-            const int p, complex_vector x, complex_vector y, weight_t W)
+            const int p, complex_vector x, complex_vector y, weight_t W) noexcept
     {
         const ymm w1p = cnjpz2(getpz2(W+p));
         const ymm w2p = mulpz2(w1p, w1p);
@@ -213,7 +217,7 @@ template <int log_N> struct inv0fftq
     }
 
     void operator()(const_index_vector ip,
-            complex_vector x, complex_vector y, weight_t W, weight_t Ws) const
+            complex_vector x, complex_vector y, weight_t W, weight_t Ws) const noexcept
     {
         if (N < OMP_THRESHOLD) {
             for (int p = 0; p < N1; p += 2) {
@@ -271,13 +275,13 @@ template <int log_N> struct fwdnfftq
     static const int N7 = N3 + N4;
 
     static inline void transpose_kernel(
-            const int p, complex_vector x, complex_vector y)
+            const int p, complex_vector x, complex_vector y) noexcept
     {
         fwd0fftq<log_N>::transpose_kernel(p, x, y);
     }
 
     static inline void fft_and_mult_twiddle_factor_kernel(
-            const int p, complex_vector x, complex_vector y, weight_t W)
+            const int p, complex_vector x, complex_vector y, weight_t W) noexcept
     {
         static const ymm rN = { 1.0/N, 1.0/N, 1.0/N, 1.0/N };
         const ymm w1p = getpz2(W+p);
@@ -322,7 +326,7 @@ template <int log_N> struct fwdnfftq
     }
 
     void operator()(const_index_vector ip,
-            complex_vector x, complex_vector y, weight_t W, weight_t Ws) const
+            complex_vector x, complex_vector y, weight_t W, weight_t Ws) const noexcept
     {
         if (N < OMP_THRESHOLD) {
             for (int p = 0; p < N1; p += 2) {
@@ -380,13 +384,13 @@ template <int log_N> struct invnfftq
     static const int N7 = N3 + N4;
 
     static inline void transpose_kernel(
-            const int p, complex_vector x, complex_vector y)
+            const int p, complex_vector x, complex_vector y) noexcept
     {
         fwd0fftq<log_N>::transpose_kernel(p, x, y);
     }
 
     static inline void fft_and_mult_twiddle_factor_kernel(
-            const int p, complex_vector x, complex_vector y, weight_t W)
+            const int p, complex_vector x, complex_vector y, weight_t W) noexcept
     {
         static const ymm rN = { 1.0/N, 1.0/N, 1.0/N, 1.0/N };
         const ymm w1p = cnjpz2(getpz2(W+p));
@@ -431,7 +435,7 @@ template <int log_N> struct invnfftq
     }
 
     void operator()(const_index_vector ip,
-            complex_vector x, complex_vector y, weight_t W, weight_t Ws) const
+            complex_vector x, complex_vector y, weight_t W, weight_t Ws) const noexcept
     {
         if (N < OMP_THRESHOLD) {
             for (int p = 0; p < N1; p += 2) {

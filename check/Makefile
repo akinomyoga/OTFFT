@@ -58,7 +58,8 @@ LDLIBS = $(OMPLIB)
 # Enable library: fftw3_threads
 ifeq ($(FFTW_THREADS),yes)
   bench_LIBS := -lfftw3_threads
-  bench_CXXFLAGS += -D USE_FFTW_THREADS
+else
+  bench_CXXFLAGS += -D DO_SINGLE_THREAD
 endif
 
 bench_LIBS += -lfftw3 -lpthread

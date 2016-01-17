@@ -1,5 +1,5 @@
 /******************************************************************************
-*  OTFFT Sixstep of Normalized Square Version 6.0
+*  OTFFT Sixstep of Normalized Square Version 6.4
 *
 *  Copyright (c) 2015 OK Ojisan(Takuya OKAHISA)
 *  Released under the MIT license
@@ -19,13 +19,13 @@ template <int log_N> struct fwdnffts
     static const int m = n/2*(n/2+1)/2;
 
     static inline void transpose_kernel(
-            const int k, const int p, complex_vector x)
+            const int k, const int p, complex_vector x) noexcept
     {
         fwd0ffts_body<log_N,1>::transpose_kernel(k, p, x);
     }
 
     static void mult_twiddle_factor_kernel(
-            const int p, const int k, complex_vector x, weight_t W)
+            const int p, const int k, complex_vector x, weight_t W) noexcept
     {
         static const ymm rN = { 1.0/N, 1.0/N, 1.0/N, 1.0/N };
         if (p == k) {
@@ -63,7 +63,7 @@ template <int log_N> struct fwdnffts
     }
 
     void operator()(const_index_vector ip,
-            complex_vector x, complex_vector y, weight_t W, weight_t Ws) const
+            complex_vector x, complex_vector y, weight_t W, weight_t Ws) const noexcept
     {
         if (N < OMP_THRESHOLD1) {
             for (int i = 0; i < m; i++) {
@@ -73,7 +73,7 @@ template <int log_N> struct fwdnffts
             }
             for (int p = 0; p < n; p++) {
                 const int pn = p*n;
-                OTFFT_AVXDIF8::fwd0fft<n,1,0>()(x + pn, y + pn, Ws);
+                OTFFT_AVXDIF16::fwd0fft<n,1,0>()(x + pn, y + pn, Ws);
             }
             for (int i = 0; i < m; i++) {
                 const int p = ip[i].row;
@@ -82,7 +82,7 @@ template <int log_N> struct fwdnffts
             }
             for (int k = 0; k < n; k++) {
                 const int kn = k*n;
-                OTFFT_AVXDIF8::fwd0fft<n,1,0>()(x + kn, y + kn, Ws);
+                OTFFT_AVXDIF16::fwd0fft<n,1,0>()(x + kn, y + kn, Ws);
             }
             for (int i = 0; i < m; i++) {
                 const int k = ip[i].row;
@@ -108,7 +108,7 @@ template <int log_N> struct fwdnffts
 #endif
             for (int p = 0; p < n; p++) {
                 const int pn = p*n;
-                OTFFT_AVXDIF8::fwd0fft<n,1,0>()(x + pn, y + pn, Ws);
+                OTFFT_AVXDIF16::fwd0fft<n,1,0>()(x + pn, y + pn, Ws);
             }
 #ifdef _OPENMP
             #pragma omp for schedule(static)
@@ -123,7 +123,7 @@ template <int log_N> struct fwdnffts
 #endif
             for (int k = 0; k < n; k++) {
                 const int kn = k*n;
-                OTFFT_AVXDIF8::fwd0fft<n,1,0>()(x + kn, y + kn, Ws);
+                OTFFT_AVXDIF16::fwd0fft<n,1,0>()(x + kn, y + kn, Ws);
             }
 #ifdef _OPENMP
             #pragma omp for schedule(static) nowait
@@ -152,7 +152,7 @@ template <int log_N> struct fwdnffts
 #endif
             for (int p = 0; p < n; p++) {
                 const int pn = p*n;
-                OTFFT_AVXDIF8::fwd0fft<n,1,0>()(x + pn, y + pn, Ws);
+                OTFFT_AVXDIF16::fwd0fft<n,1,0>()(x + pn, y + pn, Ws);
             }
 #ifdef _OPENMP
             #pragma omp for schedule(guided)
@@ -167,7 +167,7 @@ template <int log_N> struct fwdnffts
 #endif
             for (int k = 0; k < n; k++) {
                 const int kn = k*n;
-                OTFFT_AVXDIF8::fwd0fft<n,1,0>()(x + kn, y + kn, Ws);
+                OTFFT_AVXDIF16::fwd0fft<n,1,0>()(x + kn, y + kn, Ws);
             }
 #ifdef _OPENMP
             #pragma omp for schedule(guided) nowait
@@ -191,13 +191,13 @@ template <int log_N> struct invnffts
     static const int m = n/2*(n/2+1)/2;
 
     static inline void transpose_kernel(
-            const int k, const int p, complex_vector x)
+            const int k, const int p, complex_vector x) noexcept
     {
         fwdnffts<log_N>::transpose_kernel(k, p, x);
     }
 
     static void mult_twiddle_factor_kernel(
-            const int p, const int k, complex_vector x, weight_t W)
+            const int p, const int k, complex_vector x, weight_t W) noexcept
     {
         static const ymm rN = { 1.0/N, 1.0/N, 1.0/N, 1.0/N };
         if (p == k) {
@@ -235,7 +235,7 @@ template <int log_N> struct invnffts
     }
 
     void operator()(const_index_vector ip,
-            complex_vector x, complex_vector y, weight_t W, weight_t Ws) const
+            complex_vector x, complex_vector y, weight_t W, weight_t Ws) const noexcept
     {
         if (N < OMP_THRESHOLD1) {
             for (int i = 0; i < m; i++) {
@@ -245,7 +245,7 @@ template <int log_N> struct invnffts
             }
             for (int p = 0; p < n; p++) {
                 const int pn = p*n;
-                OTFFT_AVXDIF8::inv0fft<n,1,0>()(x + pn, y + pn, Ws);
+                OTFFT_AVXDIF16::inv0fft<n,1,0>()(x + pn, y + pn, Ws);
             }
             for (int i = 0; i < m; i++) {
                 const int p = ip[i].row;
@@ -254,7 +254,7 @@ template <int log_N> struct invnffts
             }
             for (int k = 0; k < n; k++) {
                 const int kn = k*n;
-                OTFFT_AVXDIF8::inv0fft<n,1,0>()(x + kn, y + kn, Ws);
+                OTFFT_AVXDIF16::inv0fft<n,1,0>()(x + kn, y + kn, Ws);
             }
             for (int i = 0; i < m; i++) {
                 const int k = ip[i].row;
@@ -280,7 +280,7 @@ template <int log_N> struct invnffts
 #endif
             for (int p = 0; p < n; p++) {
                 const int pn = p*n;
-                OTFFT_AVXDIF8::inv0fft<n,1,0>()(x + pn, y + pn, Ws);
+                OTFFT_AVXDIF16::inv0fft<n,1,0>()(x + pn, y + pn, Ws);
             }
 #ifdef _OPENMP
             #pragma omp for schedule(static)
@@ -295,7 +295,7 @@ template <int log_N> struct invnffts
 #endif
             for (int k = 0; k < n; k++) {
                 const int kn = k*n;
-                OTFFT_AVXDIF8::inv0fft<n,1,0>()(x + kn, y + kn, Ws);
+                OTFFT_AVXDIF16::inv0fft<n,1,0>()(x + kn, y + kn, Ws);
             }
 #ifdef _OPENMP
             #pragma omp for schedule(static) nowait
@@ -324,7 +324,7 @@ template <int log_N> struct invnffts
 #endif
             for (int p = 0; p < n; p++) {
                 const int pn = p*n;
-                OTFFT_AVXDIF8::inv0fft<n,1,0>()(x + pn, y + pn, Ws);
+                OTFFT_AVXDIF16::inv0fft<n,1,0>()(x + pn, y + pn, Ws);
             }
 #ifdef _OPENMP
             #pragma omp for schedule(guided)
@@ -339,7 +339,7 @@ template <int log_N> struct invnffts
 #endif
             for (int k = 0; k < n; k++) {
                 const int kn = k*n;
-                OTFFT_AVXDIF8::inv0fft<n,1,0>()(x + kn, y + kn, Ws);
+                OTFFT_AVXDIF16::inv0fft<n,1,0>()(x + kn, y + kn, Ws);
             }
 #ifdef _OPENMP
             #pragma omp for schedule(guided) nowait

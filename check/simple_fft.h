@@ -16,7 +16,11 @@ namespace SimpleFFT { /////////////////////////////////////////////////////////
 
 using namespace OTFFT_MISC;
 
+#ifdef DO_SINGLE_THREAD
+const int OMP_THRESHOLD = 1<<30;
+#else
 const int OMP_THRESHOLD = 1<<15;
+#endif
 
 void fwdbut(int N, complex_t* const x, const complex_t* const W)
 {

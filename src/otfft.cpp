@@ -1,5 +1,5 @@
 /******************************************************************************
-*  OTFFT Implementation Version 6.0
+*  OTFFT Implementation Version 6.4
 *
 *  Copyright (c) 2015 OK Ojisan(Takuya OKAHISA)
 *  Released under the MIT license
@@ -72,32 +72,32 @@ namespace OTFFT { /////////////////////////////////////////////////////////////
         #include "otfft_setup.h"
     }
 
-    void FFT0::fwd(complex_vector x, complex_vector y) const
+    void FFT0::fwd(complex_vector x, complex_vector y) const noexcept
     {
         #include "otfft_fwd.h"
     }
 
-    void FFT0::fwd0(complex_vector x, complex_vector y) const
+    void FFT0::fwd0(complex_vector x, complex_vector y) const noexcept
     {
         #include "otfft_fwd0.h"
     }
 
-    void FFT0::fwdn(complex_vector x, complex_vector y) const
+    void FFT0::fwdn(complex_vector x, complex_vector y) const noexcept
     {
         fwd(x, y);
     }
 
-    void FFT0::inv(complex_vector x, complex_vector y) const
+    void FFT0::inv(complex_vector x, complex_vector y) const noexcept
     {
         #include "otfft_inv.h"
     }
 
-    void FFT0::inv0(complex_vector x, complex_vector y) const
+    void FFT0::inv0(complex_vector x, complex_vector y) const noexcept
     {
         inv(x, y);
     }
 
-    void FFT0::invn(complex_vector x, complex_vector y) const
+    void FFT0::invn(complex_vector x, complex_vector y) const noexcept
     {
         #include "otfft_invn.h"
     }
@@ -174,7 +174,7 @@ namespace OTFFT { /////////////////////////////////////////////////////////////
 #endif
     }
 
-    void RFFT::fwd0(const_double_vector x, complex_vector y) const
+    void RFFT::fwd0(const_double_vector x, complex_vector y) const noexcept
     {
         if (N < 1) return;
         else if (N < 2) { y[0] = x[0]; return; }
@@ -217,7 +217,7 @@ namespace OTFFT { /////////////////////////////////////////////////////////////
         }
     }
 
-    void RFFT::fwd(const_double_vector x, complex_vector y) const
+    void RFFT::fwd(const_double_vector x, complex_vector y) const noexcept
     {
         if (N < 1) return;
         else if (N < 2) { y[0] = x[0]; return; }
@@ -261,11 +261,11 @@ namespace OTFFT { /////////////////////////////////////////////////////////////
         }
     }
 
-    void RFFT::fwdn(const_double_vector x, complex_vector y) const { fwd(x, y); }
+    void RFFT::fwdn(const_double_vector x, complex_vector y) const noexcept { fwd(x, y); }
 
-    void RFFT::inv0(complex_vector x, double_vector y) const { inv(x, y); }
+    void RFFT::inv0(complex_vector x, double_vector y) const noexcept { inv(x, y); }
 
-    void RFFT::inv(complex_vector x, double_vector y) const
+    void RFFT::inv(complex_vector x, double_vector y) const noexcept
     {
         if (N < 1) return;
         else if (N < 2) { y[0] = x[0].Re; return; }
@@ -301,7 +301,7 @@ namespace OTFFT { /////////////////////////////////////////////////////////////
         }
     }
 
-    void RFFT::invn(complex_vector x, double_vector y) const
+    void RFFT::invn(complex_vector x, double_vector y) const noexcept
     {
         if (N < 1) return;
         else if (N < 2) { y[0] = x[0].Re; return; }
@@ -377,7 +377,7 @@ namespace OTFFT { /////////////////////////////////////////////////////////////
         }
     }
 
-    void DCT0::fwd0(double_vector x, double_vector y, complex_vector z) const
+    void DCT0::fwd0(double_vector x, double_vector y, complex_vector z) const noexcept
     {
         if (N < 2) return;
         const int Nh = N/2;
@@ -418,7 +418,7 @@ namespace OTFFT { /////////////////////////////////////////////////////////////
         }
     }
 
-    void DCT0::fwd(double_vector x, double_vector y, complex_vector z) const
+    void DCT0::fwd(double_vector x, double_vector y, complex_vector z) const noexcept
     {
         if (N < 2) return;
         const int Nh = N/2;
@@ -457,11 +457,11 @@ namespace OTFFT { /////////////////////////////////////////////////////////////
         }
     }
 
-    void DCT0::fwdn(double_vector x, double_vector y, complex_vector z) const { fwd(x, y, z); }
+    void DCT0::fwdn(double_vector x, double_vector y, complex_vector z) const noexcept { fwd(x, y, z); }
 
-    void DCT0::inv0(double_vector x, double_vector y, complex_vector z) const { inv(x, y, z); }
+    void DCT0::inv0(double_vector x, double_vector y, complex_vector z) const noexcept { inv(x, y, z); }
 
-    void DCT0::inv(double_vector x, double_vector y, complex_vector z) const
+    void DCT0::inv(double_vector x, double_vector y, complex_vector z) const noexcept
     {
         if (N < 2) return;
         const int Nh = N/2;
@@ -493,7 +493,7 @@ namespace OTFFT { /////////////////////////////////////////////////////////////
         }
     }
 
-    void DCT0::invn(double_vector x, double_vector y, complex_vector z) const
+    void DCT0::invn(double_vector x, double_vector y, complex_vector z) const noexcept
     {
         if (N < 2) return;
         const int Nh = N/2;
@@ -563,7 +563,7 @@ namespace OTFFT { /////////////////////////////////////////////////////////////
         }
     }
 
-    void Bluestein::fwd0(complex_vector x) const
+    void Bluestein::fwd0(complex_vector x) const noexcept
     {
         if (N < 2) return;
         const int N2 = 2*N;
@@ -621,7 +621,7 @@ namespace OTFFT { /////////////////////////////////////////////////////////////
         }
     }
 
-    void Bluestein::fwd(complex_vector x) const
+    void Bluestein::fwd(complex_vector x) const noexcept
     {
         if (N < 2) return;
         const xmm rN = cmplx(1.0/N, 1.0/N);
@@ -680,11 +680,11 @@ namespace OTFFT { /////////////////////////////////////////////////////////////
         }
     }
 
-    void Bluestein::fwdn(complex_vector x) const { fwd(x); }
+    void Bluestein::fwdn(complex_vector x) const noexcept { fwd(x); }
 
-    void Bluestein::inv0(complex_vector x) const { inv(x); }
+    void Bluestein::inv0(complex_vector x) const noexcept { inv(x); }
 
-    void Bluestein::inv(complex_vector x) const
+    void Bluestein::inv(complex_vector x) const noexcept
     {
         if (N < 2) return;
         const int N2 = 2*N;
@@ -742,7 +742,7 @@ namespace OTFFT { /////////////////////////////////////////////////////////////
         }
     }
 
-    void Bluestein::invn(complex_vector x) const
+    void Bluestein::invn(complex_vector x) const noexcept
     {
         if (N < 2) return;
         const xmm rN = cmplx(1.0/N, 1.0/N);

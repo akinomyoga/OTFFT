@@ -1,5 +1,5 @@
 /******************************************************************************
-*  OTFFT AVXDIT(Radix-16) Version 6.0
+*  OTFFT AVXDIT(Radix-16) Version 6.4
 *
 *  Copyright (c) 2015 OK Ojisan(Takuya OKAHISA)
 *  Released under the MIT license
@@ -17,8 +17,11 @@ namespace OTFFT_AVXDIT16 { ////////////////////////////////////////////////////
 
 using namespace OTFFT_MISC;
 
+#ifdef DO_SINGLE_THREAD
+static const int OMP_THRESHOLD = 1<<30;
+#else
 static const int OMP_THRESHOLD = 1<<11;
-//static const int OMP_THRESHOLD = 1<<25;
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 // Forward buffterfly operation
@@ -46,7 +49,7 @@ template <int n, int s> struct fwdcore
     static const int Nf = N1*15;
 
     void operator()(
-            complex_vector x, complex_vector y, const_complex_vector W) const
+            complex_vector x, complex_vector y, const_complex_vector W) const noexcept
     {
         for (int p = 0; p < n1; p++) {
             const int sp   = s*p;
@@ -188,7 +191,7 @@ template <int N> struct fwdcore<N,1>
     static const int Nf = N1*15;
 
     void operator()(
-            complex_vector x, complex_vector y, const_complex_vector W) const
+            complex_vector x, complex_vector y, const_complex_vector W) const noexcept
     {
         for (int p = 0; p < N1; p += 2) {
             complex_vector x_p   = x + p;
@@ -349,7 +352,7 @@ template <int n, int s, bool eo> struct fwd0end;
 
 template <int s> struct fwd0end<16,s,1>
 {
-    void operator()(complex_vector x, complex_vector y) const
+    void operator()(complex_vector x, complex_vector y) const noexcept
     {
         for (int q = 0; q < s; q += 2) {
             complex_vector xq = x + q;
@@ -452,7 +455,7 @@ template <int s> struct fwd0end<16,s,1>
 
 template <> struct fwd0end<16,1,1>
 {
-    inline void operator()(complex_vector x, complex_vector y) const
+    inline void operator()(complex_vector x, complex_vector y) const noexcept
     {
         zeroupper();
         const xmm y0 = getpz(y[0x0]);
@@ -553,7 +556,7 @@ template <> struct fwd0end<16,1,1>
 
 template <int s> struct fwd0end<16,s,0>
 {
-    void operator()(complex_vector x, complex_vector) const
+    void operator()(complex_vector x, complex_vector) const noexcept
     {
         for (int q = 0; q < s; q += 2) {
             complex_vector xq = x + q;
@@ -655,7 +658,7 @@ template <int s> struct fwd0end<16,s,0>
 
 template <> struct fwd0end<16,1,0>
 {
-    inline void operator()(complex_vector x, complex_vector) const
+    inline void operator()(complex_vector x, complex_vector) const noexcept
     {
         zeroupper();
         const xmm x0 = getpz(x[0x0]);
@@ -762,7 +765,7 @@ template <int s> struct fwdnend<16,s,1>
 {
     static const int N = 16*s;
 
-    void operator()(complex_vector x, complex_vector y) const
+    void operator()(complex_vector x, complex_vector y) const noexcept
     {
         static const ymm rN = { 1.0/N, 1.0/N, 1.0/N, 1.0/N };
         for (int q = 0; q < s; q += 2) {
@@ -866,7 +869,7 @@ template <int s> struct fwdnend<16,s,1>
 
 template <> struct fwdnend<16,1,1>
 {
-    inline void operator()(complex_vector x, complex_vector y) const
+    inline void operator()(complex_vector x, complex_vector y) const noexcept
     {
         zeroupper();
         static const xmm rN = { 1.0/16, 1.0/16 };
@@ -970,7 +973,7 @@ template <int s> struct fwdnend<16,s,0>
 {
     static const int N = 16*s;
 
-    void operator()(complex_vector x, complex_vector) const
+    void operator()(complex_vector x, complex_vector) const noexcept
     {
         static const ymm rN = { 1.0/N, 1.0/N, 1.0/N, 1.0/N };
         for (int q = 0; q < s; q += 2) {
@@ -1073,7 +1076,7 @@ template <int s> struct fwdnend<16,s,0>
 
 template <> struct fwdnend<16,1,0>
 {
-    inline void operator()(complex_vector x, complex_vector) const
+    inline void operator()(complex_vector x, complex_vector) const noexcept
     {
         zeroupper();
         static const xmm rN = { 1.0/16, 1.0/16 };
@@ -1178,7 +1181,7 @@ template <> struct fwdnend<16,1,0>
 template <int n, int s, bool eo> struct fwd0fft
 {
     inline void operator()(
-        complex_vector x, complex_vector y, const_complex_vector W) const
+        complex_vector x, complex_vector y, const_complex_vector W) const noexcept
     {
         fwd0fft<n/16,16*s,!eo>()(y, x, W);
         fwdcore<n,s>()(x, y, W);
@@ -1188,7 +1191,7 @@ template <int n, int s, bool eo> struct fwd0fft
 template <int s, bool eo> struct fwd0fft<16,s,eo>
 {
     inline void operator()(
-        complex_vector x, complex_vector y, const_complex_vector) const
+        complex_vector x, complex_vector y, const_complex_vector) const noexcept
     {
         fwd0end<16,s,eo>()(x, y);
     }
@@ -1197,7 +1200,7 @@ template <int s, bool eo> struct fwd0fft<16,s,eo>
 template <int s, bool eo> struct fwd0fft<8,s,eo>
 {
     inline void operator()(
-        complex_vector x, complex_vector y, const_complex_vector) const
+        complex_vector x, complex_vector y, const_complex_vector) const noexcept
     {
         OTFFT_AVXDIT8::fwd0end<8,s,eo>()(x, y);
     }
@@ -1206,7 +1209,7 @@ template <int s, bool eo> struct fwd0fft<8,s,eo>
 template <int s, bool eo> struct fwd0fft<4,s,eo>
 {
     inline void operator()(
-        complex_vector x, complex_vector y, const_complex_vector) const
+        complex_vector x, complex_vector y, const_complex_vector) const noexcept
     {
         OTFFT_AVXDIT4::fwd0end<4,s,eo>()(x, y);
     }
@@ -1215,7 +1218,7 @@ template <int s, bool eo> struct fwd0fft<4,s,eo>
 template <int s, bool eo> struct fwd0fft<2,s,eo>
 {
     inline void operator()(
-        complex_vector x, complex_vector y, const_complex_vector) const
+        complex_vector x, complex_vector y, const_complex_vector) const noexcept
     {
         OTFFT_AVXDIT4::fwd0end<2,s,eo>()(x, y);
     }
@@ -1226,7 +1229,7 @@ template <int s, bool eo> struct fwd0fft<2,s,eo>
 template <int n, int s, bool eo> struct fwdnfft
 {
     inline void operator()(
-        complex_vector x, complex_vector y, const_complex_vector W) const
+        complex_vector x, complex_vector y, const_complex_vector W) const noexcept
     {
         fwdnfft<n/16,16*s,!eo>()(y, x, W);
         fwdcore<n,s>()(x, y, W);
@@ -1236,7 +1239,7 @@ template <int n, int s, bool eo> struct fwdnfft
 template <int s, bool eo> struct fwdnfft<16,s,eo>
 {
     inline void operator()(
-        complex_vector x, complex_vector y, const_complex_vector) const
+        complex_vector x, complex_vector y, const_complex_vector) const noexcept
     {
         fwdnend<16,s,eo>()(x, y);
     }
@@ -1245,7 +1248,7 @@ template <int s, bool eo> struct fwdnfft<16,s,eo>
 template <int s, bool eo> struct fwdnfft<8,s,eo>
 {
     inline void operator()(
-        complex_vector x, complex_vector y, const_complex_vector) const
+        complex_vector x, complex_vector y, const_complex_vector) const noexcept
     {
         OTFFT_AVXDIT8::fwdnend<8,s,eo>()(x, y);
     }
@@ -1254,7 +1257,7 @@ template <int s, bool eo> struct fwdnfft<8,s,eo>
 template <int s, bool eo> struct fwdnfft<4,s,eo>
 {
     inline void operator()(
-        complex_vector x, complex_vector y, const_complex_vector) const
+        complex_vector x, complex_vector y, const_complex_vector) const noexcept
     {
         OTFFT_AVXDIT4::fwdnend<4,s,eo>()(x, y);
     }
@@ -1263,7 +1266,7 @@ template <int s, bool eo> struct fwdnfft<4,s,eo>
 template <int s, bool eo> struct fwdnfft<2,s,eo>
 {
     inline void operator()(
-        complex_vector x, complex_vector y, const_complex_vector) const
+        complex_vector x, complex_vector y, const_complex_vector) const noexcept
     {
         OTFFT_AVXDIT4::fwdnend<2,s,eo>()(x, y);
     }
@@ -1295,7 +1298,7 @@ template <int n, int s> struct invcore
     static const int Nf = N1*15;
 
     void operator()(
-            complex_vector x, complex_vector y, const_complex_vector W) const
+            complex_vector x, complex_vector y, const_complex_vector W) const noexcept
     {
         for (int p = 0; p < n1; p++) {
             const int sp   = s*p;
@@ -1437,7 +1440,7 @@ template <int N> struct invcore<N,1>
     static const int Nf = N1*15;
 
     void operator()(
-            complex_vector x, complex_vector y, const_complex_vector W) const
+            complex_vector x, complex_vector y, const_complex_vector W) const noexcept
     {
         for (int p = 0; p < N1; p += 2) {
             complex_vector x_p   = x + p;
@@ -1598,7 +1601,7 @@ template <int n, int s, bool eo> struct inv0end;
 
 template <int s> struct inv0end<16,s,1>
 {
-    void operator()(complex_vector x, complex_vector y) const
+    void operator()(complex_vector x, complex_vector y) const noexcept
     {
         for (int q = 0; q < s; q += 2) {
             complex_vector xq = x + q;
@@ -1701,7 +1704,7 @@ template <int s> struct inv0end<16,s,1>
 
 template <> struct inv0end<16,1,1>
 {
-    inline void operator()(complex_vector x, complex_vector y) const
+    inline void operator()(complex_vector x, complex_vector y) const noexcept
     {
         zeroupper();
         const xmm y0 = getpz(y[0x0]);
@@ -1802,7 +1805,7 @@ template <> struct inv0end<16,1,1>
 
 template <int s> struct inv0end<16,s,0>
 {
-    void operator()(complex_vector x, complex_vector) const
+    void operator()(complex_vector x, complex_vector) const noexcept
     {
         for (int q = 0; q < s; q += 2) {
             complex_vector xq = x + q;
@@ -1904,7 +1907,7 @@ template <int s> struct inv0end<16,s,0>
 
 template <> struct inv0end<16,1,0>
 {
-    inline void operator()(complex_vector x, complex_vector) const
+    inline void operator()(complex_vector x, complex_vector) const noexcept
     {
         zeroupper();
         const xmm x0 = getpz(x[0x0]);
@@ -2011,7 +2014,7 @@ template <int s> struct invnend<16,s,1>
 {
     static const int N = 16*s;
 
-    void operator()(complex_vector x, complex_vector y) const
+    void operator()(complex_vector x, complex_vector y) const noexcept
     {
         static const ymm rN = { 1.0/N, 1.0/N, 1.0/N, 1.0/N };
         for (int q = 0; q < s; q += 2) {
@@ -2115,7 +2118,7 @@ template <int s> struct invnend<16,s,1>
 
 template <> struct invnend<16,1,1>
 {
-    inline void operator()(complex_vector x, complex_vector y) const
+    inline void operator()(complex_vector x, complex_vector y) const noexcept
     {
         zeroupper();
         static const xmm rN = { 1.0/16, 1.0/16 };
@@ -2219,7 +2222,7 @@ template <int s> struct invnend<16,s,0>
 {
     static const int N = 16*s;
 
-    void operator()(complex_vector x, complex_vector) const
+    void operator()(complex_vector x, complex_vector) const noexcept
     {
         static const ymm rN = { 1.0/N, 1.0/N, 1.0/N, 1.0/N };
         for (int q = 0; q < s; q += 2) {
@@ -2322,7 +2325,7 @@ template <int s> struct invnend<16,s,0>
 
 template <> struct invnend<16,1,0>
 {
-    inline void operator()(complex_vector x, complex_vector) const
+    inline void operator()(complex_vector x, complex_vector) const noexcept
     {
         zeroupper();
         static const xmm rN = { 1.0/16, 1.0/16 };
@@ -2427,7 +2430,7 @@ template <> struct invnend<16,1,0>
 template <int n, int s, bool eo> struct inv0fft
 {
     inline void operator()(
-        complex_vector x, complex_vector y, const_complex_vector W) const
+        complex_vector x, complex_vector y, const_complex_vector W) const noexcept
     {
         inv0fft<n/16,16*s,!eo>()(y, x, W);
         invcore<n,s>()(x, y, W);
@@ -2437,7 +2440,7 @@ template <int n, int s, bool eo> struct inv0fft
 template <int s, bool eo> struct inv0fft<16,s,eo>
 {
     inline void operator()(
-        complex_vector x, complex_vector y, const_complex_vector) const
+        complex_vector x, complex_vector y, const_complex_vector) const noexcept
     {
         inv0end<16,s,eo>()(x, y);
     }
@@ -2446,7 +2449,7 @@ template <int s, bool eo> struct inv0fft<16,s,eo>
 template <int s, bool eo> struct inv0fft<8,s,eo>
 {
     inline void operator()(
-        complex_vector x, complex_vector y, const_complex_vector) const
+        complex_vector x, complex_vector y, const_complex_vector) const noexcept
     {
         OTFFT_AVXDIT8::inv0end<8,s,eo>()(x, y);
     }
@@ -2455,7 +2458,7 @@ template <int s, bool eo> struct inv0fft<8,s,eo>
 template <int s, bool eo> struct inv0fft<4,s,eo>
 {
     inline void operator()(
-        complex_vector x, complex_vector y, const_complex_vector) const
+        complex_vector x, complex_vector y, const_complex_vector) const noexcept
     {
         OTFFT_AVXDIT4::inv0end<4,s,eo>()(x, y);
     }
@@ -2464,7 +2467,7 @@ template <int s, bool eo> struct inv0fft<4,s,eo>
 template <int s, bool eo> struct inv0fft<2,s,eo>
 {
     inline void operator()(
-        complex_vector x, complex_vector y, const_complex_vector) const
+        complex_vector x, complex_vector y, const_complex_vector) const noexcept
     {
         OTFFT_AVXDIT4::inv0end<2,s,eo>()(x, y);
     }
@@ -2475,7 +2478,7 @@ template <int s, bool eo> struct inv0fft<2,s,eo>
 template <int n, int s, bool eo> struct invnfft
 {
     inline void operator()(
-        complex_vector x, complex_vector y, const_complex_vector W) const
+        complex_vector x, complex_vector y, const_complex_vector W) const noexcept
     {
         invnfft<n/16,16*s,!eo>()(y, x, W);
         invcore<n,s>()(x, y, W);
@@ -2485,7 +2488,7 @@ template <int n, int s, bool eo> struct invnfft
 template <int s, bool eo> struct invnfft<16,s,eo>
 {
     inline void operator()(
-        complex_vector x, complex_vector y, const_complex_vector) const
+        complex_vector x, complex_vector y, const_complex_vector) const noexcept
     {
         invnend<16,s,eo>()(x, y);
     }
@@ -2494,7 +2497,7 @@ template <int s, bool eo> struct invnfft<16,s,eo>
 template <int s, bool eo> struct invnfft<8,s,eo>
 {
     inline void operator()(
-        complex_vector x, complex_vector y, const_complex_vector) const
+        complex_vector x, complex_vector y, const_complex_vector) const noexcept
     {
         OTFFT_AVXDIT8::invnend<8,s,eo>()(x, y);
     }
@@ -2503,7 +2506,7 @@ template <int s, bool eo> struct invnfft<8,s,eo>
 template <int s, bool eo> struct invnfft<4,s,eo>
 {
     inline void operator()(
-        complex_vector x, complex_vector y, const_complex_vector) const
+        complex_vector x, complex_vector y, const_complex_vector) const noexcept
     {
         OTFFT_AVXDIT4::invnend<4,s,eo>()(x, y);
     }
@@ -2512,7 +2515,7 @@ template <int s, bool eo> struct invnfft<4,s,eo>
 template <int s, bool eo> struct invnfft<2,s,eo>
 {
     inline void operator()(
-        complex_vector x, complex_vector y, const_complex_vector) const
+        complex_vector x, complex_vector y, const_complex_vector) const noexcept
     {
         OTFFT_AVXDIT4::invnend<2,s,eo>()(x, y);
     }
@@ -2528,7 +2531,7 @@ struct FFT0
     simd_array<complex_t> weight;
     complex_t* __restrict W;
 
-    FFT0() : N(0), log_N(0), W(0) {}
+    FFT0() noexcept : N(0), log_N(0), W(0) {}
     FFT0(const int n) { setup(n); }
 
     void setup(int n)
@@ -2546,7 +2549,7 @@ struct FFT0
 
     ///////////////////////////////////////////////////////////////////////////
 
-    inline void fwd(complex_vector x, complex_vector y) const
+    inline void fwd(complex_vector x, complex_vector y) const noexcept
     {
         if (N < OMP_THRESHOLD) {
             switch (log_N) {
@@ -2580,7 +2583,7 @@ struct FFT0
         else OTFFT_AVXDIT16omp::fwd(log_N, x, y, W);
     }
 
-    inline void fwd0(complex_vector x, complex_vector y) const
+    inline void fwd0(complex_vector x, complex_vector y) const noexcept
     {
         if (N < OMP_THRESHOLD) {
             switch (log_N) {
@@ -2614,9 +2617,9 @@ struct FFT0
         else OTFFT_AVXDIT16omp::fwd0(log_N, x, y, W);
     }
 
-    inline void fwdn(complex_vector x, complex_vector y) const { fwd(x, y); }
+    inline void fwdn(complex_vector x, complex_vector y) const noexcept { fwd(x, y); }
 
-    inline void fwd0o(complex_vector x, complex_vector y) const
+    inline void fwd0o(complex_vector x, complex_vector y) const noexcept
     {
         if (N < OMP_THRESHOLD) {
             switch (log_N) {
@@ -2650,7 +2653,7 @@ struct FFT0
         else OTFFT_AVXDIT16omp::fwd0o(log_N, x, y, W);
     }
 
-    inline void fwdno(complex_vector x, complex_vector y) const
+    inline void fwdno(complex_vector x, complex_vector y) const noexcept
     {
         if (N < OMP_THRESHOLD) {
             switch (log_N) {
@@ -2686,7 +2689,7 @@ struct FFT0
 
     ///////////////////////////////////////////////////////////////////////////
 
-    inline void inv(complex_vector x, complex_vector y) const
+    inline void inv(complex_vector x, complex_vector y) const noexcept
     {
         if (N < OMP_THRESHOLD) {
             switch (log_N) {
@@ -2720,9 +2723,9 @@ struct FFT0
         else OTFFT_AVXDIT16omp::inv(log_N, x, y, W);
     }
 
-    inline void inv0(complex_vector x, complex_vector y) const { inv(x, y); }
+    inline void inv0(complex_vector x, complex_vector y) const noexcept { inv(x, y); }
 
-    inline void invn(complex_vector x, complex_vector y) const
+    inline void invn(complex_vector x, complex_vector y) const noexcept
     {
         if (N < OMP_THRESHOLD) {
             switch (log_N) {
@@ -2756,7 +2759,7 @@ struct FFT0
         else OTFFT_AVXDIT16omp::invn(log_N, x, y, W);
     }
 
-    inline void inv0o(complex_vector x, complex_vector y) const
+    inline void inv0o(complex_vector x, complex_vector y) const noexcept
     {
         if (N < OMP_THRESHOLD) {
             switch (log_N) {
@@ -2790,7 +2793,7 @@ struct FFT0
         else OTFFT_AVXDIT16omp::inv0o(log_N, x, y, W);
     }
 
-    inline void invno(complex_vector x, complex_vector y) const
+    inline void invno(complex_vector x, complex_vector y) const noexcept
     {
         if (N < OMP_THRESHOLD) {
             switch (log_N) {
@@ -2836,12 +2839,12 @@ struct FFT {
 
     inline void setup(const int n) { fft.setup(n); work.setup(n); y = &work; }
 
-    inline void fwd(complex_vector x)  const { fft.fwd(x, y);  }
-    inline void fwd0(complex_vector x) const { fft.fwd0(x, y); }
-    inline void fwdn(complex_vector x) const { fft.fwdn(x, y); }
-    inline void inv(complex_vector x)  const { fft.inv(x, y);  }
-    inline void inv0(complex_vector x) const { fft.inv0(x, y); }
-    inline void invn(complex_vector x) const { fft.invn(x, y); }
+    inline void fwd(complex_vector x)  const noexcept { fft.fwd(x, y);  }
+    inline void fwd0(complex_vector x) const noexcept { fft.fwd0(x, y); }
+    inline void fwdn(complex_vector x) const noexcept { fft.fwdn(x, y); }
+    inline void inv(complex_vector x)  const noexcept { fft.inv(x, y);  }
+    inline void inv0(complex_vector x) const noexcept { fft.inv0(x, y); }
+    inline void invn(complex_vector x) const noexcept { fft.invn(x, y); }
 };
 #endif
 

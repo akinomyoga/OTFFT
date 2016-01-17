@@ -1,12 +1,14 @@
 /******************************************************************************
-*  FFT Tuning Command Version 6.0
+*  FFT Tuning Command Version 6.4
 *
 *  Copyright (c) 2015 OK Ojisan(Takuya OKAHISA)
 *  Released under the MIT license
 *  http://opensource.org/licenses/mit-license.php
 ******************************************************************************/
 
-#include <cstdio>
+#include <iostream>
+#include <iomanip>
+#include <fstream>
 #include <cmath>
 #include <vector>
 #include <algorithm>
@@ -19,7 +21,7 @@
 #include "otfft_avxdif16.h"
 #include "otfft_avxdit16.h"
 
-#ifdef DONT_USE_chrono
+#if __cplusplus < 201103L
 #include "otfft/stopwatch.h"
 #else
 #include <chrono>
@@ -39,10 +41,11 @@ using namespace OTFFT_MISC;
 #define DELAY1 1
 #define DELAY2 100
 
-#ifdef DONT_USE_chrono
+#if __cplusplus < 201103L
 template <class FFT>
 double laptime(int LOOPS, int TRIES, const FFT& fft, complex_t *x, complex_t *y)
 {
+    using namespace std;
     counter_t sum = 0;
     std::vector<counter_t> dt(TRIES);
     for (int i = 0; i < TRIES; i++) {
@@ -69,15 +72,16 @@ double laptime(int LOOPS, int TRIES, const FFT& fft, complex_t *x, complex_t *y)
         const double d = dt[i] - m;
         if (d*d <= 2*ss) { sum += dt[i]; n++; }
     }
-    printf("%9.2f", usec(sum)/n/LOOPS);
+    cout << fixed << setw(9) << setprecision(2) << usec(sum)/n/LOOPS << flush;
     return double(sum)/n;
 }
 #else
 template <class FFT>
 double laptime(int LOOPS, int TRIES, const FFT& fft, complex_t *x, complex_t *y)
 {
+    using namespace std;
     using namespace std::chrono;
-    typedef long long counter_t;
+    typedef microseconds::rep counter_t;
     counter_t sum = 0;
     std::vector<counter_t> dt(TRIES);
     for (int i = 0; i < TRIES; i++) {
@@ -104,29 +108,29 @@ double laptime(int LOOPS, int TRIES, const FFT& fft, complex_t *x, complex_t *y)
         const double d = dt[i] - m;
         if (d*d <= 2*ss) { sum += dt[i]; n++; }
     }
-    printf("%9.2f", double(sum)/n/LOOPS);
+    cout << fixed << setw(9) << setprecision(2) << double(sum)/n/LOOPS << flush;
     return double(sum)/n;
 }
-#endif // DONT_USE_chrono
+#endif // __cplusplus < 201103L
 
 int main() try
 {
+    using namespace std;
     static const int n_min  = 1;
     static const int n_max  = N_MAX;
     static const int N_max  = 1 << n_max;
     static const int nN_max = n_max * N_max;
 
-    setbuf(stdout, NULL);
-    FILE* fp1 = fopen("otfft_setup.h", "w");
-    FILE* fp2 = fopen("otfft_fwd.h",   "w");
-    FILE* fp3 = fopen("otfft_inv.h",   "w");
-    FILE* fp4 = fopen("otfft_fwd0.h",  "w");
-    FILE* fp5 = fopen("otfft_invn.h",  "w");
-    fprintf(fp1, "switch (log_N) {\ncase  0: break;\n");
-    fprintf(fp2, "switch (log_N) {\ncase  0: break;\n");
-    fprintf(fp3, "switch (log_N) {\ncase  0: break;\n");
-    fprintf(fp4, "switch (log_N) {\ncase  0: break;\n");
-    fprintf(fp5, "switch (log_N) {\ncase  0: break;\n");
+    ofstream fs1("otfft_setup.h");
+    ofstream fs2("otfft_fwd.h");
+    ofstream fs3("otfft_inv.h");
+    ofstream fs4("otfft_fwd0.h");
+    ofstream fs5("otfft_invn.h");
+    fs1 << "switch (log_N) {\ncase  0: break;\n";
+    fs2 << "switch (log_N) {\ncase  0: break;\n";
+    fs3 << "switch (log_N) {\ncase  0: break;\n";
+    fs4 << "switch (log_N) {\ncase  0: break;\n";
+    fs5 << "switch (log_N) {\ncase  0: break;\n";
     complex_vector x = (complex_vector) simd_malloc(N_max*sizeof(complex_t));
     complex_vector y = (complex_vector) simd_malloc(N_max*sizeof(complex_t));
     for (int n = n_min; n <= n_max; n++) {
@@ -150,7 +154,7 @@ int main() try
         }
 
         msleep(DELAY2);
-        printf("2^(%2d)", n);
+        cout << "2^(" << setw(2) << n << ")" << flush;
 
         lap = laptime(LOOPS, TRIES, fft1, x, y);
 
@@ -186,31 +190,34 @@ int main() try
 
         msleep(DELAY2);
 
-        fprintf(fp1, "case %2d: fft%d->setup2(log_N); break;\n", n, fft_num);
-        fprintf(fp2, "case %2d: fft%d->fwd(x, y); break;\n",     n, fft_num);
-        fprintf(fp3, "case %2d: fft%d->inv(x, y); break;\n",     n, fft_num);
-        fprintf(fp4, "case %2d: fft%d->fwd0(x, y); break;\n",    n, fft_num);
-        fprintf(fp5, "case %2d: fft%d->invn(x, y); break;\n",    n, fft_num);
-        printf(" fft%d\n", fft_num);
+        fs1 << "case " << setw(2) << n << ": fft" << fft_num << "->setup2(log_N); break;\n";
+        fs2 << "case " << setw(2) << n << ": fft" << fft_num << "->fwd(x, y); break;\n";
+        fs3 << "case " << setw(2) << n << ": fft" << fft_num << "->inv(x, y); break;\n";
+        fs4 << "case " << setw(2) << n << ": fft" << fft_num << "->fwd0(x, y); break;\n";
+        fs5 << "case " << setw(2) << n << ": fft" << fft_num << "->invn(x, y); break;\n";
+        cout << " fft" << fft_num << endl;
     }
     simd_free(y);
     simd_free(x);
-    fprintf(fp1, "default: fft5->setup2(log_N); break;\n");
-    fprintf(fp2, "default: fft5->fwd(x, y); break;\n");
-    fprintf(fp3, "default: fft5->inv(x, y); break;\n");
-    fprintf(fp4, "default: fft5->fwd0(x, y); break;\n");
-    fprintf(fp5, "default: fft5->invn(x, y); break;\n");
-    fprintf(fp1, "}\n");
-    fprintf(fp2, "}\n");
-    fprintf(fp3, "}\n");
-    fprintf(fp4, "}\n");
-    fprintf(fp5, "}\n");
-    fclose(fp5);
-    fclose(fp4);
-    fclose(fp3);
-    fclose(fp2);
-    fclose(fp1);
+#ifndef DO_SINGLE_THREAD
+    fs1 << "default: fft5->setup2(log_N); break;\n";
+    fs2 << "default: fft5->fwd(x, y); break;\n";
+    fs3 << "default: fft5->inv(x, y); break;\n";
+    fs4 << "default: fft5->fwd0(x, y); break;\n";
+    fs5 << "default: fft5->invn(x, y); break;\n";
+#else
+    fs1 << "default: fft4->setup2(log_N); break;\n";
+    fs2 << "default: fft4->fwd(x, y); break;\n";
+    fs3 << "default: fft4->inv(x, y); break;\n";
+    fs4 << "default: fft4->fwd0(x, y); break;\n";
+    fs5 << "default: fft4->invn(x, y); break;\n";
+#endif
+    fs1 << "}\n";
+    fs2 << "}\n";
+    fs3 << "}\n";
+    fs4 << "}\n";
+    fs5 << "}\n";
 
     return 0;
 }
-catch (std::bad_alloc&) { fprintf(stderr, "\n""not enough memory!!\n"); }
+catch (std::bad_alloc&) { std::cerr << "\n""not enough memory!!\n"; }

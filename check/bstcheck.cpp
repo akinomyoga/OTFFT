@@ -30,7 +30,7 @@ void print_err1(const char* name, int N, const complex_t* x, const complex_t* y)
         if (err == 0)
             printf("---\n");
         else if (err > 0)
-            printf("%3d\n", static_cast<int>(rint(log10(err))));
+            printf("%3ld\n", lrint(log10(err)));
         else
             printf("ERROR\n");
         simd_free(z);
@@ -48,7 +48,7 @@ void print_err2(const char* name, int N, const complex_t* x, const complex_t* y)
     if (err == 0)
         printf("---\n");
     else if (err > 0)
-        printf("%3d\n", static_cast<int>(rint(log10(err))));
+        printf("%3ld\n", lrint(log10(err)));
     else
         printf("ERROR\n");
 }
