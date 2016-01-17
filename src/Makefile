@@ -1,7 +1,7 @@
 # -*- makefile-gmake -*-
 # otfft/src/Makefile
 
-VERSION:=6.0
+VERSION:=6.4
 VERSION_MAJOR:=6
 #------------------------------------------------------------------------------
 
