@@ -32,7 +32,7 @@ This software is released under the MIT License, see LICENSE.txt.
 
 ##必要なファイル
 
-　`otfft-6.4.tar.gz` を展開すると、いくつかのファイルができますが、OTFFT を使うのに必要なファイルはその中の `otfft` フォルダとその中身です。このうち、
+　`otfft-6.5.tar.gz` を展開すると、いくつかのファイルができますが、OTFFT を使うのに必要なファイルはその中の `otfft` フォルダとその中身です。このうち、
 
     otfft_setup.h
     otfft_fwd.h

@@ -162,8 +162,8 @@ int main(int argc, char *argv[]) try
         //// サンプル値設定 ////
         for (int p = 0; p < N; p++) {
             const double t = double(p)/N;
-            x0[p].Re = 10 * cos(3*(2*M_PI/N)*t*t);
-            x0[p].Im = 10 * sin(3*(2*M_PI/N)*t*t);
+            x0[p].Re = 10 * cos(3*2*M_PI*t*t);
+            x0[p].Im = 10 * sin(3*2*M_PI*t*t);
             x1[p] = x2[p] = x3[p] = x4[p] = x0[p];
         }
         msleep(DELAY2);

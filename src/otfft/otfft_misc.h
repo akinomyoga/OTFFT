@@ -1,5 +1,5 @@
 /******************************************************************************
-*  FFT Miscellaneous Routines Version 6.4
+*  FFT Miscellaneous Routines Version 6.5
 *
 *  Copyright (c) 2015 OK Ojisan(Takuya OKAHISA)
 *  Released under the MIT license
@@ -209,7 +209,7 @@ static inline complex_t expj(const double& theta) noexcept
 
 static void init_W(int N, complex_vector W) noexcept
 {
-#ifndef DO_SINGLE_THREAD
+#ifdef DO_SINGLE_THREAD
     static const int OMP_THRESHOLD_W = 1<<30;
 #else
     static const int OMP_THRESHOLD_W = 1<<16;

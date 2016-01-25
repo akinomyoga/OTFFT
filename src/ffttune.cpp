@@ -1,5 +1,5 @@
 /******************************************************************************
-*  FFT Tuning Command Version 6.4
+*  FFT Tuning Command Version 6.5
 *
 *  Copyright (c) 2015 OK Ojisan(Takuya OKAHISA)
 *  Released under the MIT license
