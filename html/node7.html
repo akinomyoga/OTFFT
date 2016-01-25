@@ -52,10 +52,10 @@ A. ダウンロード
 </P>
 <UL>
 <LI>OTFFT (OS X/Linux/Cygwin 用) - <A NAME="tex2html3"
-    HREF="otfft-6.4.tar.gz">otfft-6.4.tar.gz</A> <span style="color:red">(2016/1/18 new!)</span>
+    HREF="otfft-6.5.tar.gz">otfft-6.5.tar.gz</A> <span style="color:red">(2016/1/25 new!)</span>
 </LI>
 <LI>OTFFT (Visual Studio nmake 用) - <A NAME="tex2html4"
-    HREF="otfft-6.4.zip">otfft-6.4.zip</A> <span style="color:red">(2016/1/18 new!)</span>
+    HREF="otfft-6.5.zip">otfft-6.5.zip</A> <span style="color:red">(2016/1/25 new!)</span>
 </LI>
 </UL>
 <P>
@@ -85,6 +85,12 @@ __cplusplus マクロで自動判定するようにしました。
 　バージョン6.4 では、シングルスレッドモードをサポートしました。
 また、Amazon EC2 で 32 並列のベンチマークを行い、
 メニーコアに対するパラメータ調整を行いました。
+</P>
+<P>
+　バージョン6.5 では、
+シングルスレッドモードの<span style="color:red">バグを修正しました。</span>
+初期化がシングルスレッドで実行されていませんでした<code>(^^;</code>
+初期化の時間を含まないベンチマークには影響ありません。
 </P>
 <HR>
 <A NAME="tex2html82"
