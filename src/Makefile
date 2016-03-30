@@ -63,7 +63,7 @@ HEADERS2 = \
   $(OUTINC)/otfft_invn.h
 
 all:
-.PHONY: all clean install
+.PHONY: all clean install tune
 
 clean:
 	-rm -rf $(OUTDIR)/*
@@ -78,13 +78,20 @@ $(OUTDIR)/ffttune: $(OUTDIR)/ffttune.o
 	$(CXX) $^ $(LDFLAGS) $(ffttune_LIBS) -o $@
 $(OUTDIR)/ffttune.log: $(OUTDIR)/ffttune | $(OUTINC)
 	cd $(OUTINC) && ../ffttune | tee ../ffttune.log
-$(HEADERS2): $(OUTDIR)/ffttune.log
+tune $(HEADERS2):
+	make $(OUTDIR)/ffttune.log
+
+
+# static library
 
 $(OUTDIR)/otfft.o: otfft.cpp $(HEADERS1) otfft/otfft.h $(HEADERS2)
 	@echo NOTE: This compilation may take several minutes.
 	$(CXX) $(CXXFLAGS) -I $(OUTINC) -c -o $@ $<
-$(OUTDIR)/libotfft.a: $(OUTDIR)/otfft.o
-	ar cru $@ $<
+$(OUTDIR)/libotfft.a: $(OUTDIR)/otfft.o $(OUTDIR)/util.o
+	ar rc $@ $<
+
+
+# shared library
 
 libotfft_FullName:=libotfft.so.$(VERSION)
 libotfft_MajorName:=libotfft.so.$(VERSION_MAJOR)
@@ -106,29 +113,32 @@ $(OUTDIR)/libotfft.so $(OUTDIR)/$(libotfft_MajorName): $(OUTDIR)/$(libotfft_Full
 	ln -sf $(libotfft_FullName) $@
 all: $(OUTDIR)/$(libotfft_FullName) $(OUTDIR)/$(libotfft_MajorName) $(OUTDIR)/libotfft.so
 
+
 # install headers
+
 INSINC:=$(INSDIR)/include/otfft
-install: $(INSINC)/otfft.h $(INSINC)/otfft_misc.h $(INSINC)/util.h
-$(INSINC)/%.h: otfft/%.h | $(INSINC)
+install: $(INSINC)/otfft.h $(INSINC)/otfft_misc.h
+$(INSINC)/otfft%.h: otfft/otfft%.h | $(INSINC)
 	cp $< $@
+install: $(INSINC)/util.h
 $(INSINC)/util.h: util.h | $(INSINC)
 	cp $< $@
+install: $(INSINC)/allocator.h
+$(INSINC)/allocator.h: allocator.h | $(INSINC)
+	cp $< $@
+
 
 # install library files
+
 install:  $(INSDIR)/lib/$(libotfft_FullName) $(INSDIR)/lib/$(libotfft_MajorName) $(INSDIR)/lib/libotfft.so
 $(INSDIR)/lib/$(libotfft_FullName): $(OUTDIR)/$(libotfft_FullName) | $(INSDIR)/lib
 	cp $< $@
 $(INSDIR)/lib/$(libotfft_MajorName) $(INSDIR)/lib/libotfft.so: $(INSDIR)/lib/$(libotfft_FullName)
 	ln -sf $(libotfft_FullName) $@
 
-# otfft.o: otfft.cpp otfft.h $(HEADERS1) $(HEADERS2)
-# $(libotfft_FullName): otfft_shared.o
-# 	$(CXX) $(CXXFLAGS) -shared -Wl,-soname=$(libotfft_MajorName) -o $@ $^
-# otfft_shared.o: otfft.cpp otfft.h $(HEADERS1) $(HEADERS2)
-# 	$(CXX) $(CXXFLAGS) -fPIC -c -o $@ $<
-
 
 # check
+
 .PHONY: utilcheck
 
 utilcheck: $(OUTDIR)/utilcheck.exe
