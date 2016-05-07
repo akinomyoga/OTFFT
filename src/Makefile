@@ -71,6 +71,16 @@ clean:
 $(OUTDIR) $(OUTINC) $(OUTLIB) $(INSDIR) $(INSDIR)/include/otfft $(INSDIR)/lib:
 	mkdir -p $@
 
+# 取り敢えず headers を生成
+$(OUTDIR)/ffttune_default.o: ffttune_default.cpp | $(OUTDIR)
+	$(CXX) -c $(CXXFLAGS) $< -o $@
+$(OUTDIR)/ffttune_default: $(OUTDIR)/ffttune_default.o
+	$(CXX) $^ $(LDFLAGS) $(ffttune_LIBS) -o $@
+$(HEADERS2):
+	make $(OUTDIR)/ffttune_default
+	cd $(OUTINC) && ../ffttune_default
+
+# tune してから headers を生成
 $(OUTDIR)/ffttune.o: ffttune.cpp $(HEADERS1) otfft/stopwatch.h | $(OUTDIR)
 	@echo NOTE: This compilation may take several minutes.
 	$(CXX) -c $(CXXFLAGS) $< -o $@
@@ -78,7 +88,7 @@ $(OUTDIR)/ffttune: $(OUTDIR)/ffttune.o
 	$(CXX) $^ $(LDFLAGS) $(ffttune_LIBS) -o $@
 $(OUTDIR)/ffttune.log: $(OUTDIR)/ffttune | $(OUTINC)
 	cd $(OUTINC) && ../ffttune | tee ../ffttune.log
-tune $(HEADERS2):
+tune:
 	make $(OUTDIR)/ffttune.log
 
 
