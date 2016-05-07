@@ -128,6 +128,8 @@ all: $(OUTDIR)/$(libotfft_FullName) $(OUTDIR)/$(libotfft_MajorName) $(OUTDIR)/li
 
 INSINC:=$(INSDIR)/include/otfft
 install: $(INSINC)/otfft.h $(INSINC)/otfft_misc.h
+$(INSINC)/otfft.h: otfft/otfft.h | $(INSINC)
+	cp $< $@
 $(INSINC)/otfft%.h: otfft/otfft%.h | $(INSINC)
 	cp $< $@
 install: $(INSINC)/util.h

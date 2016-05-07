@@ -40,6 +40,12 @@ int main(){
       2, 3, 1, 6, 4, 4, 4, 4,
       4, 4, 4, 6, 4, 4, 4, };
 
+    // // padparadscha single thread 1-22
+    // int optimal_engines[]={
+    //   0, 6, 6, 6, 6, 1, 1, 1,
+    //   2, 1, 1, 1, 1, 1, 1, 4,
+    //   2, 3, 3, 6, 3, 3, };
+
     for (int n = n_min; n <= n_max; n++) {
         int fft_num = optimal_engines[n];
         fs1 << "case " << setw(2) << n << ": fft" << fft_num << "->setup2(log_N); break;\n";
@@ -47,7 +53,6 @@ int main(){
         fs3 << "case " << setw(2) << n << ": fft" << fft_num << "->inv(x, y); break;\n";
         fs4 << "case " << setw(2) << n << ": fft" << fft_num << "->fwd0(x, y); break;\n";
         fs5 << "case " << setw(2) << n << ": fft" << fft_num << "->invn(x, y); break;\n";
-        cout << " fft" << fft_num << endl;
     }
 
 #ifndef DO_SINGLE_THREAD
