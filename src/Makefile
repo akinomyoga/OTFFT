@@ -76,7 +76,7 @@ $(OUTDIR)/ffttune_default.o: ffttune_default.cpp | $(OUTDIR)
 	$(CXX) -c $(CXXFLAGS) $< -o $@
 $(OUTDIR)/ffttune_default: $(OUTDIR)/ffttune_default.o
 	$(CXX) $^ $(LDFLAGS) $(ffttune_LIBS) -o $@
-$(HEADERS2):
+$(HEADERS2): | $(OUTINC)
 	make $(OUTDIR)/ffttune_default
 	cd $(OUTINC) && ../ffttune_default
 
