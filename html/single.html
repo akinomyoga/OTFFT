@@ -1,8 +1,9 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD html 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta http-equiv="Content-Style-Type" content="text/css">
+<meta http-equiv="Content-Script-Type" content="text/javascript">
 <meta name="description" content="OTFFT のシングルスレッドベンチマーク">
 <meta name="keywords" content="OTFFT,シングルスレッド,ベンチマーク">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -16,6 +17,9 @@
 <title>OTFFT のシングルスレッドベンチマーク</title>
 </head>
 <body>
+<a href="node4.html">FFTW より速い FFT ライブラリ OTFFT</a>
+<hr>
+
 <h1>OTFFT のシングルスレッドベンチマーク</h1>
 <p>
 　OTFFT はデフォルトでは OpenMP によるマルチスレッドで動作します。しかし、
@@ -26,10 +30,39 @@ OTFFT は DO_SINGLE_THREAD マクロを定義してコンパイルすると、
 </p>
 <p>
 　そんなわけで、シングルスレッドのベンチマークもしてみました。
+条件は以下のようになります。
+<!--
 実行環境は MacBook Pro 15 inch Late 2013(Haswell Core i7 2GHz) 上の
 OS X El Capitan/GCC 5.3 です。
 比較した FFTW3 はバージョン 3.3.4 の <code>FFTW_MEASURE</code> です。
 浮動小数点数の精度は倍精度です。
+-->
+</p>
+<table style="padding-left:1em">
+    <tr>
+        <td>Machine:</td><td>MacBook Pro 15 inch Late 2013(Haswell Core i7 2GHz)</td>
+    </tr>
+    <tr>
+        <td>OS:</td><td>OS X El Capitan</td>
+    </tr>
+    <tr>
+        <td>Compiler:</td><td>GCC 5.3</td>
+    </tr>
+    <tr>
+        <td>cores/threads:</td><td>4 cores/1 thread</td>
+    </tr>
+    <tr>
+        <td>FFTW Version:</td><td>3.3.4</td>
+    </tr>
+    <tr>
+        <td>FFTW Mode:</td><td>FFTW_MEASURE (AVX enabled)</td>
+    </tr>
+    <tr>
+        <td>浮動小数点数の精度:</td><td>倍精度</td>
+    </tr>
+</table>
+<p>
+ベンチマーク結果は以下のようになります。
 </p>
 <pre>
 ------+-----------+-----------------+-----------------+-----------------+---
@@ -93,6 +126,8 @@ FFTW はイマイチですね。
 マルチスレッドも 4 並列までしかサポートしないようなので、
 最近のコンピュータで使うとなると、どうしても見劣りします。
 </p>
+
 <hr>
+<a href="node4.html">FFTW より速い FFT ライブラリ OTFFT</a>
 </body>
 </html>

@@ -1,8 +1,9 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD html 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta http-equiv="Content-Style-Type" content="text/css">
+<meta http-equiv="Content-Script-Type" content="text/javascript">
 <meta name="description" content="Amazon EC2 による 32 並列のベンチマーク">
 <meta name="keywords" content="OTFFT,Amazon EC2,ベンチマーク">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -16,6 +17,9 @@
 <title>Amazon EC2 による 32 並列のベンチマーク</title>
 </head>
 <body>
+<a href="node4.html">OTFFT -- FFTW より速い FFT ライブラリ</a>
+<hr>
+
 <h1>Amazon EC2 による 32 並列のベンチマーク</h1>
 <p>
 　OTFFT の性能を測るのに、今までずっと自分の MacBook Pro を使ってきました。
@@ -31,13 +35,45 @@
 </p>
 <p>
 　それでは、ベンチマーク結果を示しましょう。
+<!--
 実行環境は Amazon EC2 c4.8xlarge(Intel Xeon E5-2666 v3 (Haswell)) 上の
 Ubuntu 14.04/GCC 4.8 です。
 比較した FFTW3 はバージョン 3.3.4 の <code>FFTW_MEASURE</code> です。
 浮動小数点数の精度は倍精度です。
+-->
 並列度はいろいろ試したんですが、
 最大 36 並列の中では 32 並列あたりが、
 安定して良い結果が出ましたので、まずは 32 並列の結果を示します。
+ベンチマーク条件は以下のようになります。
+</p>
+<table style="padding-left:1em">
+<tr>
+    <td>Machine:</td><td>Amazon EC2 c4.8xlarge(Intel Xeon E5-2666 v3 (Haswell))</td>
+</tr>
+<tr>
+    <td>OS:</td><td>Ubuntu 14.04</td>
+</tr>
+<tr>
+    <td>Compiler:</td><td>GCC 4.8</td>
+</tr>
+<tr>
+    <td>OpenMP Runtime:</td><td>libgomp</td>
+</tr>
+<tr>
+    <td>cores/threads:</td><td>36 cores/32 threads</td>
+</tr>
+<tr>
+    <td>FFTW Version:</td><td>3.3.4</td>
+</tr>
+<tr>
+    <td>FFTW Mode:</td><td>FFTW_MEASURE (AVX enabled)</td>
+</tr>
+<tr>
+    <td>浮動小数点数の精度:</td><td>倍精度</td>
+</tr>
+</table>
+<p>
+ベンチマーク結果は以下のようになります。
 </p>
 <pre>
 ------+-----------+-----------------+-----------------+-----------------+---
@@ -88,7 +124,7 @@ cost は全てのサイズで平均した速さの目安です。小さいほど
 </p>
 <p>
 　ご覧のように、
-\(2^1\) 〜 \(2^{24}\) の系列長において、OTFFT が FFTW より速くなっております。
+\(2^1,2^2,...,2^{24}\) の系列長において、OTFFT が FFTW より速くなっております。
 ちなみに、HT ではない本当の 8 並列でのベンチマークは以下のようになります。
 微妙な差ですが、8 並列より 32 並列の方が FFTW に対して速くなっているようです。
 cost で見ると 8 並列が 55％、32 並列が 54％ です。OTFFT は構造が単純なので、
@@ -127,5 +163,8 @@ length|FFTW3[usec]|   OOURA   [usec]| SimpleFFT [usec]|   OTFFT   [usec]|err
  cost |  182545.15|  410015.14(225%)|  390179.53(214%)|  100254.73( 55%)|
 ------+-----------+-----------------+-----------------+-----------------+---
 </pre>
+
+<hr>
+<a href="node4.html">OTFFT -- FFTW より速い FFT ライブラリ</a>
 </body>
 </html>

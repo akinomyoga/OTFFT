@@ -1,84 +1,77 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
-<HTML>
-<HEAD>
-
-<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=utf-8">
-<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
-<META NAME="description" CONTENT="再帰版の Stockham FFT をループで書き換える">
-<META NAME="keywords" CONTENT="Stockham FFT,FFT,C++">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<meta http-equiv="Content-Script-Type" content="text/javascript">
+<meta name="description" content="再帰版の Stockham FFT をループで書き換える">
+<meta name="keywords" content="Stockham FFT,FFT,C++">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<LINK REL="STYLESHEET" HREF="stockham.css" TYPE="text/css">
-<LINK REL="next" HREF="node3.html">
-<LINK REL="previous" HREF="node1.html">
-<LINK REL="up" HREF="stockham.html">
-<LINK REL="next" HREF="node3.html">
+<link rel="stylesheet" href="stockham.css" type="text/css">
+<link rel="next" href="node3.html">
+<link rel="prev" href="node1.html">
+<link rel="up" href="stockham.html">
 
-<TITLE>2 Stockham のアルゴリズムの完成</TITLE>
-
+<!--
 <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+-->
 <script type="text/javascript" src="ga.js"></script>
 
-</HEAD>
-<BODY>
-<A NAME="tex2html31"
-  HREF="node3.html">
-<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next" SRC="next.png"></A> 
-<A NAME="tex2html29"
-  HREF="stockham.html">
-<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up" SRC="up.png"></A> 
-<A NAME="tex2html23"
-  HREF="node1.html">
-<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous" SRC="prev.png"></A>   <BR>
-<B> Next:</B> <A NAME="tex2html32"
-  HREF="node3.html">3 4基底の Stockham FFT</A>
-<B>Up:</B> <A NAME="tex2html30"
-  HREF="stockham.html">stockham</A>
-<B> Previous:</B> <A NAME="tex2html24"
-  HREF="node1.html">1 Stockham FFT 入門</A>
+<title>Stockham のアルゴリズムの完成</title>
+</head>
+<body>
+<b>Next:</b> <a href="node3.html">４基底の Stockham FFT</a>
+<b>Up:</b> <a href="stockham.html">トップページ</a>
+<b>Previous:</b> <a href="node1.html">Stockham FFT 入門</a>
+<b>Reference:</b> <a href="http://www.moon.sannet.ne.jp/okahisa/otfft-en/stockham2.html">English Page</a>
+<hr>
 
-<H1><A NAME="SECTION00020000000000000000"></A><A NAME="stockham-speedup"></A>
-2 Stockham のアルゴリズムの完成
-</H1>
-<P>
-　前章、<A HREF="node1.html#stockham-intro">セクション1</A>では
+<h1><a name="stockham-speedup"></a>
+Stockham のアルゴリズムの完成
+</h1>
+<p>
+　前章、<a href="node1.html#stockham-intro">セクション1</a>では
 Cooley-Tukey のアルゴリズムから単純な変形で Stockham
 のアルゴリズムを導きました。しかし、この再帰版のアルゴリズムは速度的に
 Cooley-Tukey に有利な点はなく、そのままでは用いる価値はありません。
 そこでこの章ではさらなる書き換えを行って通常の高速な Stockham
 のアルゴリズムを導きましょう。
-</P>
-<P>
+</p>
+<p>
 　関数型プログラミング言語の信者の方は、
 何でも再帰で書くのが一番みたいに思っているかもしれませんが、
 世の中再帰で書いてあると気がつかないこともあります。
 再帰バリバリで書かれている
-<A HREF="node1.html#list:selfsort1">リスト3</A>
+<a href="node1.html#list:selfsort1">リスト３</a>
 のアルゴリズムを一部ループに書き換えてみましょう。
 一つ一つフーリエ変換を呼び出していた部分をループで繰り返すようにします。
-</P>
-<P>
-　<A HREF="node1.html#list:selfsort1">リスト3</A> の関数
+</p>
+<p>
+　<a href="node1.html#list:selfsort1">リスト３</a> の関数
 <code>fft0(n,s,q,x,y), fft1(n,s,q,x,y)</code>
 は
 <code>x[q + s*p]</code> をアクセスして処理します。
-<A HREF="node1.html#list:selfsort1">リスト3</A> は２分岐していく再帰ですので、
+<a href="node1.html#list:selfsort1">リスト３</a> は２分岐していく再帰ですので、
 再帰の段数が進むと次のようになります。
-</P>
-<PRE>
-    再帰0段目
+</p>
+<pre style="border:1px solid gray;padding:4px;max-width:900px;overflow:auto">
+    再帰０段目
     fft0(8,1,0,x,y)
          x[p]
 
-    再帰1段目
+    再帰１段目
     fft1(4,2,0,x,y)                 fft1(4,2,1,x,y)
         x[2p+0]                         x[2p+1]
 
-    再帰2段目
+    再帰２段目
     fft0(2,4,0,x,y) fft0(2,4,2,x,y) fft0(2,4,1,x,y) fft0(2,4,3,x,y)
         x[4p+0]         x[4p+2]         x[4p+1]         x[4p+3]
-</PRE>
-<P>
+</pre>
+<div style="text-align:center;max-width:900px">
+図１：<code>fft0</code> と <code>fft1</code> の再帰の様子
+</div>
+<p>
 　系列長 8 を例にとり、関数の下にアクセスする要素を表示しています。
 再帰２段目 <code>n = 2, s = 4</code> のときは <code>q = 0,2,1,3</code>
 で処理することになります。
@@ -88,14 +81,14 @@ Cooley-Tukey に有利な点はなく、そのままでは用いる価値はあ�
 <code>q</code> をループ変数として <code>fft0(n,s,q,x,y)</code> を
 <code>0</code> から <code>s-1</code> まで(つまり、3 まで)回してやれば、
 再帰２段目とループが等価になることが分かります。
-この事実に基づいて <A HREF="node1.html#list:selfsort1">リスト3</A>
+この事実に基づいて <a href="node1.html#list:selfsort1">リスト３</a>
 の再帰の一部をループに書き換えてやると以下のようになります。
-</P>
-<A NAME="list:selfsort2"></A>
-<DIV ALIGN="CENTER">
-リスト5:再帰のループによる書き換え
-</DIV>
-<PRE>
+</p>
+<a name="list:selfsort2"></a>
+<div style="text-align:center;max-width:900px">
+リスト５：再帰のループによる書き換え
+</div>
+<pre style="border:1px solid gray;padding:4px;max-width:900px;overflow:auto">
 #include &lt;complex&gt;
 #include &lt;cmath&gt;
 
@@ -171,28 +164,28 @@ void ifft(int n, complex_t* x) // 逆フーリエ変換
     delete[] y;
     for (int k = 0; k &lt; n; k++) x[k] = conj(x[k]);
 }
-</PRE>
-<P>
+</pre>
+<p>
 　どうでしょう。
 ２分岐していく再帰が分岐しない再帰になってかなりスッキリしましたね。
 これでもう一段、再帰をループに書き換えられることが分かると思います。しかし、
 重要な点はそこではありません。そう、勘の良い人はもう気がついたと思いますが、
 変数 <code>p</code> のループと変数 <code>q</code> のループは入れ替え可能です。
 実はこのループを入れ替えると決定的な速度の差が現れます。
-</P>
-<P>
-　再帰版 Stockham のアルゴリズムが遅いのは、再帰の段数が深くなると
-ストライド <code>s</code> が大きくなって、
+</p>
+<p>
+　再帰版 Stockham のアルゴリズムが遅いのは、再帰の段数が深くなるとストライド
+<code>s</code> が大きくなって、
 配列を大きく飛び飛びにアクセスすることになるからです。
 最近のコンピュータはこういうメモリのアクセスをすると速度が低下します。
 いわゆるキャッシュに入り切らなくなると言うやつです。それでは、
 ループを入れ替えてみましょう。次のようになります。
-</P>
-<A NAME="list:selfsort3"></A>
-<DIV ALIGN="CENTER">
-リスト6:ループを入れ替えた Stockham のアルゴリズム
-</DIV>
-<PRE>
+</p>
+<a name="list:selfsort3"></a>
+<div style="text-align:center;max-width:900px">
+リスト６：ループを入れ替えた Stockham のアルゴリズム
+</div>
+<pre style="border:1px solid gray;padding:4px;max-width:900px;overflow:auto">
 #include &lt;complex&gt;
 #include &lt;cmath&gt;
 
@@ -268,24 +261,24 @@ void ifft(int n, complex_t* x) // 逆フーリエ変換
     delete[] y;
     for (int k = 0; k &lt; n; k++) x[k] = conj(x[k]);
 }
-</PRE>
-<P>
+</pre>
+<p>
 　するとあら不思議、配列へのアクセスがストライド 1 になってしまいました。
 ついでに三角関数の取得も一つ外側のループに移動できて、
 さらに効率が上がっています。
 そう、これこそが一般に言われる Stockham のアルゴリズムなのです。
-</P>
-<P>
+</p>
+<p>
 　さて、このままでも良いのですが、
-相互再帰でほとんど同じことを2回書くのは嫌な感じですよね。
+相互再帰でほとんど同じことを２回書くのは嫌な感じですよね。
 そこで今どちらの関数なのかを表すフラグ <code>eo</code>
 を導入して通常の再帰に書き換えてみましょう。以下のようになります。
-</P>
-<A NAME="list:selfsort4"></A>
-<DIV ALIGN="CENTER">
-リスト7:完成版 Stockham のアルゴリズム
-</DIV>
-<PRE>
+</p>
+<a name="list:selfsort4"></a>
+<div style="text-align:center;max-width:900px">
+リスト７：完成版 Stockham のアルゴリズム
+</div>
+<pre style="border:1px solid gray;padding:4px;max-width:900px;overflow:auto">
 #include &lt;complex&gt;
 #include &lt;cmath&gt;
 
@@ -294,9 +287,9 @@ typedef std::complex&lt;double&gt; complex_t;
 void fft0(int n, int s, bool eo, complex_t* x, complex_t* y)
 // n  : 系列長
 // s  : ストライド
-// eo : eo == false か 0 なら x が出力、eo == true か 1 なら y が出力
-// x  : フーリエ変換する系列(入力兼 eo == false のとき出力)
-// y  : 作業用配列(eo == true のとき出力)
+// eo : eo == 0 か false なら x が出力、eo == 1 か true なら y が出力
+// x  : フーリエ変換する入力系列(eo == 0 のとき出力)
+// y  : 作業用配列(eo == 1 のとき出力)
 {
     const int m = n/2;
     const double theta0 = 2*M_PI/n;
@@ -336,27 +329,17 @@ void ifft(int n, complex_t* x) // 逆フーリエ変換
     delete[] y;
     for (int k = 0; k &lt; n; k++) x[k] = conj(x[k]);
 }
-</PRE>
-<P>
-　次章、<A HREF="node3.html#stockham4">セクション3</A>で、
+</pre>
+<p>
+　次章、<a href="node3.html#stockham4">セクション3</a>で、
 応用問題として4基底の Stockham のアルゴリズムを
 Cooley-Tukey のアルゴリズムから導いてみましょう。
-</P>
-<HR>
-<A NAME="tex2html31"
-  HREF="node3.html">
-<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next" SRC="next.png"></A> 
-<A NAME="tex2html29"
-  HREF="stockham.html">
-<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up" SRC="up.png"></A> 
-<A NAME="tex2html23"
-  HREF="node1.html">
-<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous" SRC="prev.png"></A>   <BR>
-<B> Next:</B> <A NAME="tex2html32"
-  HREF="node3.html">3 4基底の Stockham FFT</A>
-<B>Up:</B> <A NAME="tex2html30"
-  HREF="stockham.html">stockham</A>
-<B> Previous:</B> <A NAME="tex2html24"
-  HREF="node1.html">1 Stockham FFT 入門</A>
-</BODY>
-</HTML>
+</p>
+
+<hr>
+<b>Next:</b> <a href="node3.html">４基底の Stockham FFT</a>
+<b>Up:</b> <a href="stockham.html">トップページ</a>
+<b>Previous:</b> <a href="node1.html">Stockham FFT 入門</a>
+<b>Reference:</b> <a href="http://www.moon.sannet.ne.jp/okahisa/otfft-en/stockham2.html">English Page</a>
+</body>
+</html>

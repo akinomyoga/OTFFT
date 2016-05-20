@@ -1,8 +1,9 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD html 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta http-equiv="Content-Style-Type" content="text/css">
+<meta http-equiv="Content-Script-Type" content="text/javascript">
 <meta name="description" content="ShibaFFT -- Fortran90 で書かれた混合基数 FFT ライブラリ">
 <meta name="keywords" content="ShibaFFT,混合基数 FFT,Fortran,OTFFT">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -19,8 +20,9 @@
 <body>
 関連リンク：
 <a href="shibafftdl.html">Download</a>　
-<a href="node4.html">FFTW より速い FFT ライブラリ OTFFT</a>
+<a href="node4.html">OTFFT -- FFTW より速い FFT ライブラリ</a>
 <hr>
+
 <h1>ShibaFFT -- Fortran90 で書かれた混合基数 FFT ライブラリ</h1>
 <h2>【ShibaFFT とは】</h2>
 <p>
@@ -108,6 +110,7 @@ FFTE-6.0 での実行時間です。そして ShibaFFT の欄が ShibaFFT-1.2
 まあ、そこそこ善戦してます(^^;
 最悪でも FFTPACK の 120％ ほどの処理時間に収まっています。
 </p>
+
 <hr>
 <h3>＜Multi Thread Benchmark＞</h3>
 <p>
@@ -147,6 +150,7 @@ length|FFTPACK[us]|      OOURA  [us]|   FFT_OPENMP[us]| ShibaFFT MT [us]
 の大浦さんのライブラリはすごいですね。シングルスレッドなのに、マルチスレッドの
 ShibaFFT より速いとは。FFTPACK も 2^10 は神がかりですね。
 </p>
+
 <hr>
 <h3>＜Power of 10 Benchmark＞</h3>
 <p>
@@ -176,6 +180,7 @@ FFTE ST = FFTE with Single Thread
 2,3,5 には専用のコードが書かれているのですが、
 7 以上は素朴で汎用的なコードが使われるからです。
 </p>
+
 <hr>
 <h3>＜ベンチマークを動かすには？＞</h3>
 <p>
@@ -433,9 +438,10 @@ Fortran では使えなかったり意味がなかったりしたからです。
 <p>
 　そんなわけで、興味がわいたら使ってみてください。
 </p>
+
 <hr>
 関連リンク：
 <a href="shibafftdl.html">Download</a>　
-<a href="node4.html">FFTW より速い FFT ライブラリ OTFFT</a>
+<a href="node4.html">OTFFT -- FFTW より速い FFT ライブラリ</a>
 </body>
 </html>

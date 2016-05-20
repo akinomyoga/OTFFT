@@ -1,120 +1,101 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
-<HTML>
-<HEAD>
-<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=utf-8">
-<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
-<META NAME="description" CONTENT="A. ダウンロード">
-<META NAME="keywords" CONTENT="Stockham FFT">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<meta http-equiv="Content-Script-Type" content="text/javascript">
+<meta name="description" content="ダウンロード">
+<meta name="keywords" content="Stockham FFT">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<LINK REL="STYLESHEET" HREF="stockham.css" TYPE="text/css">
-<LINK REL="next" HREF="node8.html">
-<LINK REL="previous" HREF="node6.html">
-<LINK REL="up" HREF="stockham.html">
-<LINK REL="next" HREF="node8.html">
-
-<TITLE>A. ダウンロード</TITLE>
+<link rel="stylesheet" href="stockham.css" type="text/css">
+<link rel="next" href="node8.html">
+<link rel="prev" href="node6.html">
+<link rel="up" href="stockham.html">
 
 <script type="text/javascript" src="ga.js"></script>
-</HEAD>
-<BODY>
-<A NAME="tex2html82"
-  HREF="node8.html">
-<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next" SRC="next.png"></A> 
-<A NAME="tex2html80"
-  HREF="stockham.html">
-<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up" SRC="up.png"></A> 
-<A NAME="tex2html74"
-  HREF="node6.html">
-<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous" SRC="prev.png"></A>   <BR>
-<B> Next:</B> <A NAME="tex2html83"
-  HREF="node8.html">B. Stockham のアルゴリズムの種類</A>
-<B>Up:</B> <A NAME="tex2html81"
-  HREF="stockham.html">stockham</A>
-<B> Previous:</B> <A NAME="tex2html75"
-  HREF="node6.html">あとがき</A>
-<!--End of Navigation Panel-->
 
-<H1><A NAME="SECTION00070000000000000000"></A><A NAME="download"></A>
-A. ダウンロード
-</H1>
-<P>
+<title>ダウンロード</title>
+</head>
+<body>
+<b>Next:</b> <a href="node8.html">Stockham のアルゴリズムの種類</a>
+<b>Up:</b> <a href="stockham.html">トップページ</a>
+<b>Previous:</b> <a href="node6.html">あとがき</a>
+<b>Reference:</b> <a href="http://www.moon.sannet.ne.jp/okahisa/otfft-en/">English Page</a>
+<hr>
+
+<h1><a name="download"></a>
+ダウンロード
+</h1>
+<p>
 　Stockham のアルゴリズムと AVX/AVX2 を使った高速な FFT ライブラリ OTFFT
 は以下のリンクからダウンロードできます。
-</P>
-<P>
+</p>
+<p>
 　OTFFT は MIT ライセンスです。作者 OK おじさんが、
 「俺、オープンソースプロジェクトで開発してるんだぜ！(ドヤァ)」
 と言ってみたいからです<code>(^^;</code>
 なので、お気軽にダウンロードしてください。
-</P>
-<UL>
-<LI>OTFFT (OS X/Linux/Cygwin 用) - <A NAME="tex2html3"
-    HREF="otfft-8.1.tar.gz">otfft-8.1.tar.gz</A> <span style="color:red">(2016/3/22 new!)</span>
-</LI>
-<LI>OTFFT (Visual Studio nmake 用) - <A NAME="tex2html4"
-    HREF="otfft-8.1.zip">otfft-8.1.zip</A> <span style="color:red">(2016/3/22 new!)</span>
-</LI>
-</UL>
-<P>
+</p>
+<ul>
+    <li>OTFFT (OS X/Linux/Cygwin 用) -
+    <a href="otfft-8.1.tar.gz">otfft-8.1.tar.gz</a>
+    <span style="color:black">(2016/3/22)</span>
+    </li>
+    <li>OTFFT (Visual Studio nmake 用) -
+    <a href="otfft-8.1.zip">otfft-8.1.zip</a>
+    <span style="color:black">(2016/3/22)</span>
+    </li>
+</ul>
+<p>
 　コンパイルするには非常に長い時間がかかります。辛抱強くお待ちください。
-使い方は <A HREF="node5.html#otfft-usage">セクション5</A> を参照してください。
-</P>
+使い方は <a href="node5.html#otfft-usage">セクション5</a> を参照してください。
+</p>
+<hr>
+<p>
 　バージョン 8.1 では、OTFFT が混合基数 FFT になりました。また、
 扱うメモリがアラインされていなくても動作する、
 アンアラインモードを用意しました。
-<P>
-</P>
+</p>
+<p>
 　バージョン 7.0 では、OS X/Linux/Cygwin 版で、
 OTFFT を C99 と Fortran 2003 から呼び出すインターフェイスを用意しました。
 Visual Studio nmake 版ではサポートされません。
-<P>
-</P>
-<P>
+</p>
+<p>
 　バージョン 6.5 では、
 シングルスレッドモードのバグを修正しました。
 初期化がシングルスレッドで実行されていませんでした<code>(^^;</code>
 初期化の時間を含まないベンチマークには影響ありません。
-</P>
-<P>
+</p>
+<p>
 　バージョン 6.4 では、シングルスレッドモードをサポートしました。
 また、Amazon EC2 で 32 並列のベンチマークを行い、
 メニーコアに対するパラメータ調整を行いました。
-</P>
-<P>
-　バージョン 6.3 では、C++11 と C++03 の切り替えを
+</p>
+<p>
+　バージョン 6.3 では、C++11 と C++98 の切り替えを
 __cplusplus マクロで自動判定するようにしました。
-</P>
-<P>
+</p>
+<p>
 　バージョン 6.2 では、四捨五入まわりのコードを整理しました。
 6.1 と実質的な違いはありません。
-</P>
-<P>
+</p>
+<p>
 　バージョン 6.1 では Makefile のバグを修正しています。その他、
 sleep 系関数を C++11 の sleep_for で実装しました。これで、
 C++11 以降の標準以外の関数は SSE2/AVX/AVX2 のイントリンシックのみとなりました。
 個人的には、かな〜り気持ちいいですね。
-</P>
-<P>
+</p>
+<p>
 　バージョン 6.0 から
 OTFFT 自身のコンパイルには C++11 を使うようになりました。
 時間計測に chrono を用いています。リンクするプログラムは C++03 でも OK です。
-</P>
+</p>
 <HR>
-<A NAME="tex2html82"
-  HREF="node8.html">
-<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next" SRC="next.png"></A> 
-<A NAME="tex2html80"
-  HREF="stockham.html">
-<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up" SRC="up.png"></A> 
-<A NAME="tex2html74"
-  HREF="node6.html">
-<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous" SRC="prev.png"></A>   <BR>
-<B> Next:</B> <A NAME="tex2html83"
-  HREF="node8.html">B. Stockham のアルゴリズムの種類</A>
-<B>Up:</B> <A NAME="tex2html81"
-  HREF="stockham.html">stockham</A>
-<B> Previous:</B> <A NAME="tex2html75"
-  HREF="node6.html">あとがき</A>
-</BODY>
-</HTML>
+<b>Next:</b> <a href="node8.html">Stockham のアルゴリズムの種類</a>
+<b>Up:</b> <a href="stockham.html">トップページ</a>
+<b>Previous:</b> <a href="node6.html">あとがき</a>
+<b>Reference:</b> <a href="http://www.moon.sannet.ne.jp/okahisa/otfft-en/">English Page</a>
+</body>
+</html>

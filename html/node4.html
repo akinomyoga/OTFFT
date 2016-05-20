@@ -1,49 +1,37 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
-<HTML>
-<HEAD>
-
-<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=utf-8">
-<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
-<META NAME="description" CONTENT="4 FFTW より速い FFT ライブラリ OTFFT">
-<META NAME="keywords" CONTENT="stockham fft,ベンチマーク,benchmark">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<meta http-equiv="Content-Script-Type" content="text/javascript">
+<meta name="description" content="FFTW より速い FFT ライブラリの紹介">
+<meta name="keywords" content="Stockham FFT,ベンチマーク,benchmark">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<LINK REL="STYLESHEET" HREF="stockham.css" TYPE="text/css">
-<LINK REL="next" HREF="node5.html">
-<LINK REL="previous" HREF="node3.html">
-<LINK REL="up" HREF="stockham.html">
-<LINK REL="next" HREF="node5.html">
+<link rel="stylesheet" href="stockham.css" type="text/css">
+<link rel="next" href="node5.html">
+<link rel="prev" href="node3.html">
+<link rel="up" href="stockham.html">
 
 <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
 <script type="text/javascript" src="ga.js"></script>
 
-<TITLE>4 FFTW より速い FFT ライブラリ OTFFT</TITLE>
-</HEAD>
-<BODY>
-<A NAME="tex2html51"
-  HREF="node5.html">
-<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next" SRC="next.png"></A> 
-<A NAME="tex2html49"
-  HREF="stockham.html">
-<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up" SRC="up.png"></A> 
-<A NAME="tex2html43"
-  HREF="node3.html">
-<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous" SRC="prev.png"></A>   <BR>
-<B> Next:</B> <A NAME="tex2html52"
-  HREF="node5.html">5 OTFFT の使い方</A>
-<B>Up:</B> <A NAME="tex2html50"
-  HREF="stockham.html">stockham</A>
-<B> Previous:</B> <A NAME="tex2html44"
-  HREF="node3.html">3 4基底の Stockham FFT</A>
-<B> Reference:</B> <A HREF="shibafft.html">ShibaFFT -- Fortran90 で書かれた混合基数 FFT ライブラリ</A>
-<BR>
-<H1><A NAME="SECTION00040000000000000000"></A><A NAME="otfft"></A>
-4 FFTW より速い FFT ライブラリ OTFFT
-</H1>
-<P>
-　<A HREF="node1.html">セクション1</A>, <A HREF="node2.html">セクション2</A>,
-<A HREF="node3.html">セクション3</A>で、
-　せっかく高速な Stockham FFT アルゴリズムを導いたのですから、
+<title>OTFFT -- FFTW より速い FFT ライブラリ</title>
+</head>
+<body>
+<b>Next:</b> <a href="node5.html">OTFFT の使い方</a>
+<b>Up:</b> <a href="stockham.html">トップページ</a>
+<b>Previous:</b> <a href="node3.html">４基底の Stockham FFT</a>
+<b>Reference:</b> <a href="http://www.moon.sannet.ne.jp/okahisa/otfft-en/">English Page</a>
+<hr>
+
+<h1><a name="otfft"></a>
+OTFFT -- FFTW より速い FFT ライブラリ
+</h1>
+<p>
+　<a href="node1.html">セクション1</a>, <a href="node2.html">セクション2</a>,
+<a href="node3.html">セクション3</a> で、
+せっかく高速な Stockham FFT アルゴリズムを導いたのですから、
 実際にそれを使ったらどうなるか試してみたいですよね。
 そこで、Stockham のアルゴリズムを用いた FFT ライブラリを作ってみました。
 その名も OTFFT です(OK おじさん Template FFT の略)。
@@ -59,36 +47,68 @@ C99 や Fortran 2003 から使うためのインターフェイスもありま�
 <p>
 　ちなみに、Fortran で実装されたバージョンに興味のある方は、
 <a href="shibafft.html">こちらのページ</a> へどうぞ。
-</P>
-<P>
+</p>
+<p>
 　それにしても、FFTW より速いとは大きく出たなと思うでしょう。
 でも、本当なんですよ。
 まあ、特定の CPU 特定の系列長に限っての話ですけどね<code>(^^;</code>
 それではベンチマーク結果を示しましょう。以下のようなベンチマークを行いました。
-</P>
-<OL>
-    <LI><A HREF="#multithreads">OTFFT のマルチスレッドベンチマーク</A></LI>
-    <LI><A HREF="single.html">OTFFT のシングルスレッドベンチマーク</A></LI>
-    <LI><A HREF="amazonec2.html">Amazon EC2 による 32 並列のベンチマーク</A></LI>
-</OL>
-<P><A NAME="multithreads">
-　ソースコードは <A HREF="node7.html#download">ダウンロードのページ</A>
+</p>
+<ol>
+    <li><a href="#multithreads">OTFFT のマルチスレッドベンチマーク</a></li>
+    <li><a href="single.html">OTFFT のシングルスレッドベンチマーク</a></li>
+    <li><a href="amazonec2.html">Amazon EC2 による 32 並列のベンチマーク</a></li>
+</ol>
+<p><a name="multithreads">
+　ソースコードは <a href="node7.html#download">ダウンロードのページ</a>
 で公開するとして(MIT ライセンスです)、
 ここでは、マルチスレッド性能に関するベンチマークを示します。
+ベンチマークの条件は以下の通りです。
+</p>
+<table style="padding-left:1em">
+    <tr>
+        <td>Machine:</td><td>MacBook Pro 15 inch Late 2013(Haswell Core i7 2GHz)</td>
+    </tr>
+    <tr>
+        <td>OS:</td><td>OS X El Capitan</td>
+    </tr>
+    <tr>
+        <td>Compiler:</td><td>GCC 5.3</td>
+    </tr>
+    <tr>
+        <td>OpenMP Runtime:</td><td>Intel OpenMP Runtime</td>
+    </tr>
+    <tr>
+        <td>cores/threads:</td><td>4 cores/8 threads</td>
+    </tr>
+    <tr>
+        <td>FFTW Version:</td><td>3.3.4</td>
+    </tr>
+    <tr>
+        <td>FFTW Mode:</td><td>FFTW_ESTIMATE (AVX enabled)</td>
+    </tr>
+    <tr>
+        <td>浮動小数点数の精度:</td><td>倍精度</td>
+    </tr>
+</table>
+<p>
+<!--
 実行環境は MacBook Pro 15 inch Late 2013(Haswell Core i7 2GHz) 上の
 OS X El Capitan/GCC 5.3 です。OpenMP は Intel OpenMP Runtime を使いました。
 比較した FFTW3 はバージョン 3.3.4 の <code>FFTW_ESTIMATE</code> です。
 浮動小数点数の精度は倍精度です。
-(MacPorts の GCC で AVX/AVX2 および Intel OpenMP Runtime を使いたい人は、
-<a href="libiomp5.html">こちらのページ</a> をご参照ください)
-</P>
-<P STYLE="color:green">
+-->
+MacPorts の GCC で AVX/AVX2 および Intel OpenMP Runtime を使いたい人は、
+<a href="libiomp5.html">こちらのページ</a> をご参照ください。
+マルチスレッド性能に関するベンチマーク結果は以下のようになります。
+</p>
+<p STYLE="color:green">
 ※注　OTFFT は、Linux Mint 17.2 など一部の Linux でベンチマークすると、
 OpenMP が謎の速度低下を起こすようです。
 この現象を回避するには、Core i7(4 コア 8 スレッド)の場合、
 環境変数 OMP_NUM_THREADS を 7 に設定すると良いようです。
-</P>
-<PRE>
+</p>
+<pre>
 ------+-----------+-----------------+-----------------+-----------------+---
 length|FFTW3[usec]|   OOURA   [usec]| SimpleFFT [usec]|   OTFFT   [usec]|err
 ------+-----------+-----------------+-----------------+-----------------+---
@@ -117,8 +137,8 @@ length|FFTW3[usec]|   OOURA   [usec]| SimpleFFT [usec]|   OTFFT   [usec]|err
 ------+-----------+-----------------+-----------------+-----------------+---
  cost |   49819.71|   70165.35(141%)|   84434.12(169%)|   26348.73( 53%)|
 ------+-----------+-----------------+-----------------+-----------------+---
-</PRE>
-<P>
+</pre>
+<p>
 　length の欄は FFT の系列長を表しています。
 そして、言うまでもなく FFTW3 の欄が FFTW3 での実行時間です。
 DFT と IDFT の実行時間の和を表示しています。
@@ -134,15 +154,15 @@ OTFFT の成績が最も良くなる結果を選んだことを白状してお�
 err の欄は FFTW3 と OTFFT の２乗誤差の対数です。
 エラーチェックのために付けてあります。開発者用なので気にしないでください。
 cost は全てのサイズで平均した速さの目安です。小さいほど高速です。
-</P>
-<P>
+</p>
+<p>
 　どうでしょう。\(2^{22}\)のサイズまで OTFFT が FFTW3 より速くなっています。
 cost で比較するとだいたい OTFFT が FFTW3 の 53% ほどの実行時間で済みます。
 AVX が Stockham のアルゴリズムに見事にはまり、加えて C++ の template によって、
 ループの長さがコンパイル時に決まる、
 固定長のループになっているところが効いているのかもしれません。
-</P>
-<P>
+</p>
+<p>
 　実はコア数が少ないと、例えば２の場合、
 大浦さんのライブラリが大きなサイズの FFT で高い性能を示します。
 OTFFT はコア数２の場合、大きなサイズでの成績はふるいません。
@@ -150,15 +170,15 @@ OTFFT はコア数２の場合、大きなサイズでの成績はふるいま�
 ご覧の様に高い性能を示します。
 OTFFT は並列処理に OpenMP の <code>#pragma omp for</code> を用いていますが、
 構造が単純なので、スレッド数が増えた場合に性能が上がるようです。
-</P>
-<P>
+</p>
+<p>
 　もう一つ、実行時間計測に FFT
 用のオブジェクトの初期化の時間も含んだベンチマークも示しておきます。
 ある意味こちらの時間が本当に必要な実行時間を示しているとも言えます。
 FFT オブジェクトを初期化した後、
 FFT を一回しか実行しない場合はこちらの時間を気にする必要があります。
-</P>
-<PRE>
+</p>
+<pre>
 ------+-----------+-----------------+-----------------+-----------------
 length|FFTW3[usec]|   OOURA   [usec]| SimpleFFT [usec]|   OTFFT   [usec]
 ------+-----------+-----------------+-----------------+-----------------
@@ -184,30 +204,30 @@ length|FFTW3[usec]|   OOURA   [usec]| SimpleFFT [usec]|   OTFFT   [usec]
 ------+-----------+-----------------+-----------------+-----------------
  cost |  526178.47|   91973.87( 17%)|  117175.06( 22%)|   53286.84( 10%)
 ------+-----------+-----------------+-----------------+-----------------
-</PRE>
-<P>
+</pre>
+<p>
 　FFT オブジェクトの初期化も計測時間に含めた場合、
 あまり小さなサイズの FFT では FFTW3 での実行時間が計測困難だったため、
 系列長 \(2^4\) から計測を開始しています。
 ご覧の様に、\(2^5\) から \(2^{22}\) のサイズまでは、
 OTFFT がお得です。しかも、
 よく使うと思われる系列長で、OTFFT がかなり速くなっております。
-</P>
-<P>
+</p>
+<p>
 　つまり OTFFT は、内部で FFT を使うサブルーチンを書く場合に、
 その場で FFT オブジェクトを作って１回だけ FFT を実行し、
 そのまま捨てるような使い方をするときに有利です。
 FFT を独立したコマンドにして、
 スクリプトで呼び出すみたいな使い方をするとこの特徴がいきてきます。
-</P>
-<P>
+</p>
+<p>
 　さて、FFT オブジェクトの初期化時間を含まないベンチマークの条件を、
 <code>FFTW_ESTIMATE</code> にして誤摩化してないで、
 とっとと <code>FFTW_MEASURE</code> で比較した結果を見せろ！
 と言う方も居るかもしれませんので、一応結果を載せておきます。
 こんな感じです。
-</P>
-<PRE>
+</p>
+<pre>
 ------+-----------+-----------------+-----------------+-----------------+---
 length|FFTW3[usec]|   OOURA   [usec]| SimpleFFT [usec]|   OTFFT   [usec]|err
 ------+-----------+-----------------+-----------------+-----------------+---
@@ -236,9 +256,9 @@ length|FFTW3[usec]|   OOURA   [usec]| SimpleFFT [usec]|   OTFFT   [usec]|err
 ------+-----------+-----------------+-----------------+-----------------+---
  cost |   39303.37|   70662.79(180%)|   84728.63(216%)|   26745.68( 68%)|
 ------+-----------+-----------------+-----------------+-----------------+---
-</PRE>
-<P>
-　ところで、<A HREF="node7.html#download">ダウンロードのページ</A> から
+</pre>
+<p>
+　ところで、<a href="node7.html#download">ダウンロードのページ</a> から
 OTFFT をダウンロードしてご自分の環境で試したという方が居たとして、
 その実行結果がここに示されている結果と一致しなくとも驚かないでください。
 実行結果は環境によってまちまちです。
@@ -249,23 +269,12 @@ CPU が同じでも Linux の GCC でコンパイルしたりすると、
 ですから、あなたがこのページを見て試すころには FFTW3
 が進歩して OTFFT が陳腐化しているかもしれません。
 そんなわけで、ここに書いてある通りにならなくともご了承ください。
-</P>
-<HR>
-<A NAME="tex2html51"
-  HREF="node5.html">
-<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next" SRC="next.png"></A> 
-<A NAME="tex2html49"
-  HREF="stockham.html">
-<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up" SRC="up.png"></A> 
-<A NAME="tex2html43"
-  HREF="node3.html">
-<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous" SRC="prev.png"></A>   <BR>
-<B> Next:</B> <A NAME="tex2html52"
-  HREF="node5.html">5 OTFFT の使い方</A>
-<B>Up:</B> <A NAME="tex2html50"
-  HREF="stockham.html">stockham</A>
-<B> Previous:</B> <A NAME="tex2html44"
-  HREF="node3.html">3 4基底の Stockham FFT</A>
-<B> Reference:</B> <A HREF="shibafft.html">ShibaFFT -- Fortran90 で書かれた混合基数 FFT ライブラリ</A>
-</BODY>
-</HTML>
+</p>
+
+<hr>
+<b>Next:</b> <a href="node5.html">OTFFT の使い方</a>
+<b>Up:</b> <a href="stockham.html">トップページ</a>
+<b>Previous:</b> <a href="node3.html">４基底の Stockham FFT</a>
+<b>Reference:</b> <a href="shibafft.html">ShibaFFT -- Fortran90 で書かれた混合基数 FFT ライブラリ</a>
+</body>
+</html>

@@ -1,47 +1,32 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
-<HTML>
-<HEAD>
-
-<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=utf-8">
-<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
-<META NAME="description" CONTENT="Stockham FFT 入門">
-<META NAME="keywords" CONTENT="Stockham FFT,FFT,C++">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<meta http-equiv="Content-Script-Type" content="text/javascript">
+<meta name="description" content="Stockham FFT 入門">
+<meta name="keywords" content="Stockham FFT,FFT,C++">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<LINK REL="STYLESHEET" HREF="stockham.css" TYPE="text/css">
-<LINK REL="next" HREF="node2.html">
-<LINK REL="previous" HREF="stockham.html">
-<LINK REL="up" HREF="stockham.html">
-<LINK REL="next" HREF="node2.html">
-
-<TITLE>1 Stockham FFT 入門</TITLE>
+<link rel="stylesheet" href="stockham.css" type="text/css">
+<link rel="next" href="node2.html">
+<link rel="up" href="stockham.html">
 
 <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
 <script type="text/javascript" src="ga.js"></script>
 
-</HEAD>
-<BODY>
-<A NAME="tex2html21"
-  HREF="node2.html">
-<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next" SRC="next.png"></A> 
-<A NAME="tex2html19"
-  HREF="stockham.html">
-<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up" SRC="up.png"></A> 
-<A NAME="tex2html13"
-  HREF="stockham.html">
-<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous" SRC="prev.png"></A>   <BR>
-<B> Next:</B> <A NAME="tex2html22"
-  HREF="node2.html">2 Stockham のアルゴリズムの完成</A>
-<B>Up:</B> <A NAME="tex2html20"
-  HREF="stockham.html">stockham</A>
-<B> Previous:</B> <A NAME="tex2html14"
-  HREF="stockham.html">stockham</A>
-<!--End of Navigation Panel-->
+<title>Stockham FFT 入門</title>
+</head>
+<body>
+<b>Next:</b> <a href="node2.html">Stockham のアルゴリズムの完成</a>
+<b>Up:</b> <a href="stockham.html">トップページ</a>
+<b>Reference:</b> <a href="http://www.moon.sannet.ne.jp/okahisa/otfft-en/stockham1.html">English Page</a>
+<hr>
 
-<H1><A NAME="SECTION00010000000000000000"></A><A NAME="stockham-intro"></A>
-1 Stockham FFT 入門
-</H1>
-<P>
+<h1><a name="stockham-intro"></a>
+Stockham FFT 入門
+</h1>
+<p>
 　このホームページはFFT(高速フーリエ変換)のアルゴリズムの１つである Stockham
 のアルゴリズムについて解説するホームページです。Cooley-Tukey
 のアルゴリズムは理解できたけど、Stockham のアルゴリズムは、
@@ -51,22 +36,22 @@
 天下り式に与えられるあの漸化式も Cooley-Tukey
 のバタフライ演算から簡単に得られます。このホームページを見れば、
 あなたもきっと Stockham のアルゴリズムに納得がいくことでしょう。
-</P>
-<P>
+</p>
+<p>
 　まず、Cooley-Tukey のアルゴリズムは理解していることを前提に話を進めます。
 Cooley-Tukey のアルゴリズムって何？そもそも FFT って何？という人は次のページ
-<A NAME="tex2html1" HREF="http://www.kurims.kyoto-u.ac.jp/~ooura/fftman/index.html">(大浦さんのページ)</A>
+<a href="http://www.kurims.kyoto-u.ac.jp/~ooura/fftman/index.html">(大浦さんのページ)</a>
 を参考にしてください。分かりやすく解説されています。
-</P>
-<P>
+</p>
+<p>
 　それでは、Cooley-Tukey のアルゴリズムを実装したコードを示しておきましょう。
 Cooley-Tukey アルゴリズムを再帰呼び出しを使って実装すると以下のようになります。
-</P>
-<A NAME="list:cooley-tukey"></A>
-<DIV ALIGN="CENTER">
-リスト1: Cooley-Tukey アルゴリズム
-</DIV>
-<PRE>
+</p>
+<a name="list:cooley-tukey"></a>
+<div style="text-align:center;max-width:900px">
+リスト１：Cooley-Tukey アルゴリズム
+</div>
+<pre style="border:1px solid gray;padding:4px;max-width:900px;overflow:auto">
 #include &lt;complex&gt;
 #include &lt;cmath&gt;
 #include &lt;utility&gt;
@@ -122,16 +107,16 @@ void ifft(int n, complex_t* x) // 逆フーリエ変換
     bit_reverse(n, x);
     for (int k = 0; k &lt; n; k++) x[k] = conj(x[k]);
 }
-</PRE>
-<P>
+</pre>
+<p>
 　係数 \(\frac{1}{N}\) はフーリエ変換の側に付けてあります(\(N\) は系列長)。
 普通の流儀では逆フーリエ変換の方に付けるようです。しかし、
 物理的な意味を考えるなら \(\frac{1}{N}\)
 はフーリエ変換の方に付けるのが自然です。
 普通の流儀になれている人は読み替えてください。
-</P>
-<P>
-　Cooley-Tukey アルゴリズムの特徴は、<A HREF="#list:cooley-tukey">リスト1</A>
+</p>
+<p>
+　Cooley-Tukey アルゴリズムの特徴は、<a href="#list:cooley-tukey">リスト１</a>
 の中の <code>bit_reverse()</code> 関数です。
 このアルゴリズムは Cooley-Tukey
 のアルゴリズムの中でも周波数間引き(DIF)と言われるアルゴリズムですが、
@@ -141,18 +126,19 @@ void ifft(int n, complex_t* x) // 逆フーリエ変換
 Stockham のアルゴリズムではビット反転並べ替えを行わなくとも<!--
 -->自然な順序でフーリエ変換の結果が出力されます。
 すなわち、<code>bit_reverse()</code> を省略できるようになるわけです。
-</P>
-<P>
-　しかし、出力を自然な順序にしたいだけなら Cooley-Tukey
-のアルゴリズムを使ってもできないことはありません。
+</p>
+<p>
+　しかし、出力を自然な順序にしたいだけなら、
+<code>bit_reverse()</code> を用いなくとも、
+Cooley-Tukey のアルゴリズムを使ってできないことはありません。
 大浦さんのページにもサンプルコードで示されていますが、
 以下のようにしてやれば出力は自然な順序で並びます。
-</P>
-<A NAME="list:cooley-tukey2"></A>
-<DIV ALIGN="CENTER">
-リスト2: 自然な順序で並ぶ Cooley-Tukey アルゴリズム
-</DIV>
-<PRE>
+</p>
+<a name="list:cooley-tukey2"></a>
+<div style="text-align:center;max-width:900px">
+リスト２：自然な順序で並ぶ Cooley-Tukey アルゴリズム
+</div>
+<pre style="border:1px solid gray;padding:4px;max-width:900px;overflow:auto">
 #include &lt;complex&gt;
 #include &lt;cmath&gt;
 
@@ -204,8 +190,8 @@ void ifft(int n, complex_t* x) // 逆フーリエ変換
     delete[] y;
     for (int k = 0; k &lt; n; k++) x[k] = conj(x[k]);
 }
-</PRE>
-<P>
+</pre>
+<p>
 　サイズが \(N = 2^L\) のフーリエ変換を \(F_N\) とし(\(L\) は 0 以上の整数)、
 入力系列を
 \(x_p~(p = 0,1,\ldots,N-1)\)、フーリエ変換した結果を
@@ -214,8 +200,8 @@ void ifft(int n, complex_t* x) // 逆フーリエ変換
 W_N = \exp\left(-j\frac{2\pi}{N}\right),~j = \sqrt{-1}\)
 と書けます。今 \(N \ge 2\) と仮定し、これを FFT するために再帰で分解してやると、
 周波数間引きでは以下のような関係が成り立つことはご存知ですね。
-</P>
-<div style="font-size: 141%;">
+</p>
+<div style="font-size:141%;">
 \[
 \begin{eqnarray*}
     2X_{2k}   & = & F_{\frac{N}{2}}(x_p + x_{p+\frac{N}{2}}) \\
@@ -225,54 +211,53 @@ W_N = \exp\left(-j\frac{2\pi}{N}\right),~j = \sqrt{-1}\)
 \end{eqnarray*}
 \]
 </div>
-<P>
-　このように フーリエ変換を再帰で分解してやると再帰の各段階で \(X_{2k}\) と
+<p>
+　このように、フーリエ変換を再帰で分解してやると再帰の各段階で \(X_{2k}\) と
 \(X_{2k+1}\) という偶数成分と奇数成分が得られます。
 ビット反転並べ替えが起こるのは、
 この偶数成分と奇数成分をさらに偶数成分の偶数成分、
 偶数成分の奇数成分というふうに分割していくからです。少し考えれば、
 最終的にはビット反転順になることが分かるでしょう。
-</P>
-<P>
+</p>
+<p>
 　ならば出力を自然な順序にするには、各再帰の最後で偶数成分と奇数成分を合成して
 \(X_k\) にしてやれば良いことになります。それを行ったのが
-<A HREF="#list:cooley-tukey2">リスト2</A> です。しかし、このコードは遅いです。
+<a href="#list:cooley-tukey2">リスト２</a> です。しかし、このコードは遅いです。
 そこで Stockham のアルゴリズムの出番ということになるのです。
-</P>
-<P>
+</p>
+<p>
 　Stockham のアルゴリズムを得るのに、先の自然な順序で出力が並ぶ Cooley-Tukey
 のアルゴリズムから無駄を省くことから始めてみましょう。
-まず気がつくのは配列の読み書きが2ヶ所に分かれていることです。
+まず気がつくのは配列の読み書きが２ヶ所に分かれていることです。
 一つはバタフライ演算を行っている所、
 もう一つは偶数成分と奇数成分の合成を行っている所です。
 バタフライ演算の所でせっかく配列から読み出しているのですから、
 そのまま書き戻すのではなく、
 同時に偶数成分と奇数成分の合成も行ってやったら良いのではないでしょうか。
-</P>
-<P>
+</p>
+<p>
 　しかし、バタフライ演算の所で偶数成分と奇数成分の合成を行うためには、
 再帰呼び出ししているフーリエ変換をまたいで、
 合成の操作を移動してやる必要があります。
 当然フーリエ変換がそのままではうまくいきません。では、どうしたら良いか。
 それは、偶数位置だけを取り出して変換するフーリエ変換と<!--
 -->奇数位置だけを取り出して変換するフーリエ変換に変更してやれば良いのです。
-<!-- (ただし、フーリエ変換の係数 \(\frac{1}{N}\) は後でかけることとします) -->
-</P>
-<P>
+</p>
+<p>
 　再帰の段数が進むと偶数位置の偶数位置、
 奇数位置の偶数位置などをフーリエ変換してやる必要が出てきます。
 それを実現するには結局のところ配列を \(s\) 間隔
 (\(s = 2^h~(h = 0,1,\ldots,L - 1)\))
 でアクセスして変換するフーリエ変換が必要になります。
 この \(s\) をストライドと呼ぶことにして
-<A HREF="#list:cooley-tukey2">リスト2</A>
+<a href="#list:cooley-tukey2">リスト２</a>
 を書き換えてやると以下のようになります。
-</P>
-<A NAME="list:selfsort1"></A>
-<DIV ALIGN="CENTER">
-リスト3:再帰版 Stockham のアルゴリズム
-</DIV>
-<PRE>
+</p>
+<a name="list:selfsort1"></a>
+<div style="text-align:center;max-width:900px">
+リスト３：再帰版 Stockham のアルゴリズム
+</div>
+<pre style="border:1px solid gray;padding:4px;max-width:900px;overflow:auto">
 #include &lt;complex&gt;
 #include &lt;cmath&gt;
 
@@ -348,8 +333,8 @@ void ifft(int n, complex_t* x) // 逆フーリエ変換
     delete[] y;
     for (int k = 0; k &lt; n; k++) x[k] = conj(x[k]);
 }
-</PRE>
-<P>
+</pre>
+<p>
 　いきなり相互再帰が登場していますが、
 これは配列の書き換えを効率的に行うためです。Stockham
 のアルゴリズムでは並べ替えのための作業領域 <code>y</code> が必要です。
@@ -359,24 +344,24 @@ void ifft(int n, complex_t* x) // 逆フーリエ変換
 配列の読み書きを減らした意味がなくなります。<code>x</code> と <code>y</code>
 を交互に書き換えれば余分な読み書きは最小限にできます。
 そのため相互再帰になっています。
-</P>
-<P>
+</p>
+<p>
 　簡単に相互再帰の <code>fft0</code>, <code>fft1</code>
 について説明しておきましょう。<code>fft0(n, s, q, x, y)</code> はサイズ
 <code>n</code> のフーリエ変換で、入力 <code>x</code>
 を受け取りストライド <code>s</code> でフーリエ変換した結果を再び
 <code>x</code> に書き戻します。<code>y</code> は作業領域として使われます。
 <code>q</code> は偶数位置と奇数位置を切り替えるために使われます。
-</P>
-<P>
+</p>
+<p>
 　<code>fft1(n, s, q, x, y)</code> はサイズ <code>n</code> のフーリエ変換で、
 入力 <code>x</code> を受け取りストライド <code>s</code>
 でフーリエ変換した結果を <code>y</code> に書き込みます。
 <code>q</code> は偶数位置と奇数位置を切り替えるために使われます。
 出力変数が <code>y</code> になっていることに注意してください。
 これで <code>x</code> と <code>y</code> を交互に書き換え出来るようになります。
-</P>
-<P>
+</p>
+<p>
 　さて、今までの書き換えは理解できたでしょうか。
 実はこれで Stockham のアルゴリズムになっています。
 めったにお目にかかれないと言うか、
@@ -386,8 +371,8 @@ void ifft(int n, complex_t* x) // 逆フーリエ変換
 以下のようになるはずです。\(x_h[~]\) は計算 \(h\) 段目の配列です。
 入力系列 \(x_0[~]\) から始めて \(x_L[~]\)
 を求めるとフーリエ変換出来ます(係数 \(\frac{1}{N}\) をかける必要があります)。
-</P>
-<div style="font-size: 141%;">
+</p>
+<div style="font-size:141%;">
 \[
 \begin{eqnarray*}
     x_{h+1}(q,p)     & = & x_h(q,p) + x_h(q,p + m) \\
@@ -397,7 +382,20 @@ void ifft(int n, complex_t* x) // 逆フーリエ変換
 \end{eqnarray*}
 \]
 </div>
-<P>
+<p>
+<code>fft0(n,s,q,x,y)</code> あるいは <code>fft1(n,s,q,x,y)</code>
+の呼ばれ方に注目して、<code>s=1,2,4,8,...</code> の時、
+<code>q</code> の取る値の範囲を考えると、
+以下のようになることに注意してください。
+</p>
+<pre>
+    再帰０段目 s=1:q=0
+    再帰１段目 s=2:q=0,      1
+    再帰２段目 s=4:q=0,  2,  1,  3
+    再帰３段目 s=8:q=0,4,2,6,1,5,3,7
+    ...
+</pre>
+<p>
 　え？何？Stockham のアルゴリズムにならない？う〜ん、そうかもしれませんね。
 私もこの変形を最初に思いついたときはそう思いました。「やべぇ！俺、
 フーリエ変換なんていう基本的な分野で新しいアルゴリズムを思いついちゃったよ。
@@ -408,13 +406,12 @@ void ifft(int n, complex_t* x) // 逆フーリエ変換
 時間間引き(DIT)の Stockham のアルゴリズムを想定していたんでしょう。
 ベースとなる Cooley-Tukey のアルゴリズムが DIT の場合、
 DIT 版の Stockham になります。実際に書いてみると以下のようになります。
-</P>
-<A NAME="list:selfsort-dit1"></A>
-<DIV ALIGN="CENTER">
-リスト4:時間間引き Stockham のアルゴリズム
-</DIV>
-<BR>
-<PRE>
+</p>
+<a name="list:selfsort-dit1"></a>
+<div style="text-align:center;max-width:900px">
+リスト４：時間間引き Stockham のアルゴリズム
+</div>
+<pre style="border:1px solid gray;padding:4px;max-width:900px;overflow:auto">
 #include &lt;complex&gt;
 #include &lt;cmath&gt;
 
@@ -490,13 +487,13 @@ void ifft(int n, complex_t* x) // 逆フーリエ変換
     delete[] y;
     for (int k = 0; k &lt; n; k++) x[k] = conj(x[k]);
 }
-</PRE>
-<P>
+</pre>
+<p>
 　どうでしょう。漸化式は Stockham のアルゴリズムになりましたね。おっと、
 時間間引きの場合 \(m = 2^h,~s = 2^{L-h-1},~x_h(q,p) = x_h[q+2sp]\)
 とおくのを忘れないでください。
-</P>
-<div style="font-size: 141%;">
+</p>
+<div style="font-size:141%;">
 \[
 \begin{eqnarray*}
     x_{h+1}(q,p)     & = & x_h(q,p) + x_h(q + s,p)W_N^{sp} \\
@@ -506,17 +503,17 @@ void ifft(int n, complex_t* x) // 逆フーリエ変換
 \end{eqnarray*}
 \]
 </div>
-<P>
+<p>
 　何？まだ Stockham のアルゴリズムにならない？そうですね。実はその後の調査で、
 ここで示した方法とは違った Stockham
 のアルゴリズムがあるらしいことが分かりました。
 申し訳ありませんが私も詳しいことは分かっていません。
 もう一つの Stockham のアルゴリズムを想定していた人にはごめんなさい。
 とりあえず、Stockham のアルゴリズムの種類に関して
-<A HREF="node8.html#kindsofstockham">付録B</A>
+<a href="node8.html#kindsofstockham">付録</a>
 にまとめてあります。
-</P>
-<P>
+</p>
+<p>
 　さて、これで一応 Stockham のアルゴリズムが求まりました。
 これでめでたしめでたしとなればいいんですが、実はそんなに甘くありません。
 このアルゴリズムは Stockham のアルゴリズムが Cooley-Tukey
@@ -524,24 +521,13 @@ void ifft(int n, complex_t* x) // 逆フーリエ変換
 依然として遅いままです。
 ようするにこのままでは Stockham のアルゴリズムを用いる意味がないのです。
 次章、
-<A HREF="node2.html#stockham-speedup">セクション2</A>
+<a href="node2.html#stockham-speedup">セクション2</a>
 では、さらなる書き換えを行って高速なStockham のアルゴリズムを導きます。
-</P>
-<HR>
-<A NAME="tex2html21"
-  HREF="node2.html">
-<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next" SRC="next.png"></A> 
-<A NAME="tex2html19"
-  HREF="stockham.html">
-<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up" SRC="up.png"></A> 
-<A NAME="tex2html13"
-  HREF="stockham.html">
-<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous" SRC="prev.png"></A>   <BR>
-<B> Next:</B> <A NAME="tex2html22"
-  HREF="node2.html">2 Stockham のアルゴリズムの完成</A>
-<B>Up:</B> <A NAME="tex2html20"
-  HREF="stockham.html">stockham</A>
-<B> Previous:</B> <A NAME="tex2html14"
-  HREF="stockham.html">stockham</A>
-</BODY>
-</HTML>
+</p>
+
+<hr>
+<b>Next:</b> <a href="node2.html">Stockham のアルゴリズムの完成</a>
+<b>Up:</b> <a href="stockham.html">トップページ</a>
+<b>Reference:</b> <a href="http://www.moon.sannet.ne.jp/okahisa/otfft-en/stockham1.html">English Page</a>
+</body>
+</html>

@@ -1,76 +1,47 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
-
-<!--Converted with jLaTeX2HTML 2008 (1.71) JA patch-2.1beta1.13
-patched version by:  Kenshi Muto, Debian Project.
-* modified by:  Shige TAKENO
-LaTeX2HTML 2008 (1.71),
-original version by:  Nikos Drakos, CBLU, University of Leeds
-* revised and updated by:  Marcus Hennecke, Ross Moore, Herb Swan
-* with significant contributions from:
-  Jens Lippmann, Marek Rouchal, Martin Wilck and others -->
-<HTML>
-<HEAD>
-
-<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=utf-8">
-<META NAME="Generator" CONTENT="jLaTeX2HTML v2008 JA patch-2.1beta1.13">
-<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
-<META NAME="description" CONTENT="B. Stockham アルゴリズムの種類">
-<META NAME="keywords" CONTENT="stockham">
-<META NAME="resource-type" CONTENT="document">
-<META NAME="distribution" CONTENT="global">
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<meta http-equiv="Content-Script-Type" content="text/javascript">
+<meta name="description" content="Stockham アルゴリズムの種類">
+<meta name="keywords" content="stockham">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<LINK REL="STYLESHEET" HREF="stockham.css" TYPE="text/css">
-<LINK REL="previous" HREF="node7.html">
-<LINK REL="up" HREF="stockham.html">
-<TITLE>B. Stockham のアルゴリズムの種類</TITLE>
+<link rel="stylesheet" HREF="stockham.css" type="text/css">
+<link rel="prev" HREF="node7.html">
+<link rel="up" HREF="stockham.html">
 
 <script type="text/javascript" src="ga.js"></script>
-</HEAD>
 
-<BODY >
+<title>Stockham のアルゴリズムの種類</title>
+</head>
+<body>
+<b>Next:</b> <a HREF="optimize1.html">配列へアクセスをさらに減らす最適化</a>
+<b>Up:</b> <a HREF="stockham.html">トップページ</a>
+<b>Previous:</b> <a HREF="node7.html">ダウンロード</a>
+<hr>
 
-<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next" SRC="next_g.png"> 
-<A NAME="tex2html88"
-  HREF="stockham.html">
-<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up" SRC="up.png"></A> 
-<A NAME="tex2html84"
-  HREF="node7.html">
-<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous" SRC="prev.png"></A>   <BR>
-<B>Up:</B> <A NAME="tex2html89"
-  HREF="stockham.html">stockham</A>
-<B> Previous:</B> <A NAME="tex2html85"
-  HREF="node7.html">A. ダウンロード</A>
-<BR> <P>
-<!--End of Navigation Panel-->
-
-<H1><A NAME="SECTION00080000000000000000"></A><A NAME="kindsofstockham"></A>
-<BR>
-B. Stockham のアルゴリズムの種類
-</H1>
-　ここでは、私が Web を検索して見つけた Stockham のアルゴリズムの種類について
-整理しておきます。まず、このサイトで説明されている Cooley-Tukey のアルゴリズム
-からの単純な変形で導ける Stockham のアルゴリズムをタイプ1。私がなぜこれで
-フーリエ変換できるのか説明できない Stockham のアルゴリズムをタイプ2とします。
-<BR>
-<P>
-　タイプ1、タイプ2それぞれに周波数間引き(DIF)と時間間引き(DIT)のアルゴリズム
-があります。すなわち、Stockham のアルゴリズムは最低でも４種類あることになり
-ます。
-<BR>
-<P>
-　タイプ2のアルゴリズムは速度的にタイプ1に劣るので実際の FFT の実装に用いること
-はないでしょう。ただ、理論的にはタイプ2でも FFT が可能ということは、おそらく
-重要な事実と思われます。
-
-<P>
-<BR>
-<DIV ALIGN="CENTER">
-タイプ1-DIF Stockham アルゴリズム
-
-</DIV>
-<BR>
-<PRE>#include &lt;complex&gt;
+<h1><a name="kindsofstockham"></a>
+Stockham のアルゴリズムの種類
+</h1>
+　ここでは、私が Web を検索して見つけた
+Stockham のアルゴリズムの種類について整理しておきます。まず、
+このサイトで説明されている Cooley-Tukey のアルゴリズムからの単純な変形で導ける
+Stockham のアルゴリズムをタイプ１。
+私がなぜこれでフーリエ変換できるのか説明できない
+Stockham のアルゴリズムをタイプ２とします。
+</p>
+<p>
+　タイプ１、
+タイプ２それぞれに周波数間引き(DIF)と時間間引き(DIT)のアルゴリズムがあります。
+すなわち、Stockham のアルゴリズムは最低でも４種類あることになります。
+</p>
+<div style="text-align:center;max-width:900px">
+タイプ１-DIF Stockham アルゴリズム
+</div>
+<pre style="border:1px solid gray;padding:4px;max-width:900px;overflow:auto">
+#include &lt;complex&gt;
 #include &lt;cmath&gt;
 
 typedef std::complex&lt;double&gt; complex_t;
@@ -111,17 +82,14 @@ void ifft(int n, complex_t* x)
     delete[] y;
     for (int k = 0; k &lt; n; k++) x[k] = conj(x[k]);
 }
-</PRE>
-<BR>
+</pre>
+<br>
 
-<P>
-<BR>
-<DIV ALIGN="CENTER">
-タイプ1-DIT Stockham アルゴリズム
-
-</DIV>
-<BR>
-<PRE>#include &lt;complex&gt;
+<div style="text-align:center;max-width:900px">
+タイプ１-DIT Stockham アルゴリズム
+</div>
+<pre style="border:1px solid gray;padding:4px;max-width:900px;overflow:auto">
+#include &lt;complex&gt;
 #include &lt;cmath&gt;
 
 typedef std::complex&lt;double&gt; complex_t;
@@ -162,17 +130,14 @@ void ifft(int n, complex_t* x)
     delete[] y;
     for (int k = 0; k &lt; n; k++) x[k] = conj(x[k]);
 }
-</PRE>
-<BR>
+</pre>
+<br>
 
-<P>
-<BR>
-<DIV ALIGN="CENTER">
-タイプ2-DIF Stockham アルゴリズム
-
-</DIV>
-<BR>
-<PRE>#include &lt;complex&gt;
+<div style="text-align:center;max-width:900px">
+タイプ２-DIF Stockham アルゴリズム
+</div>
+<pre style="border:1px solid gray;padding:4px;max-width:900px;overflow:auto">
+#include &lt;complex&gt;
 #include &lt;cmath&gt;
 
 typedef std::complex&lt;double&gt; complex_t;
@@ -213,17 +178,14 @@ void ifft(int n, complex_t* x)
     delete[] y;
     for (int k = 0; k &lt; n; k++) x[k] = conj(x[k]);
 }
-</PRE>
-<BR>
+</pre>
+<br>
 
-<P>
-<BR>
-<DIV ALIGN="CENTER">
-タイプ2-DIT Stockham アルゴリズム
-
-</DIV>
-<BR>
-<PRE>#include &lt;complex&gt;
+<div style="text-align:center;max-width:900px">
+タイプ２-DIT Stockham アルゴリズム
+</div>
+<pre style="border:1px solid gray;padding:4px;max-width:900px;overflow:auto">
+#include &lt;complex&gt;
 #include &lt;cmath&gt;
 
 typedef std::complex&lt;double&gt; complex_t;
@@ -264,22 +226,11 @@ void ifft(int n, complex_t* x)
     delete[] y;
     for (int k = 0; k &lt; n; k++) x[k] = conj(x[k]);
 }
-</PRE>
-<BR>
-<HR>
-<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next" SRC="next_g.png"> 
-<A NAME="tex2html88"
-  HREF="stockham.html">
-<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up" SRC="up.png"></A> 
-<A NAME="tex2html84"
-  HREF="node7.html">
-<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous" SRC="prev.png"></A>   <BR>
-<B>Up:</B> <A NAME="tex2html89"
-  HREF="stockham.html">stockham</A>
-<B> Previous:</B> <A NAME="tex2html85"
-  HREF="node7.html">A. ダウンロード</A>
+</pre>
 
-<!--End of Navigation Panel-->
-
-</BODY>
-</HTML>
+<hr>
+<b>Next:</b> <a HREF="optimize1.html">配列へアクセスをさらに減らす最適化</a>
+<b>Up:</b> <a HREF="stockham.html">トップページ</a>
+<b>Previous:</b> <a HREF="node7.html">ダウンロード</a>
+</body>
+</html>
