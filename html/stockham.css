@@ -1,10 +1,10 @@
 @charset "UTF-8";
 @import url(http://fonts.googleapis.com/css?family=Inconsolata);
 /*@import url(http://fonts.googleapis.com/css?family=Droid+Sans+Mono);*/
-html { font-size: 1em; font-family: "メイリオ", Serif; }
+html { font-size: 1em; font-family: "メイリオ", "Times", Serif; }
 code,pre {
     font-size: 1.1em; line-height: 1.2em;
-    font-family: "Inconsolata", "Consolas", "Menlo", monospace;
+    font-family: "Inconsolata", "Consolas", "Hiragino Sans", monospace;
     /*font-size: 1em; line-height: 1.1em;
     font-family: "Droid Sans Mono", "Consolas", "Menlo", monospace;*/
 }

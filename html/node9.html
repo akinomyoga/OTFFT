@@ -1,10 +1,10 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
-<html>
+<html lang="ja">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta http-equiv="Content-Style-Type" content="text/css">
 <meta http-equiv="Content-Script-Type" content="text/javascript">
-<meta name="description" content="配列へのアクセスをさらに減らす最適化">
+<meta name="description" content="配列へのアクセスを減らす最適化">
 <meta name="keywords" content="最適化,Stockham FFT">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -15,19 +15,20 @@
 
 <script type="text/javascript" src="ga.js"></script>
 
-<title>配列へのアクセスをさらに減らす最適化</title>
+<title>配列へのアクセスを減らす最適化</title>
 </head>
 <body>
 <b>Next:</b> <a href="node10.html">Stockham FFT の AVX による最適化</a>
 <b>Up:</b> <a href="stockham.html">トップページ</a>
 <b>Previous:</b> <a href="node8.html">Stockham のアルゴリズムの種類</a>
+<b>Reference:</b> <a href="http://www.moon.sannet.ne.jp/okahisa/otfft-en/stockham5.html">English Page</a>
 <hr>
 
-<h1>配列へのアクセスをさらに減らす最適化</h1>
+<h1>配列へのアクセスを減らす最適化</h1>
 <p>
 　<a href="node2.html">セクション２</a>
 で完成版 Stockham のアルゴリズムを示しましたが、ちょっとした工夫で、
-さらに配列へのアクセスを減らすことができます。
+配列へのアクセスを減らすことができます。
 まずは、リスト７：完成版 Stockham のアルゴリズムを再掲しておきましょう。
 </p>
 <div style="text-align:center;max-width:900px">
@@ -93,7 +94,7 @@ void ifft(int n, complex_t* x) // 逆フーリエ変換
 </p>
 
 <div style="text-align:center;max-width:900px">
-リスト１０：配列へのアクセスをさらに減らした Stockham のアルゴリズム
+リスト１０：配列へのアクセスを減らした Stockham のアルゴリズム
 </div>
 <pre style="border:1px solid gray;padding:4px;max-width:900px;overflow:auto">
 #include &lt;complex&gt;
@@ -155,10 +156,19 @@ void ifft(int n, complex_t* x) // 逆フーリエ変換
     for (int k = 0; k &lt; n; k++) x[k] = conj(x[k]);
 }
 </pre>
+<p>
+　副作用として、<code>n == 2</code> の時のバタフライ演算が簡単になるため、
+1 を掛けるだけの無駄な乗算も消去できています。
+</p>
+<p>
+　ところで、このページのアルゴリズムを用いた FFT ライブラリを作ってみました。
+興味のある人は、<a href="node4.html">こちらのページ</a>　へどうぞ。
+</p>
 
 <hr>
 <b>Next:</b> <a href="node10.html">Stockham FFT の AVX による最適化</a>
 <b>Up:</b> <a href="stockham.html">トップページ</a>
 <b>Previous:</b> <a href="node8.html">Stockham のアルゴリズムの種類</a>
+<b>Reference:</b> <a href="http://www.moon.sannet.ne.jp/okahisa/otfft-en/stockham5.html">English Page</a>
 </body>
 </html>
