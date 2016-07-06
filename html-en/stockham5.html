@@ -1,0 +1,181 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<meta http-equiv="Content-Script-Type" content="text/javascript">
+<meta name="description" content="Optimization that reduce the accesses to an array">
+<meta name="keywords" content="Optimization,Stockham FFT">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="stylesheet" href="otfft-en.css" type="text/css">
+<link rel="prev" href="stockham4.html">
+<link rel="next" href="stockham6.html">
+
+<script type="text/javascript" src="ga.js"></script>
+
+<title>Optimization that reduce the accesses to an array</title>
+</head>
+<body>
+<b>Reference:</b>&nbsp;
+<a href="stockham4.html">Previous Page</a>&nbsp;&nbsp;
+<a href="stockham1.html">Top Page</a>&nbsp;&nbsp;
+<a href="stockham6.html">Next Page</a>&nbsp;&nbsp;
+<a href="index.html">OTFFT -- The FFT library that is faster than FFTW</a>&nbsp;&nbsp;
+<a href="http://www.moon.sannet.ne.jp/okahisa/stockham/node9.html">Japanese Page</a>
+<hr>
+
+<h1>Optimization that reduce the accesses to an array</h1>
+<p>
+In <a href="stockham2.html">Section-2</a>,
+I show the final version of the <a href="stockham1.html">Stockham algorithm</a>,
+From this algorithm, with a little ingenuity,
+we can reduce the accesses to an array.
+First of all, I show the List-7 again.
+</p>
+<div style="text-align:center;max-width:900px">
+List-7: Final version of the Stockham Algorithm
+</div>
+<pre style="border:1px solid gray;padding:4px;max-width:900px;overflow:auto">
+#include &lt;complex&gt;
+#include &lt;cmath&gt;
+
+typedef std::complex&lt;double&gt; complex_t;
+
+void fft0(int n, int s, bool eo, complex_t* x, complex_t* y)
+// n  : sequence length
+// s  : stride
+// eo : x is output if eo == 0, y is output if eo == 1
+// x  : input sequence(or output sequence if eo == 0)
+// y  : work area(or output sequence if eo == 1)
+{
+    const int m = n/2;
+    const double theta0 = 2*M_PI/n;
+
+    if (n == 1) { if (eo) for (int q = 0; q &lt; s; q++) y[q] = x[q]; }
+    else {
+        for (int p = 0; p &lt; m; p++) {
+            const complex_t wp = complex_t(cos(p*theta0), -sin(p*theta0));
+            for (int q = 0; q &lt; s; q++) {
+                const complex_t a = x[q + s*(p + 0)];
+                const complex_t b = x[q + s*(p + m)];
+                y[q + s*(2*p + 0)] =  a + b;
+                y[q + s*(2*p + 1)] = (a - b) * wp;
+            }
+        }
+        fft0(n/2, 2*s, !eo, y, x);
+    }
+}
+
+void fft(int n, complex_t* x) // Fourier transform
+// n : sequence length
+// x : input/output sequence
+{
+    complex_t* y = new complex_t[n];
+    fft0(n, 1, 0, x, y);
+    delete[] y;
+    for (int k = 0; k &lt; n; k++) x[k] /= n;
+}
+
+void ifft(int n, complex_t* x) // Inverse Fourier transform
+// n : sequence length
+// x : input/output sequence
+{
+    for (int p = 0; p &lt; n; p++) x[p] = conj(x[p]);
+    complex_t* y = new complex_t[n];
+    fft0(n, 1, 0, x, y);
+    delete[] y;
+    for (int k = 0; k &lt; n; k++) x[k] = conj(x[k]);
+}
+</pre>
+<p>
+If we look at this code carefully,
+when <code>n == 1</code> in <code>fft0</code>,
+this code does not calculate anything, this code does the copy only.
+If we substitute a calculation result into the destination array beforehand,
+we can remove this copy.
+If I rewrite this code to such a code, the program will be as follows.
+</p>
+
+<div style="text-align:center;max-width:900px">
+List-8: The Stockham algorithm that reduce the accesses to an array
+</div>
+<pre style="border:1px solid gray;padding:4px;max-width:900px;overflow:auto">
+#include &lt;complex&gt;
+#include &lt;cmath&gt;
+
+typedef std::complex&lt;double&gt; complex_t;
+
+void fft0(int n, int s, bool eo, complex_t* x, complex_t* y)
+// n  : sequence length
+// s  : stride
+// eo : x is output if eo == 0, y is output if eo == 1
+// x  : input sequence(or output sequence if eo == 0)
+// y  : work area(or output sequence if eo == 1)
+{
+    const int m = n/2;
+    const double theta0 = 2*M_PI/n;
+
+    if (n == 2) {
+        complex_t* z = eo ? y : x;
+        for (int q = 0; q &lt; s; q++) {
+            const complex_t a = x[q + 0];
+            const complex_t b = x[q + s];
+            z[q + 0] = a + b;
+            z[q + s] = a - b;
+        }
+    }
+    else if (n &gt;= 4) {
+        for (int p = 0; p &lt; m; p++) {
+            const complex_t wp = complex_t(cos(p*theta0), -sin(p*theta0));
+            for (int q = 0; q &lt; s; q++) {
+                const complex_t a = x[q + s*(p + 0)];
+                const complex_t b = x[q + s*(p + m)];
+                y[q + s*(2*p + 0)] =  a + b;
+                y[q + s*(2*p + 1)] = (a - b) * wp;
+            }
+        }
+        fft0(n/2, 2*s, !eo, y, x);
+    }
+}
+
+void fft(int n, complex_t* x) // Fourier transform
+// n : sequence length
+// x : input/output sequence
+{
+    complex_t* y = new complex_t[n];
+    fft0(n, 1, 0, x, y);
+    delete[] y;
+    for (int k = 0; k &lt; n; k++) x[k] /= n;
+}
+
+void ifft(int n, complex_t* x) // Inverse Fourier transform
+// n : sequence length
+// x : input/output sequence
+{
+    for (int p = 0; p &lt; n; p++) x[p] = conj(x[p]);
+    complex_t* y = new complex_t[n];
+    fft0(n, 1, 0, x, y);
+    delete[] y;
+    for (int k = 0; k &lt; n; k++) x[k] = conj(x[k]);
+}
+</pre>
+<p>
+As a side effect,
+because the butterfly operation can be simplified when <code>n == 2</code>,
+we can also erase useless multiplication of only to multiply 1.
+</p>
+<p>
+By the way, I made the FFT library using this algorithm. If you are interested,
+please to <a href="index.html">this page</a>.
+</p>
+
+<hr>
+<b>Reference:</b>&nbsp;
+<a href="stockham4.html">Previous Page</a>&nbsp;&nbsp;
+<a href="stockham1.html">Top Page</a>&nbsp;&nbsp;
+<a href="stockham6.html">Next Page</a>&nbsp;&nbsp;
+<a href="index.html">OTFFT -- The FFT library that is faster than FFTW</a>&nbsp;&nbsp;
+<a href="http://www.moon.sannet.ne.jp/okahisa/stockham/node9.html">Japanese Page</a>
+</body>
+</html>

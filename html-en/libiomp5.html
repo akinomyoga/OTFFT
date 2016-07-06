@@ -1,0 +1,72 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD html 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<meta name="description" content="Usage of AVX and Intel OpenMP Runtime in MacPorts GCC">
+<meta name="keywords" content="Intel AVX,Intel OpenMP Runtime,MacPorts GCC">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="stylesheet" href="otfft-en.css" type="text/css">
+<link rel="up" href="index.html">
+
+<script type="text/javascript" src="ga.js"></script>
+
+<title>Usage of AVX and Intel OpenMP Runtime in MacPorts GCC</title>
+</head>
+<body>
+<b>Reference:</b> <a href="index.html">OTFFT -- The FFT library that is faster than FFTW</a>
+<hr>
+
+<h1>Usage of AVX and Intel OpenMP Runtime in MacPorts GCC</h1>
+<p>
+When I try to use Intel AVX in MacPorts GCC, GCC fails to compile by default.
+In addition, the performance of OpenMP is not enough in the "libgomp" of GCC's
+default. Therefore, in this page, I will show how to use Intel AVX in MacPorts
+GCC and how to use high performance
+<a href="https://www.openmprtl.org/download#stable-releases">Intel OpenMP Runtime</a>
+in MacPorts GCC.
+
+<h2>[How to use Intel AVX in MacPorts GCC]</h2>
+<p>
+When you compile it using "<code>-mavx</code>" or "<code>-march=native</code>"
+in MacPorts GCC, GCC just fails to compile.
+However, GCC becomes able to compile if you do it as follows.
+</p>
+<pre>
+    cd /opt/local/bin
+    sudo ln -s /usr/bin/clang
+</pre>
+<p>
+And, when you compile it, you have to attach the option "<code>-Wa,-q</code>"
+to "</code>g++-mp-5</code>".
+</p>
+<pre>
+    g++-mp-5 -Ofast -Wa,-q -march=native hello.cpp -o hello
+</pre>
+
+<h2>[How to use Intel OpenMP Runtime in MacPorts GCC]</h2>
+<p>
+First, please download Intel OpenMP Runtime from
+<a href="https://www.openmprtl.org/download#stable-releases">this page</a>
+and expand the downloaded file.
+Second, install "cmake" by MacPorts.
+Third, execute the following commands in "libomp_oss" folder.
+</p>
+<pre>
+    cmake -DCMAKE_C_COMPILER=gcc-mp-5 -DCMAKE_CXX_COMPILER=g++-mp-5 CMakeLists.txt
+    make
+</pre>
+<p>
+Last, place "libiomp5.dylib" into $HOME/lib.
+Afterwards, you can use Intel OpenMP Runtime if you do it as follows.
+</p>
+<pre>
+    g++-mp-5 -Ofast -fopenmp -c hello.cpp
+    g++-mp-5 hello.o -L$HOME/lib -liomp5 -o hello
+</pre>
+
+<hr>
+<b>Reference:</b> <a href="index.html">OTFFT -- The FFT library that is faster than FFTW</a>
+</body>
+</html>

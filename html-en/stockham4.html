@@ -1,0 +1,157 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<meta http-equiv="Content-Script-Type" content="text/javascript">
+<meta name="description" content="Radix-4 Stockham FFT">
+<meta name="keywords" content="Radix-4,Stockham FFT">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="stylesheet" href="otfft-en.css" type="text/css">
+<link rel="prev" href="stockham3.html">
+<link rel="next" href="stockham5.html">
+
+<script type="text/javascript" src="ga.js"></script>
+
+<title>Radix-4 Stockham FFT</title>
+</head>
+<body>
+<b>Reference:</b>&nbsp;
+<a href="stockham3.html">Previous Page</a>&nbsp;&nbsp;
+<a href="stockham1.html">Top Page</a>&nbsp;&nbsp;
+<a href="stockham5.html">Next Page</a>&nbsp;&nbsp;
+<a href="index.html">OTFFT -- The FFT library that is faster than FFTW</a>
+<hr>
+
+<h1>Radix-4 Stockham FFT</h1>
+<p>
+Do you know the Radix-4 Stockham Algorithm?
+Radix-4 Stockham Algorithm is faster than Radix-2 Stockham Algorithm.
+In this page, I show the program of Radix-4 Stockham FFT.
+Please refer to <a href="stockham1.html">"Introduction to the Stockham FFT"</a>
+for details of the Stockham algorithm.
+</p>
+<div style="text-align:center;max-width:1000px">
+Radix-4 Stockham Algorithm(DIF)
+</div>
+<pre style="border:1px solid gray;padding:4px;max-width:1000px;overflow:auto">
+#include &lt;complex&gt;
+#include &lt;cmath&gt;
+
+typedef std::complex&lt;double&gt; complex_t;
+
+void fft0(int n, int s, bool eo, complex_t* x, complex_t* y)
+{
+    static const complex_t j = complex_t(0, 1);
+    const int n0 = 0;
+    const int n1 = n/4;
+    const int n2 = n/2;
+    const int n3 = n1 + n2;
+    const double theta0 = 2*M_PI/n;
+
+    if (n == 1) { if (eo) for (int q = 0; q &lt; s; q++) y[q] = x[q]; }
+    else if (n == 2) {
+        for (int q = 0; q &lt; s; q++) {
+            const complex_t a = x[q + 0];
+            const complex_t b = x[q + s];
+            y[q + 0] = a + b;
+            y[q + s] = a - b;
+        }
+        fft0(1, 2*s, !eo, y, x);
+    }
+    else if (n &gt; 2) {
+        for (int p = 0; p &lt; n1; p++) {
+            const complex_t w1p = complex_t(cos(p*theta0), -sin(p*theta0));
+            const complex_t w2p = w1p*w1p;
+            const complex_t w3p = w1p*w2p;
+            for (int q = 0; q &lt; s; q++) {
+                const complex_t a = x[q + s*(p + n0)];
+                const complex_t b = x[q + s*(p + n1)];
+                const complex_t c = x[q + s*(p + n2)];
+                const complex_t d = x[q + s*(p + n3)];
+                const complex_t  apc =    a + c;
+                const complex_t  amc =    a - c;
+                const complex_t  bpd =    b + d;
+                const complex_t jbmd = j*(b - d);
+                y[q + s*(4*p + 0)] =      apc +  bpd;
+                y[q + s*(4*p + 1)] = w1p*(amc - jbmd);
+                y[q + s*(4*p + 2)] = w2p*(apc -  bpd);
+                y[q + s*(4*p + 3)] = w3p*(amc + jbmd);
+            }
+        }
+        fft0(n/4, 4*s, !eo, y, x);
+    }
+}
+
+void ifft0(int n, int s, bool eo, complex_t* x, complex_t* y)
+{
+    static const complex_t j = complex_t(0, 1);
+    const int n0 = 0;
+    const int n1 = n/4;
+    const int n2 = n/2;
+    const int n3 = n1 + n2;
+    const double theta0 = 2*M_PI/n;
+
+    if (n == 1) { if (eo) for (int q = 0; q &lt; s; q++) y[q] = x[q]; }
+    else if (n == 2) {
+        for (int q = 0; q &lt; s; q++) {
+            const complex_t a = x[q + 0];
+            const complex_t b = x[q + s];
+            y[q + 0] = a + b;
+            y[q + s] = a - b;
+        }
+        ifft0(1, 2*s, !eo, y, x);
+    }
+    else if (n &gt; 2) {
+        for (int p = 0; p &lt; n1; p++) {
+            const complex_t w1p = complex_t(cos(p*theta0), sin(p*theta0));
+            const complex_t w2p = w1p*w1p;
+            const complex_t w3p = w1p*w2p;
+            for (int q = 0; q &lt; s; q++) {
+                const complex_t a = x[q + s*(p + n0)];
+                const complex_t b = x[q + s*(p + n1)];
+                const complex_t c = x[q + s*(p + n2)];
+                const complex_t d = x[q + s*(p + n3)];
+                const complex_t  apc =    a + c;
+                const complex_t  amc =    a - c;
+                const complex_t  bpd =    b + d;
+                const complex_t jbmd = j*(b - d);
+                y[q + s*(4*p + 0)] =      apc +  bpd;
+                y[q + s*(4*p + 1)] = w1p*(amc + jbmd);
+                y[q + s*(4*p + 2)] = w2p*(apc -  bpd);
+                y[q + s*(4*p + 3)] = w3p*(amc - jbmd);
+            }
+        }
+        ifft0(n/4, 4*s, !eo, y, x);
+    }
+}
+
+void fft(int n, complex_t* x) // Fourier transform
+// n : sequence length
+// x : input/output sequence
+{
+    complex_t* y = new complex_t[n];
+    fft0(n, 1, 0, x, y);
+    delete[] y;
+    for (int k = 0; k &lt; n; k++) x[k] /= n;
+}
+
+void ifft(int n, complex_t* x) // Inverse Fourier transform
+// n : sequence length
+// x : input/output sequence
+{
+    complex_t* y = new complex_t[n];
+    ifft0(n, 1, 0, x, y);
+    delete[] y;
+}
+</pre>
+
+<hr>
+<b>Reference:</b>&nbsp;
+<a href="stockham3.html">Previous Page</a>&nbsp;&nbsp;
+<a href="stockham1.html">Top Page</a>&nbsp;&nbsp;
+<a href="stockham5.html">Next Page</a>&nbsp;&nbsp;
+<a href="index.html">OTFFT -- The FFT library that is faster than FFTW</a>
+</body>
+</html>

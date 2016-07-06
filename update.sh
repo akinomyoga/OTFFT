@@ -1,12 +1,11 @@
 #!/bin/bash
 
-function dispatch.original-web {
-  wget -r http://www.moon.sannet.ne.jp/okahisa/stockham/stockham.html
+function mkd { [[ -d $1 ]] || mkdir -p "$1"; }
 
-  stockham=www.moon.sannet.ne.jp/okahisa/stockham
-
+function dispatch.original-web/remove-counter {
+  local dir="$1"
   (
-    cd "$stockham"
+    cd "$dir"
     for f in *.html; do
       # 2016-05-21 EUC-JP -> UTF-8 に変わった様だ。
       cat "$f" \
@@ -15,8 +14,19 @@ function dispatch.original-web {
         && mv -f "$f.part" "$f"
     done
   )
+}
 
-  mv -f "$stockham"/* html/
+function dispatch.original-web {
+  wget -r http://www.moon.sannet.ne.jp/okahisa/stockham/stockham.html
+  stockham=www.moon.sannet.ne.jp/okahisa/stockham
+  dispatch.original-web/remove-counter "$stockham"
+  mkd html && mv -f "$stockham"/* html/
+
+  wget -r http://www.moon.sannet.ne.jp/okahisa/otfft-en/stockham1.html
+  otfften=www.moon.sannet.ne.jp/okahisa/otfft-en
+  dispatch.original-web/remove-counter "$otfften"
+  mkd html-en && mv -f "$otfften"/* html-en/
+
   rm -rf www.moon.sannet.ne.jp
 }
 
