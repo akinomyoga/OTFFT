@@ -29,22 +29,24 @@ OTFFT のダウンロード
 </h1>
 <p>
 　Stockham のアルゴリズムと AVX/AVX2 を使った高速な FFT ライブラリ OTFFT
-は以下のリンクからダウンロードできます。
-</p>
-<p>
-　OTFFT は MIT ライセンスです。作者 OK おじさんが、
-「俺、オープンソースプロジェクトで開発してるんだぜ！(ドヤァ)」
-と言ってみたいからです<code>(^^;</code>
-なので、お気軽にダウンロードしてください。
+は以下のリンクからダウンロードできます。OTFFT は MIT ライセンスです。
 </p>
 <ul>
-    <li>OTFFT (OS X/Linux/Cygwin 用) -
-    <a href="otfft-8.1.tar.gz">otfft-8.1.tar.gz</a>
-    <span style="color:black">(2016/3/22)</span>
+    <li>OTFFT (Mac/Linux/Cygwin 用) -
+    <a href="otfft-9.0.tar.gz">otfft-9.0.tar.gz</a>
+    <span style="color:red">(2016/7/18 new!)</span>
+    </li>
+    <li>OTFFT (Visual Studio 2015 nmake 用) -
+    <a href="otfft-9.0v.zip">otfft-9.0v.zip</a>
+    <span style="color:red">(2016/7/18 new!)</span>
+    </li>
+    <li>OTFFT (Mac/Linux/Cygwin 用) -
+    <a href="otfft-8.4.tar.gz">otfft-8.4.tar.gz</a>
+    <span style="color:black">(2016/7/12)</span>
     </li>
     <li>OTFFT (Visual Studio nmake 用) -
-    <a href="otfft-8.1.zip">otfft-8.1.zip</a>
-    <span style="color:black">(2016/3/22)</span>
+    <a href="otfft-8.4v.zip">otfft-8.4v.zip</a>
+    <span style="color:black">(2016/7/12)</span>
     </li>
 </ul>
 <p>
@@ -52,6 +54,29 @@ OTFFT のダウンロード
 使い方は <a href="node5.html#otfft-usage">セクション5</a> を参照してください。
 </p>
 <hr>
+<p>
+　バージョン 9.0 では、
+場当たり的に対応してきた古いコンパイラのサポートを廃止し、
+ごちゃごちゃとした汚いコードを削除しました。
+そもそも古いコンパイラでコンパイルして確認してはおらず、
+実際に動くかどうか分からない状態でした。
+そんなわけで、あまり意味がないと判断しました。
+一応、バージョン 8.4 も残しておきますが、
+決して古いコンパイラでの動作を保証するものではありません。
+</p>
+<p>
+　バージョン 8.4 では、Visual Studio で、
+AVX2 がうまく使えていなかったのを修正しました。
+</p>
+<p>
+　バージョン 8.3 では、Mac の Xcode 付属の clang++ で、
+コンパイル時に warning が出ないように修正しました。
+</p>
+<p>
+　バージョン 8.2 では、実行環境に合わせてチューンニングするコマンドを調整して、
+より適切なヘッダーファイルを生成するようにしました。以前より、ffttune に、
+ちょっと時間がかかるようになりますが、大きなサイズで効果があります。
+</p>
 <p>
 　バージョン 8.1 では、OTFFT が混合基数 FFT になりました。また、
 扱うメモリがアラインされていなくても動作する、
