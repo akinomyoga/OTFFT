@@ -43,9 +43,9 @@ And OTFFT is a mixed-radix FFT.
 <h3>[Caution]</h3>
 OTFFT is optimized for the environment used to compile.
 In other words,
-if we compile it in AVX-supported environment,
+if we compile it on AVX-supported environment,
 it becomes the binary that uses AVX.
-If someone executes this binary in AVX-unsupported environment,
+If someone executes this binary on AVX-unsupported environment,
 of course, it crashes by causing the exception.
 For this reason, OTFFT is not suitable for the use
 for distributing the compiled binary to all people.
@@ -55,7 +55,7 @@ calculation from the source code.
 <h3>[Necessary files]</h3>
 
 <p>
-If you expand the "otfft-8.1e.tar.gz", you get several files.
+If you expand the "otfft-9.1e.tar.gz", you get several files.
 Something necessary to you is "otfft" folder in these files.
 </p>
 
@@ -114,7 +114,7 @@ Following such transforms are provided.
     {
         complex_t* x = (complex_t*) simd_malloc(N*sizeof(complex_t));
         // do something
-        OTFFT::FFT fft(N); // creation of FFT object
+        OTFFT::FFT fft(N); // creation of FFT object. N is sequence length.
         fft.fwd(x);        // execution of transformation. x is input and output
         // do something
         simd_free(x);
@@ -152,7 +152,7 @@ There are member functions, such as the following.
     invn(x) -- IDFT(with 1/N normalization) x:input/output
 </pre>
 <p>
-To specify the FFT size, do the following.
+To change the FFT size, do the following.
 </p>
 <pre class="sample">
     fft.setup(2 * N);
@@ -336,7 +336,7 @@ OOURA's FFT Package. Please refer to the following URL for OOURA's FFT Package.
     <a href="http://www.kurims.kyoto-u.ac.jp/~ooura/fft.html">http://www.kurims.kyoto-u.ac.jp/~ooura/fft.html</a>
 </pre>
 <p>
-Please install the FFTW and place OOURA's "fftsg.c" file into "otfft-8.1e"
+Please install the FFTW and place OOURA's "fftsg.c" file into "otfft-9.1e"
 folder. Then, execute the following command.
 </p>
 <pre class="sample">

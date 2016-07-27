@@ -33,20 +33,20 @@ OTFFT のダウンロード
 </p>
 <ul>
     <li>OTFFT (Mac/Linux/Cygwin 用) -
-    <a href="otfft-9.0.tar.gz">otfft-9.0.tar.gz</a>
-    <span style="color:red">(2016/7/18 new!)</span>
+    <a href="otfft-9.1.tar.gz">otfft-9.1.tar.gz</a>
+    <span style="color:red">(2016/7/22 new!)</span>
     </li>
     <li>OTFFT (Visual Studio 2015 nmake 用) -
-    <a href="otfft-9.0v.zip">otfft-9.0v.zip</a>
-    <span style="color:red">(2016/7/18 new!)</span>
+    <a href="otfft-9.1v.zip">otfft-9.1v.zip</a>
+    <span style="color:red">(2016/7/22 new!)</span>
     </li>
     <li>OTFFT (Mac/Linux/Cygwin 用) -
-    <a href="otfft-8.4.tar.gz">otfft-8.4.tar.gz</a>
-    <span style="color:black">(2016/7/12)</span>
+    <a href="otfft-8.5.tar.gz">otfft-8.5.tar.gz</a>
+    <span style="color:red">(2016/7/22 new!)</span>
     </li>
     <li>OTFFT (Visual Studio nmake 用) -
-    <a href="otfft-8.4v.zip">otfft-8.4v.zip</a>
-    <span style="color:black">(2016/7/12)</span>
+    <a href="otfft-8.5v.zip">otfft-8.5v.zip</a>
+    <span style="color:red">(2016/7/22 new!)</span>
     </li>
 </ul>
 <p>
@@ -54,6 +54,13 @@ OTFFT のダウンロード
 使い方は <a href="node5.html#otfft-usage">セクション5</a> を参照してください。
 </p>
 <hr>
+<p>
+　バージョン 8.5, 9.1 では、Visual Studio での重大なバグを修正しました。
+noexcept を使っているコードがうまくコンパイル出来ませんでした。
+私が確認しているベンチマークプログラムでは、
+うまい具合にバグをよけていて、問題なくコンパイル出来ていたので発見が遅れました。
+8.5 は、古いコンパイラ用のコードを残しているバージョンです。
+</p>
 <p>
 　バージョン 9.0 では、
 場当たり的に対応してきた古いコンパイラのサポートを廃止し、
