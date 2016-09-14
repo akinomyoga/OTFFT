@@ -55,7 +55,7 @@ calculation from the source code.
 <h3>[Necessary files]</h3>
 
 <p>
-If you expand the "otfft-9.1e.tar.gz", you get several files.
+If you expand the "otfft-9.2e.tar.gz", you get several files.
 Something necessary to you is "otfft" folder in these files.
 </p>
 
@@ -83,11 +83,12 @@ After you add the "otfft" folder in the compiler include path, please execute
 the following commands. "hello.cpp" is your program.
 <p>
 <pre class="sample">
-    g++ -c -Ofast hello.cpp
-    g++ hello.o otfft/otfft.o -lgomp -o hello
+    clang++-mp-3.9 -c -Ofast hello.cpp
+    clang++-mp-3.9 hello.o otfft/otfft.o -L/opt/local/lib/libomp -lomp -o hello
 </pre>
 <p>
 Here, I'm assuming that there is a "otfft" folder in the current folder.
+"clang++-mp-3.9" is MacPorts Clang compiler.
 </p>
 
 
@@ -336,7 +337,7 @@ OOURA's FFT Package. Please refer to the following URL for OOURA's FFT Package.
     <a href="http://www.kurims.kyoto-u.ac.jp/~ooura/fft.html">http://www.kurims.kyoto-u.ac.jp/~ooura/fft.html</a>
 </pre>
 <p>
-Please install the FFTW and place OOURA's "fftsg.c" file into "otfft-9.1e"
+Please install the FFTW and place OOURA's "fftsg.c" file into "otfft-9.2e"
 folder. Then, execute the following command.
 </p>
 <pre class="sample">

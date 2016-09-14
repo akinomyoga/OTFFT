@@ -33,20 +33,20 @@ OTFFT のダウンロード
 </p>
 <ul>
     <li>OTFFT (Mac/Linux/Cygwin 用) -
-    <a href="otfft-9.1.tar.gz">otfft-9.1.tar.gz</a>
-    <span style="color:red">(2016/7/22 new!)</span>
+    <a href="otfft-9.2.tar.gz">otfft-9.2.tar.gz</a>
+    <span style="color:red">(2016/9/7 new!)</span>
     </li>
     <li>OTFFT (Visual Studio 2015 nmake 用) -
     <a href="otfft-9.1v.zip">otfft-9.1v.zip</a>
-    <span style="color:red">(2016/7/22 new!)</span>
+    <span style="color:black">(2016/7/22)</span>
     </li>
     <li>OTFFT (Mac/Linux/Cygwin 用) -
     <a href="otfft-8.5.tar.gz">otfft-8.5.tar.gz</a>
-    <span style="color:red">(2016/7/22 new!)</span>
+    <span style="color:black">(2016/7/22)</span>
     </li>
     <li>OTFFT (Visual Studio nmake 用) -
     <a href="otfft-8.5v.zip">otfft-8.5v.zip</a>
-    <span style="color:red">(2016/7/22 new!)</span>
+    <span style="color:black">(2016/7/22)</span>
     </li>
 </ul>
 <p>
@@ -54,6 +54,16 @@ OTFFT のダウンロード
 使い方は <a href="node5.html#otfft-usage">セクション5</a> を参照してください。
 </p>
 <hr>
+<p>
+　バージョン 9.2 では、Mac のデフォルトの Makefile のコンパイラを GCC から
+Clang に変更し、ベンチマークも Clang で行いました。なぜかって？
+Clang でコンパイルすると FFTW のパフォーマンスが劇的に低下して、
+相対的に OTFFT の成績が向上するからです！(おいー)
+と、思ったら、FFTW が バージョン 3.3.5 で遅くなったみたいですね。う〜ん。
+変更の本当の理由は、
+Mac で AVX と OpenMP を使おうとすると MacPorts の Clang が最も簡単だからです。
+私以外の人がベンチマークするとき、簡単な方が良いでしょ？
+</p>
 <p>
 　バージョン 8.5, 9.1 では、Visual Studio での重大なバグを修正しました。
 noexcept を使っているコードがうまくコンパイル出来ませんでした。
