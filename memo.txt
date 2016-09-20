@@ -1,5 +1,4 @@
-
-
+# dev note for otfft
 
 -------------------------------------------------------------------------------
   Memo
@@ -28,88 +27,9 @@
 
 * ToDo: 自動生成されているっぽいのをもっと何とか整理できないのか
 
-2015-11-14
-
-* original otfft.h に対する修正の一覧
-
-  以下の様にしないと pmmintrin.h の中身が OTFFT_MISC に展開されてしまうので、
-  他のヘッダで pmmintrin.h を使う物があった時にコンパイルできない。
-
-  | +} // namespace OTFFT_MISC
-  |
-  |  extern "C" {
-  |  #include <pmmintrin.h>
-  |  }
-  |
-  | +namespace OTFFT_MISC {
-
-  以下のようにしないと complex_t const& や const_complex_vector
-  で受け取った値を std::complex<double> にできない。
-
-  | -operator std::complex<double>() { return std::complex<double>(Re, Im); }
-  | +operator std::complex<double>() const { return std::complex<double>(Re, Im); }
-
 -------------------------------------------------------------------------------
   ToDo
 -------------------------------------------------------------------------------
-
-2015-12-26
-
-* 久しぶりに見たら丁度更新された所だった
-
-  追加・削除されたファイルの一覧
-
-    +LICENSE.txt
-    +otfft/LICENSE.txt
-    +otfft/msleep.h
-    +otfft/otfft_avxdif16.h
-    +otfft/otfft_avxdif16omp.h
-    -otfft/otfft_avxdifx.h
-    +otfft/otfft_avxdit16.h
-    +otfft/otfft_avxdit16omp.h
-    +otfft/README.txt
-
-  変更を追跡していないファイル
-
-    Makefile
-    Makefile.linux
-    Makefile.osx
-    Makefile.windows
-    src/Makefile
-    src/Makefile.linux
-    src/Makefile.osx
-    src/Makefile.windows
-
-  ./update.sh modify-source で対応できない物 (手動で変更するべき物)
-
-    | diff -bwur html/d/5.4/src/otfft/otfft_misc.h src/otfft/otfft_misc.h
-    | --- html/d/5.4/src/otfft/otfft_misc.h	2015-12-27 08:26:23.918671452 +0900
-    | +++ src/otfft/otfft_misc.h	2015-11-14 00:21:28.886062221 +0900
-    | @@ -94,7 +94,7 @@
-    |      complex_t(const double& x) : Re(x), Im(0) {}
-    |      complex_t(const double& x, const double& y) : Re(x), Im(y) {}
-    |      complex_t(const std::complex<double>& z) : Re(z.real()), Im(z.imag()) {}
-    | -    operator std::complex<double>() { return std::complex<double>(Re, Im); }
-    | +    operator std::complex<double>() const { return std::complex<double>(Re, Im); }
-    |
-    |      complex_t& operator+=(const complex_t& z) {
-    |          Re += z.Re;
-    | @@ -322,10 +322,14 @@
-    |
-    |  #if defined(__SSE3__) && defined(USE_INTRINSIC)
-    |
-    | +} // namespace OTFFT_MISC
-    | +
-    |  extern "C" {
-    |  #include <pmmintrin.h>
-    |  }
-    |
-    | +namespace OTFFT_MISC {
-    | +
-    |  static inline xmm haddpz(const xmm ab, const xmm xy) force_inline;
-    |  static inline xmm haddpz(const xmm ab, const xmm xy)
-    |  {
-
 
 2015-11-12
 
@@ -315,6 +235,110 @@
 -------------------------------------------------------------------------------
   Done
 -------------------------------------------------------------------------------
+
+2016-09-20
+
+* 実は otfft の作者への連絡先が v8.1 (20160322) から renraku.png
+  という画像に含まれていたという事が判明した。
+
+  内容は少々攻撃的な文章である。
+  もしかするとこの身勝手なことを書いているメモを
+  見られてだいぶ警戒させてしまったのかもしれない。
+
+  さて、当初の目的が一体どんなことだったか忘れてしまったので、
+  また調べてみる。コードの変更についての提案である。
+  それとは別に、
+
+  1 ライセンスについての詳細
+  2 #include <pmmintrin.h> が namespace の中で行われていること
+  3 complex_t が std::complex<double> に変換できないこと
+  4 OPENMP を使うか使わないかのスイッチ
+
+  などを聞きたかったが、時間が立つうちに (1), (2), (4) は対応がなされた。
+  (3) については単純なことだし明らかなミスに思われるので対応をお願いする。
+  (1) に関連して勝手に github で公開していることについてどう考えているか確認できれば幸いである。
+  他に 2016-03-30 にある様な細かいことがあるが、
+  最新版でもこれらの問題が残っているかどうかは確認していないので質問は控える。
+
+
+2015-12-26
+
+* 久しぶりに見たら丁度更新された所だった
+
+  追加・削除されたファイルの一覧
+
+    +LICENSE.txt
+    +otfft/LICENSE.txt
+    +otfft/msleep.h
+    +otfft/otfft_avxdif16.h
+    +otfft/otfft_avxdif16omp.h
+    -otfft/otfft_avxdifx.h
+    +otfft/otfft_avxdit16.h
+    +otfft/otfft_avxdit16omp.h
+    +otfft/README.txt
+
+  変更を追跡していないファイル
+
+    Makefile
+    Makefile.linux
+    Makefile.osx
+    Makefile.windows
+    src/Makefile
+    src/Makefile.linux
+    src/Makefile.osx
+    src/Makefile.windows
+
+  ./update.sh modify-source で対応できない物 (手動で変更するべき物)
+
+    | diff -bwur html/d/5.4/src/otfft/otfft_misc.h src/otfft/otfft_misc.h
+    | --- html/d/5.4/src/otfft/otfft_misc.h	2015-12-27 08:26:23.918671452 +0900
+    | +++ src/otfft/otfft_misc.h	2015-11-14 00:21:28.886062221 +0900
+    | @@ -94,7 +94,7 @@
+    |      complex_t(const double& x) : Re(x), Im(0) {}
+    |      complex_t(const double& x, const double& y) : Re(x), Im(y) {}
+    |      complex_t(const std::complex<double>& z) : Re(z.real()), Im(z.imag()) {}
+    | -    operator std::complex<double>() { return std::complex<double>(Re, Im); }
+    | +    operator std::complex<double>() const { return std::complex<double>(Re, Im); }
+    |
+    |      complex_t& operator+=(const complex_t& z) {
+    |          Re += z.Re;
+    | @@ -322,10 +322,14 @@
+    |
+    |  #if defined(__SSE3__) && defined(USE_INTRINSIC)
+    |
+    | +} // namespace OTFFT_MISC
+    | +
+    |  extern "C" {
+    |  #include <pmmintrin.h>
+    |  }
+    |
+    | +namespace OTFFT_MISC {
+    | +
+    |  static inline xmm haddpz(const xmm ab, const xmm xy) force_inline;
+    |  static inline xmm haddpz(const xmm ab, const xmm xy)
+    |  {
+
+
+2015-11-14
+
+* original otfft.h に対する修正の一覧
+
+  以下の様にしないと pmmintrin.h の中身が OTFFT_MISC に展開されてしまうので、
+  他のヘッダで pmmintrin.h を使う物があった時にコンパイルできない。
+
+  | +} // namespace OTFFT_MISC
+  |
+  |  extern "C" {
+  |  #include <pmmintrin.h>
+  |  }
+  |
+  | +namespace OTFFT_MISC {
+
+  以下のようにしないと complex_t const& や const_complex_vector
+  で受け取った値を std::complex<double> にできない。
+
+  | -operator std::complex<double>() { return std::complex<double>(Re, Im); }
+  | +operator std::complex<double>() const { return std::complex<double>(Re, Im); }
 
 2015-10-24
 
