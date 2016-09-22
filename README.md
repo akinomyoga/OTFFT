@@ -1,5 +1,5 @@
-#OTFFT
-[Stockham FFT アルゴリズムの解説](http://www.moon.sannet.ne.jp/okahisa/stockham/stockham.html) で紹介されている「OTFFT(OKおじさん Template FFT ライブラリ)」を使いやすいように弄ったものです。
+#OTFFT-6.5m
+[Stockham FFT アルゴリズムの解説](http://www.moon.sannet.ne.jp/okahisa/stockham/stockham.html) で紹介されている「OTFFT(OKおじさん Template FFT ライブラリ)」を使いやすいように変更を加えたものです。現在のコードは、オリジナルの OTFFT-6.5 がベースになっています。※このバージョンに関する連絡はオリジナルの開発者の OK おじさんではなく、akinomyoga (Koichi Murase) にお願い致します。
 
 ##ライセンス
 the MIT License
