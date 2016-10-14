@@ -33,20 +33,20 @@ OTFFT のダウンロード
 </p>
 <ul>
     <li>OTFFT (Mac/Linux/Cygwin 用) -
-    <a href="otfft-9.2.tar.gz">otfft-9.2.tar.gz</a>
-    <span style="color:red">(2016/9/7 new!)</span>
+    <a href="otfft-9.4.tar.gz">otfft-9.4.tar.gz</a>
+    <span style="color:red">(2016/10/2 new!)</span>
     </li>
     <li>OTFFT (Visual Studio 2015 nmake 用) -
-    <a href="otfft-9.2v.zip">otfft-9.2v.zip</a>
-    <span style="color:red">(2016/9/19 new!)</span>
+    <a href="otfft-9.4v.zip">otfft-9.4v.zip</a>
+    <span style="color:red">(2016/10/2 new!)</span>
     </li>
     <li>OTFFT (Mac/Linux/Cygwin 用) -
-    <a href="otfft-8.5.tar.gz">otfft-8.5.tar.gz</a>
-    <span style="color:black">(2016/7/22)</span>
+    <a href="otfft-8.6.tar.gz">otfft-8.6.tar.gz</a>
+    <span style="color:black">(2016/9/25)</span>
     </li>
     <li>OTFFT (Visual Studio nmake 用) -
-    <a href="otfft-8.5v.zip">otfft-8.5v.zip</a>
-    <span style="color:black">(2016/7/22)</span>
+    <a href="otfft-8.6v.zip">otfft-8.6v.zip</a>
+    <span style="color:black">(2016/9/25)</span>
     </li>
 </ul>
 <p>
@@ -54,6 +54,24 @@ OTFFT のダウンロード
 使い方は <a href="node5.html#otfft-usage">セクション5</a> を参照してください。
 </p>
 <hr>
+<p>
+　バージョン 9.4 では、
+fwdn, inv0 メンバ関数がリンクできなかったバグを修正しました。
+やっぱテストをサボるとダメですね。orz
+</p>
+<p>
+　バージョン 9.3 では、OTFFT のユーザーからのフィードバックで complex_t
+のインターフェイスのバグを修正しました。えっ？ OTFFT にユーザーっていたの？
+ええ、いるんですよ。えっへん！合わせてバージョン 8.6 もリリースしました。
+古いコンパイラ用のコードを残したバージョンです。繰り返しますが、
+決して古いコンパイラでの動作を保証するものではありません。
+余談ながら、Mac では、とうとう GCC でコンパイルすると
+warning が出るようになってしまいました。
+これまで Clang をアセンブラとして使うことで誤魔化してきたんですが、
+Clang 側も OpenMP 対応を果たし、
+もう GCC のアセンブラを務める必要は無くなったと思ったのかもしれません。
+今後、GCC との非互換性が拡大したら困るなぁ。
+</p>
 <p>
 　バージョン 9.2 では、Mac のデフォルトの Makefile のコンパイラを GCC から
 Clang に変更し、ベンチマークも Clang で行いました。なぜかって？

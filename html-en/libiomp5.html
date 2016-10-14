@@ -15,7 +15,7 @@
 <title>Usage of AVX and Intel OpenMP Runtime in MacPorts GCC</title>
 </head>
 <body>
-<b>Reference:</b> <a href="index.html">OTFFT -- The FFT library that is faster than FFTW</a>
+<b>Reference:</b> <a href="index.html">OTFFT -- FFT library using AVX that is faster than FFTW</a>
 <hr>
 
 <h1>Usage of AVX and Intel OpenMP Runtime in MacPorts GCC</h1>
@@ -35,14 +35,14 @@ However, GCC becomes able to compile if you do it as follows.
 </p>
 <pre>
     cd /opt/local/bin
-    sudo ln -s /usr/bin/clang
+    sudo ln -s /Library/Developer/CommandLineTools/usr/bin/clang
 </pre>
 <p>
 And, when you compile it, you have to attach the option "<code>-Wa,-q</code>"
-to "</code>g++-mp-5</code>".
+to "</code>g++-mp-6</code>".
 </p>
 <pre>
-    g++-mp-5 -Ofast -Wa,-q -march=native hello.cpp -o hello
+    g++-mp-6 -Ofast -Wa,-q -march=native hello.cpp -o hello
 </pre>
 
 <h2>[How to use Intel OpenMP Runtime in MacPorts GCC]</h2>
@@ -54,7 +54,7 @@ Second, install "cmake" by MacPorts.
 Third, execute the following commands in "libomp_oss" folder.
 </p>
 <pre>
-    cmake -DCMAKE_C_COMPILER=gcc-mp-5 -DCMAKE_CXX_COMPILER=g++-mp-5 CMakeLists.txt
+    cmake -DCMAKE_C_COMPILER=gcc-mp-6 -DCMAKE_CXX_COMPILER=g++-mp-6 CMakeLists.txt
     make
 </pre>
 <p>
@@ -62,11 +62,11 @@ Last, place "libiomp5.dylib" into $HOME/lib.
 Afterwards, you can use Intel OpenMP Runtime if you do it as follows.
 </p>
 <pre>
-    g++-mp-5 -Ofast -fopenmp -c hello.cpp
-    g++-mp-5 hello.o -L$HOME/lib -liomp5 -o hello
+    g++-mp-6 -Ofast -Wa,-q -fopenmp -c hello.cpp
+    g++-mp-6 hello.o -L$HOME/lib -liomp5 -o hello
 </pre>
 
 <hr>
-<b>Reference:</b> <a href="index.html">OTFFT -- The FFT library that is faster than FFTW</a>
+<b>Reference:</b> <a href="index.html">OTFFT -- FFT library using AVX that is faster than FFTW</a>
 </body>
 </html>

@@ -43,7 +43,7 @@ AVX や AVX2 が使える CPU に対して最適化しようとするとエラ�
 </p>
 <pre>
     cd /opt/local/bin
-    sudo ln -s /usr/bin/clang
+    sudo ln -s /Library/Developer/CommandLineTools/usr/bin/clang
 </pre>
 <p>
 　この設定をしてから g++ 等でコンパイルするとき
@@ -51,8 +51,17 @@ AVX や AVX2 が使える CPU に対して最適化しようとするとエラ�
 具体的には以下のようにします。
 </p>
 <pre>
-    g++-mp-5 -Ofast -Wa,-q -march=native hello.cpp -o hello
+    g++-mp-6 -Ofast -Wa,-q -march=native hello.cpp -o hello
 </pre>
+<p>
+　以前は、clang へのリンクは /usr/bin/clang でも大丈夫でしたが、
+バージョン 8.0.0 から warning が出るようになってしまいました。
+/Library/Developer/CommandLineTools/usr/bin/clang はバージョンが古く、
+そのおかげで GCC との互換性が保たれているようです。
+ひょっとすると、将来的には GCC との互換性が完全に失われるかもしれません。
+そうすると、gfortran で AVX が使えなくなるかもしれません。
+C++ は clang++ があるから何とかなるんですけどね。
+</p>
 
 <h2>【OS X で Intel OpenMP Runtime  を使う】</h2>
 <p>
@@ -97,8 +106,8 @@ mac_32e の部分はアーキテクチャによって変化するようです。
 $iomp5include は Intel OpenMP Runtime のヘッダファイルを配置したフォルダです。
 </p>
 <pre>
-    g++-mp-5 -Ofast -fopenmp -I$iomp5include -c hello.cpp
-    g++-mp-5 hello.o -L$HOME/lib -liomp5 -o hello
+    g++-mp-6 -Ofast -Wa,-q -fopenmp -I$iomp5include -c hello.cpp
+    g++-mp-6 hello.o -L$HOME/lib -liomp5 -o hello
 </pre>
 <p>
 　余談ですが、Intel OpenMP Runtime は OS X の場合、
@@ -106,7 +115,7 @@ $iomp5include は Intel OpenMP Runtime のヘッダファイルを配置した�
 cmake コマンドを実行するとき以下のようにします。
 </p>
 <pre>
-    cmake -DCMAKE_C_COMPILER=gcc-mp-5 -DCMAKE_CXX_COMPILER=g++-mp-5 CMakeLists.txt
+    cmake -DCMAKE_C_COMPILER=gcc-mp-6 -DCMAKE_CXX_COMPILER=g++-mp-6 CMakeLists.txt
 </pre>
 <p>
 　また、コンパイルオプションを変更したい場合などは ccmake コマンドを使います。
