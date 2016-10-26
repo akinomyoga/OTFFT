@@ -20,7 +20,7 @@
 <body>
 <b>Next:</b> <a href="node8.html">Stockham のアルゴリズムの種類</a>
 <b>Up:</b> <a href="stockham.html">トップページ</a>
-<b>Previous:</b> <a href="node6.html">あとがき</a>
+<b>Previous:</b> <a href="node6.html">OpenMP を用いない OTFFT</a>
 <b>Reference:</b> <a href="http://www.moon.sannet.ne.jp/okahisa/otfft-en/">English Page</a>
 <hr>
 
@@ -32,13 +32,16 @@ OTFFT のダウンロード
 は以下のリンクからダウンロードできます。OTFFT は MIT ライセンスです。
 </p>
 <ul>
+    <li> OktinyMP 版 OTFFT -
+    <a href="oktinympdl.html">こちらのページへどうぞ</a>
+    </li>
     <li>OTFFT (Mac/Linux/Cygwin 用) -
-    <a href="otfft-9.4.tar.gz">otfft-9.4.tar.gz</a>
-    <span style="color:red">(2016/10/2 new!)</span>
+    <a href="otfft-9.5.tar.gz">otfft-9.5.tar.gz</a>
+    <span style="color:red">(2016/10/16 new!)</span>
     </li>
     <li>OTFFT (Visual Studio 2015 nmake 用) -
-    <a href="otfft-9.4v.zip">otfft-9.4v.zip</a>
-    <span style="color:red">(2016/10/2 new!)</span>
+    <a href="otfft-9.5v.zip">otfft-9.5v.zip</a>
+    <span style="color:red">(2016/10/22 new!)</span>
     </li>
     <li>OTFFT (Mac/Linux/Cygwin 用) -
     <a href="otfft-8.6.tar.gz">otfft-8.6.tar.gz</a>
@@ -54,6 +57,12 @@ OTFFT のダウンロード
 使い方は <a href="node5.html#otfft-usage">セクション5</a> を参照してください。
 </p>
 <hr>
+<p>
+　バージョン 9.5 では、実質的な変更点はありません。
+ベンチマーク用の simple_fft.h のコードを整理しました。
+その代わり、OktinyMP という並列処理ライブラリを作って、
+OpenMP の代わりにそれを用いて OTFFT を書き換えたバージョンをリリースしました。
+</p>
 <p>
 　バージョン 9.4 では、
 fwdn, inv0 メンバ関数がリンクできなかったバグを修正しました。
@@ -152,10 +161,10 @@ C++11 以降の標準以外の関数は SSE2/AVX/AVX2 のイントリンシッ�
 OTFFT 自身のコンパイルには C++11 を使うようになりました。
 時間計測に chrono を用いています。リンクするプログラムは C++03 でも OK です。
 </p>
-<HR>
+<hr>
 <b>Next:</b> <a href="node8.html">Stockham のアルゴリズムの種類</a>
 <b>Up:</b> <a href="stockham.html">トップページ</a>
-<b>Previous:</b> <a href="node6.html">あとがき</a>
+<b>Previous:</b> <a href="node6.html">OpenMP を用いない OTFFT</a>
 <b>Reference:</b> <a href="http://www.moon.sannet.ne.jp/okahisa/otfft-en/">English Page</a>
 </body>
 </html>
