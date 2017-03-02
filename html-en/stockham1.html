@@ -31,6 +31,7 @@
     <li><a href="stockham5.html">Optimization that reduce the accesses to an array</a></li>
     <li><a href="stockham6.html">Optimization by AVX of the Stockham FFT</a></li>
     <li><a href="stockham7.html">Optimization using the Six-Step FFT and Eight-Step FFT</a></li>
+    <li><a href="cooley-tukey.html">Introduction to FFT -- Cooley-Tukey Algorithm</a></li>
 </ol>
 <hr>
 <h1><a name="stockham-intro"></a>
@@ -39,14 +40,14 @@ Introduction to the Stockham FFT
 <p>
 This page is a homepage explaining the Stockham algorithm which is a kind of
 the Fast Fourier Transform (FFT). I made this homepage for people who can not
-understand the Stockham algorithm but can understand the Cooley-Tukey algorithm.
+understand the Stockham algorithm but can understand the
+<a href="cooley-tukey.html">Cooley-Tukey algorithm</a>.
 You will be able to understand that Stockham algorithm is a transformation of
 Cooley-Tukey algorithm if you read this page.
 </p>
 <p>
-First of all, I show
-<a href="https://en.wikipedia.org/wiki/Cooley%E2%80%93Tukey_FFT_algorithm">the Cooley-Tukey algorithm</a>.
-When I implement the Cooley-Tukey algorithm using recursive-call,
+First of all, I show the Cooley-Tukey algorithm.
+When I implement the Cooley-Tukey algorithm using recursive call,
 the program will be as follows.
 </p>
 <a name="list:cooley-tukey"></a>
@@ -334,7 +335,7 @@ By the way, were you able to understand this transformation?
 In fact, this code is the Stockham algorithm.
 This is very rare recursive version of the Stockham algorithm.
 So, let's transform the calculation into a recurrence formula
-with this condition: \(m = 2^{L-h-1},~s = 2^h,~x_h(q,p) = x_h[q+sp]\).
+with this condition: \(n=2^{L-h},~m=2^{-1}n,~s=2^h,~x_h(q,p)=x_h[q+sp]\).
 </p>
 <div style="font-size:141%;">
 \[
@@ -438,7 +439,7 @@ void ifft(int n, complex_t* x) // Inverse Fourier transform
 </pre>
 <p>
 Let's transform the calculation into a recurrence formula with this condition:
-\(m = 2^h,~s = 2^{L-h-1},~x_h(q,p) = x_h[q+2sp]\).
+\(m=2^h,~t=2^{L-h},~s=2^{-1}t,~x_h(q,p)=x_h[q+tp]\).
 </p>
 <div style="font-size:141%;">
 \[

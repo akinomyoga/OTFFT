@@ -10,6 +10,7 @@
 
 <link rel="stylesheet" href="stockham.css" type="text/css">
 <link rel="prev" href="node10.html">
+<link rel="next" href="recurrence.html">
 <link rel="up" href="stockham.html">
 <link rel="alternate" hreflang="ja" href="http://www.moon.sannet.ne.jp/okahisa/stockham/node11.html">
 <link rel="alternate" hreflang="en" href="http://www.moon.sannet.ne.jp/okahisa/otfft-en/stockham7.html">
@@ -21,6 +22,7 @@
 </head>
 <body>
 <b>Up:</b> <a href="stockham.html">トップページ</a>
+<b>Next:</b> <a href="recurrence.html">Stockham FFT の漸化式の解</a>
 <b>Previous:</b> <a href="node10.html">Stockham FFT の AVX による最適化</a>
 <b>Reference:</b> <a href="node1.html">Stockham FFT 入門</a>,&nbsp;
 <a href="http://www.moon.sannet.ne.jp/okahisa/otfft-en/stockham7.html">English Page</a>
@@ -32,8 +34,9 @@
 FFT の最適化について説明します。
 </p>
 <p>
-　入力 \(x_p\) から出力 \(X_k\) を得るサイズ \(N = 2^L\) の離散フーリエ変換を
-\(X_k = F_N(x_p)\) とすると、\(F_N\) は以下のように定義されます。
+　まず、離散フーリエ変換について定義しましょう。
+入力 \(x_p\) から出力 \(X_k\) を得るサイズ \(N = 2^L,~L=0,1,2,3,\ldots\)
+の離散フーリエ変換 \(F_N\) は、以下のように定義されます。
 </p>
 \[
 X_k = F_N(x_p) = \frac{1}{N}\sum_{p=0}^{N-1}x_p W_N^{kp},~W_N = \exp\left(-j\frac{2\pi}{N}\right),~j = \sqrt{-1}
@@ -47,26 +50,32 @@ x_p = x[p_1 + p_2n],~p = p_1 + p_2n
 \]
 <p>
 　ここで、\(p_1 = 0,1,\ldots,n-1\) で \(p_2 = 0,1,\ldots,m-1\) です。
-同様に、\(X_k\) は以下のように \(k_1, k_2\) を用いて２次元的に表現できます。
+</p>
+<p>
+　同様に、\(X_k\) を配列 \(X[k]\) で表すと、以下のように \(k_1, k_2\)
+を用いて２次元的に表現できます。
 </p>
 \[
 X_k = X[k_1 + k_2m],~k = k_1 + k_2m
 \]
 <p>
 　ここで、\(k_1 = 0,1,\ldots,m-1\) で \(k_2 = 0,1,\ldots,n-1\) です。
-今、\(kp\) が以下の関係を満たすことを利用して \(F_N\) を変形すると、
+</p>
+<p>
+　今、以下の関係が成り立つことを利用して \(F_N\) を変形すると、
 </p>
 \[
-kp = (k_1 + k_2m)(p_1 + p_2n) = k_1p_1 + k_1p_2n + k_2p_1m + k_2p_2N
+kp = (k_1 + k_2m)(p_1 + p_2n) = k_1p_1 + k_1p_2n + k_2p_1m + k_2p_2N \\
+W_N^{k_1p_2n} = W_m^{k_1p_2},~W_N^{k_2p_1m} = W_n^{k_2p_1},~W_N^{k_2p_2N} = 1
 \]
 <p>
-\(F_N\) は以下のような \(G_N\) に変形できます。
+\(F_N\) は以下のような２重の離散フーリエ変換 \(G_N\) に変形できます。
 </p>
 \[
 X[k_1 + k_2m] = G_N(x[p_1 + p_2n]) = \frac{1}{n}\sum_{p_1=0}^{n-1}\left(\left(\frac{1}{m}\sum_{p_2=0}^{m-1}x[p_1 + p_2n]W_m^{k_1p_2}\right)W_N^{k_1p_1}\right)W_n^{k_2p_1}
 \]
 <p>
-　ここで、いくつか用語を定義しましょう。\(x[p_1 + p_2n]\) の \(p_2\)
+　次に、いくつか用語を定義しましょう。\(x[p_1 + p_2n]\) の \(p_2\)
 を \(p_2 = q\) に固定した場合、
 \(x\) は \(p_1\) のみを添字とする配列と見なせます。
 これを \(x\) の \(q\) 行と呼ぶことにします。また、次の関係
@@ -214,35 +223,35 @@ void eightstep_fft(int log_n, complex_t* x, complex_t* y)
     }
 }
 
-void fft(int n, complex_t* x) // フーリエ変換
-// n : 系列長
+void fft(int N, complex_t* x) // フーリエ変換
+// N : 系列長
 // x : フーリエ変換する系列(入出力)
 {
-    int log_n = 0;
-    for (int i = n; i &gt; 1; i &gt;&gt;= 1) log_n++;
-    complex_t* y = new complex_t[n];
-    if (n &lt;= 1) {}
-    else if (n == 2)       fft0(n, 1, 0, x, y);
-    else if (!(log_n &amp; 1)) sixstep_fft(log_n, x, y);
-    else                   eightstep_fft(log_n, x, y);
+    int log_N = 0;
+    for (int i = N; i &gt; 1; i &gt;&gt;= 1) log_N++;
+    complex_t* y = new complex_t[N];
+    if (N &lt;= 1) {}
+    else if (N == 2)       fft0(N, 1, 0, x, y);
+    else if (!(log_N &amp; 1)) sixstep_fft(log_N, x, y);
+    else                   eightstep_fft(log_N, x, y);
     delete[] y;
-    for (int k = 0; k &lt; n; k++) x[k] /= n;
+    for (int k = 0; k &lt; N; k++) x[k] /= N;
 }
 
-void ifft(int n, complex_t* x) // 逆フーリエ変換
-// n : 系列長
+void ifft(int N, complex_t* x) // 逆フーリエ変換
+// N : 系列長
 // x : 逆フーリエ変換する系列(入出力)
 {
-    for (int p = 0; p &lt; n; p++) x[p] = conj(x[p]);
-    int log_n = 0;
-    for (int i = n; i &gt; 1; i &gt;&gt;= 1) log_n++;
-    complex_t* y = new complex_t[n];
-    if (n &lt;= 1) {}
-    else if (n == 2)       fft0(n, 1, 0, x, y);
-    else if (!(log_n &amp; 1)) sixstep_fft(log_n, x, y);
-    else                   eightstep_fft(log_n, x, y);
+    for (int p = 0; p &lt; N; p++) x[p] = conj(x[p]);
+    int log_N = 0;
+    for (int i = N; i &gt; 1; i &gt;&gt;= 1) log_N++;
+    complex_t* y = new complex_t[N];
+    if (N &lt;= 1) {}
+    else if (N == 2)       fft0(N, 1, 0, x, y);
+    else if (!(log_N &amp; 1)) sixstep_fft(log_N, x, y);
+    else                   eightstep_fft(log_N, x, y);
     delete[] y;
-    for (int k = 0; k &lt; n; k++) x[k] = conj(x[k]);
+    for (int k = 0; k &lt; N; k++) x[k] = conj(x[k]);
 }
 </pre>
 <p>
@@ -264,6 +273,7 @@ Six-Step FFT のアルゴリズを適用して分解すると、\(n = uv, u = v\
 
 <hr>
 <b>Up:</b> <a href="stockham.html">トップページ</a>
+<b>Next:</b> <a href="recurrence.html">Stockham FFT の漸化式の解</a>
 <b>Previous:</b> <a href="node10.html">Stockham FFT の AVX による最適化</a>
 <b>Reference:</b> <a href="node1.html">Stockham FFT 入門</a>,&nbsp;
 <a href="http://www.moon.sannet.ne.jp/okahisa/otfft-en/stockham7.html">English Page</a>

@@ -66,21 +66,21 @@ void fft0(int n, int s, bool eo, complex_t* x, complex_t* y)
     }
 }
 
-void fft(int n, complex_t* x)
+void fft(int N, complex_t* x)
 {
-    complex_t* y = new complex_t[n];
-    fft0(n, 1, 0, x, y);
+    complex_t* y = new complex_t[N];
+    fft0(N, 1, 0, x, y);
     delete[] y;
-    for (int k = 0; k &lt; n; k++) x[k] /= n;
+    for (int k = 0; k &lt; N; k++) x[k] /= N;
 }
 
-void ifft(int n, complex_t* x)
+void ifft(int N, complex_t* x)
 {
-    for (int p = 0; p &lt; n; p++) x[p] = conj(x[p]);
-    complex_t* y = new complex_t[n];
-    fft0(n, 1, 0, x, y);
+    for (int p = 0; p &lt; N; p++) x[p] = conj(x[p]);
+    complex_t* y = new complex_t[N];
+    fft0(N, 1, 0, x, y);
     delete[] y;
-    for (int k = 0; k &lt; n; k++) x[k] = conj(x[k]);
+    for (int k = 0; k &lt; N; k++) x[k] = conj(x[k]);
 }
 </pre>
 <br>
@@ -114,21 +114,21 @@ void fft0(int n, int s, bool eo, complex_t* x, complex_t* y)
     }
 }
 
-void fft(int n, complex_t* x)
+void fft(int N, complex_t* x)
 {
-    complex_t* y = new complex_t[n];
-    fft0(n, 1, 0, x, y);
+    complex_t* y = new complex_t[N];
+    fft0(N, 1, 0, x, y);
     delete[] y;
-    for (int k = 0; k &lt; n; k++) x[k] /= n;
+    for (int k = 0; k &lt; N; k++) x[k] /= N;
 }
 
-void ifft(int n, complex_t* x)
+void ifft(int N, complex_t* x)
 {
-    for (int p = 0; p &lt; n; p++) x[p] = conj(x[p]);
-    complex_t* y = new complex_t[n];
-    fft0(n, 1, 0, x, y);
+    for (int p = 0; p &lt; N; p++) x[p] = conj(x[p]);
+    complex_t* y = new complex_t[N];
+    fft0(N, 1, 0, x, y);
     delete[] y;
-    for (int k = 0; k &lt; n; k++) x[k] = conj(x[k]);
+    for (int k = 0; k &lt; N; k++) x[k] = conj(x[k]);
 }
 </pre>
 <br>
@@ -162,21 +162,21 @@ void fft0(int n, int s, bool eo, complex_t* x, complex_t* y)
     }
 }
 
-void fft(int n, complex_t* x)
+void fft(int N, complex_t* x)
 {
-    complex_t* y = new complex_t[n];
-    fft0(n, 1, 0, x, y);
+    complex_t* y = new complex_t[N];
+    fft0(N, 1, 0, x, y);
     delete[] y;
-    for (int k = 0; k &lt; n; k++) x[k] /= n;
+    for (int k = 0; k &lt; N; k++) x[k] /= N;
 }
 
-void ifft(int n, complex_t* x)
+void ifft(int N, complex_t* x)
 {
-    for (int p = 0; p &lt; n; p++) x[p] = conj(x[p]);
-    complex_t* y = new complex_t[n];
-    fft0(n, 1, 0, x, y);
+    for (int p = 0; p &lt; N; p++) x[p] = conj(x[p]);
+    complex_t* y = new complex_t[N];
+    fft0(N, 1, 0, x, y);
     delete[] y;
-    for (int k = 0; k &lt; n; k++) x[k] = conj(x[k]);
+    for (int k = 0; k &lt; N; k++) x[k] = conj(x[k]);
 }
 </pre>
 <br>
@@ -210,21 +210,21 @@ void fft0(int n, int s, bool eo, complex_t* x, complex_t* y)
     }
 }
 
-void fft(int n, complex_t* x)
+void fft(int N, complex_t* x)
 {
-    complex_t* y = new complex_t[n];
-    fft0(n, 1, 0, x, y);
+    complex_t* y = new complex_t[N];
+    fft0(N, 1, 0, x, y);
     delete[] y;
-    for (int k = 0; k &lt; n; k++) x[k] /= n;
+    for (int k = 0; k &lt; N; k++) x[k] /= N;
 }
 
-void ifft(int n, complex_t* x)
+void ifft(int N, complex_t* x)
 {
-    for (int p = 0; p &lt; n; p++) x[p] = conj(x[p]);
-    complex_t* y = new complex_t[n];
-    fft0(n, 1, 0, x, y);
+    for (int p = 0; p &lt; N; p++) x[p] = conj(x[p]);
+    complex_t* y = new complex_t[N];
+    fft0(N, 1, 0, x, y);
     delete[] y;
-    for (int k = 0; k &lt; n; k++) x[k] = conj(x[k]);
+    for (int k = 0; k &lt; N; k++) x[k] = conj(x[k]);
 }
 </pre>
 

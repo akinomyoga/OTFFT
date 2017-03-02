@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta http-equiv="Content-Style-Type" content="text/css">
 <meta http-equiv="Content-Script-Type" content="text/javascript">
-<meta name="description" content="Optimization using the Six-Step FFT and Eight-Step FFt">
+<meta name="description" content="Optimization using the Six-Step FFT and Eight-Step FFT">
 <meta name="keywords" content="Six-Step FFT,FFT,C++">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -27,21 +27,22 @@
 
 <h1>Optimization using the Six-Step FFT and Eight-Step FFT</h1>
 <p>
-In this page, I explain the Optimization of FFT that use the Six-Step FFT
-algorithm.
+In this page, I explain a optimization of FFT using the Six-Step FFT algorithm.
 </p>
 <p>
-The DFT \(F_N\) is defined as follows
+First, we will define discrete Fourier transform (DFT).
+DFT \(F_N\) is defined as follows
 when we assume that \(x_p\) is an input sequence
 and assume that \(X_k\) is an output sequence
-and assume that the size of DFT is \(N = 2^L\).
+and assume that the size is \(N = 2^L\), \(L=0,1,2,3,\ldots\)
 </p>
 \[
-X_k = F_N(x_p) = \frac{1}{N}\sum_{p=0}^{N-1}x_p W_N^{kp},~W_N = \exp\left(-j\frac{2\pi}{N}\right),~j = \sqrt{-1}
+X_k = F_N(x_p) = \frac{1}{N}\sum_{p=0}^{N-1}x_p W_N^{kp},~W_N = \exp\left(-j\frac{2\pi}{N}\right),~j = \sqrt{-1} \\
+k = 0,1,2,3,\ldots,N-1
 \]
 <p>
-Now, if we express \(x_p\) with the array \(x[p]\)
-when \(N\) is factored like \(N = nm\),
+Now, we express \(x_p\) with the array \(x[p]\),
+and if \(N\) can be factored like \(N = nm\),
 it can two-dimensionaly be expressed by using \(p_1\) and \(p_2\) as follows.
 </p>
 \[
@@ -49,7 +50,9 @@ x_p = x[p_1 + p_2n],~p = p_1 + p_2n
 \]
 <p>
 Here, \(p_1 = 0,1,\ldots,n-1\) and \(p_2 = 0,1,\ldots,m-1\).
-Similarly, if we express \(X_k\) with the array \(X[k]\),
+</p>
+<p>
+Similarly, when we express \(X_k\) with the array \(X[k]\),
 it can two-dimensionaly be expressed by using \(k_1\) and \(k_2\) as follows.
 </p>
 \[
@@ -57,25 +60,29 @@ X_k = X[k_1 + k_2m],~k = k_1 + k_2m
 \]
 <p>
 Here, \(k_1 = 0,1,\ldots,m-1\) and \(k_2 = 0,1,\ldots,n-1\).
+</p>
+<p>
 Now, if we transform \(F_N\) by using the following relations,
 </p>
 \[
-kp = (k_1 + k_2m)(p_1 + p_2n) = k_1p_1 + k_1p_2n + k_2p_1m + k_2p_2N
+kp = (k_1 + k_2m)(p_1 + p_2n) = k_1p_1 + k_1p_2n + k_2p_1m + k_2p_2N \\
+W_N^{k_1p_2n} = W_m^{k_1p_2},~W_N^{k_2p_1m} = W_n^{k_2p_1},~W_N^{k_2p_2N} = 1
 \]
 <p>
-\(F_N\) becomes \(G_N\) such as follows.
+\(F_N\) can be transformed into
+a dual discrete Fourier transform \(G_N\) as follows.
 </p>
 \[
 X[k_1 + k_2m] = G_N(x[p_1 + p_2n]) = \frac{1}{n}\sum_{p_1=0}^{n-1}\left(\left(\frac{1}{m}\sum_{p_2=0}^{m-1}x[p_1 + p_2n]W_m^{k_1p_2}\right)W_N^{k_1p_1}\right)W_n^{k_2p_1}
 \]
 <p>
-Here, let's define a few terms.
+Next, let's define a few terms.
 If we fix the \(p_2\) of \(x[p_1 + p_2n]\) to \(p_2 = q\),
-\(x\) is regarded as the array that has only the suffix \(p_1\).
-This array is called the \(q\)-line of \(x\). In addition,
+\(x\) is regarded as the array that has only the index \(p_1\).
+We call this array the \(q\)-line of \(x\). In addition,
 \(y\) which satisfies the next relation: \(x[p_1 + p_2n] = y[p_2 + p_1m]\)
 is called the transposed array of \(x\).
-To get \(y\) is called "transpose \(x\)".
+And, to get \(y\) is called "transpose \(x\)".
 \(G_N\) is calculated with the following steps if we use these terms.
 </p>
 <table style="padding-left:1em">
@@ -88,7 +95,7 @@ To get \(y\) is called "transpose \(x\)".
 </table>
 <p>
 The reason why transposition is necessary is
-that we assume that the subroutines \(F_n, F_m\) cannot transform
+because we are assuming that the subroutines \(F_n, F_m\) cannot transform
 the input sequence well when its stride is not 1.
 In this way, because we can execute FFT with six steps,
 this algorithm is called the Six-Step FFT.
@@ -251,7 +258,7 @@ void ifft(int n, complex_t* x) // Inverse Fourier transform
 }
 </pre>
 <p>
-Above, sequence length \(N\) was assumed to be factored like \(N = nm\).
+Above, sequence length \(N\) is assumed to be factored like \(N = nm\).
 In this condition, when \(n = m\),
 we can execute the transposition extremely effectively.
 Hence, in the subroutine <code>sixstep_fft()</code> of this code,

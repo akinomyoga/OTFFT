@@ -29,6 +29,19 @@
 <h1><a name="otfft"></a>
 OTFFT -- FFTW より速い FFT ライブラリ
 </h1>
+<p style="color:red">
+　このサイトは、もうしばらくすると閉鎖されます。
+使っているプロバイダが、私の在住する地域でのサービスを終了するからです。
+新しいプロバイダで、ホームページを開設する方法とかまだ不明なので、
+このサイトはしばらくネットから姿を消すと思います。
+また、この際、
+今まで SEO 対策を考えて変更できなかった部分をメンテナンスしようと思うので、
+復活にはしばらく時間がかかると思います。
+</p>
+<p style="color:red">
+　なので、OTFFT を使わないと死んじゃうー！って人がもしもいるなら、
+ダウンロードはお早めにw
+</p>
 <p>
 　<a href="node1.html">セクション1</a>, <a href="node2.html">セクション2</a>,
 <a href="node3.html">セクション3</a> で、
@@ -158,9 +171,9 @@ AVX が Stockham のアルゴリズムに見事にはまり、加えて C++ の 
 <p style="color:green">
 　現在、Mac でのベンチマークには Clang を採用していますが、
 以前は GCC を利用していました。GCC でしか OpenMP が使えなかったからです。
-しかし、GCC の OpenMP は Linux に最適化されており、
+しかし、GCC デフォルトの OpenMP (libgomp) は Linux に最適化されており、
 Mac でパフォーマンスを出そうとすると
-Intel OpenMP Runtime をインストールする必要がありました。
+Intel OpenMP Runtime で置き換える必要がありました。
 現在、Clang も OpenMP 対応を果たし、
 簡単に AVX と OpenMP が使えるようになりました。
 なので、コンパイラを MacPorts の Clang に変更しました。

@@ -20,9 +20,23 @@
 <body>
 <b>Next:</b> <a href="node2.html">Stockham のアルゴリズムの完成</a>
 <b>Up:</b> <a href="stockham.html">トップページ</a>
-<b>Reference:</b> <a href="http://www.moon.sannet.ne.jp/okahisa/otfft-en/stockham1.html">English Page</a>
+<b>Reference:</b> <a href="http://www.moon.sannet.ne.jp/okahisa/otfft-en/stockham1.html">English Page</a>&nbsp;
+<b>おすすめ：</b> <a href="http://www.moon.sannet.ne.jp/okahisa/infinity/">実数とは何か？無限とは？</a>
 <hr>
 
+<p style="color:red">
+　このサイトは、もうしばらくすると閉鎖されます。
+使っているプロバイダが、私の在住する地域でのサービスを終了するからです。
+新しいプロバイダで、ホームページを開設する方法とかまだ不明なので、
+このサイトはしばらくネットから姿を消すと思います。
+また、この際、
+今まで SEO 対策を考えて変更できなかった部分をメンテナンスしようと思うので、
+復活にはしばらく時間がかかると思います。
+</p>
+<p style="color:red">
+　なので、OTFFT を使わないと死んじゃうー！って人がもしもいるなら、
+ダウンロードはお早めにw
+</p>
 <h3>目次</h3>
 <ol>
     <li><a href="#stockham-intro">Stockham FFT 入門</a></li>
@@ -36,7 +50,9 @@
     <li><a href="node9.html">配列へのアクセスを減らす最適化</a></li>
     <li><a href="node10.html">Stockham FFT の AVX による最適化</a></li>
     <li><a href="node11.html">Six-Step FFT と Eight-Step FFT を使った最適化</a></li>
+    <li><a href="recurrence.html">Stockham FFT の漸化式の解</a></li>
     <li><a href="http://www.moon.sannet.ne.jp/okahisa/otfft-en/stockham1.html">English Page</a></li>
+    <li><a href="cooley-tukey.html">付録：高速フーリエ変換入門 -- Cooley-Tukey のアルゴリズム</a></li>
 </ol>
 <hr>
 
@@ -45,9 +61,10 @@ Stockham FFT 入門
 </h1>
 <p>
 　このホームページはFFT(高速フーリエ変換)のアルゴリズムの１つである Stockham
-のアルゴリズムについて解説するホームページです。Cooley-Tukey
-のアルゴリズムは理解できたけど、Stockham のアルゴリズムは、
-何故あの漸化式が出てくるのか分からないという人に向けて書きました。
+のアルゴリズムについて解説するホームページです。
+Cooley-Tukey のアルゴリズムは理解できたけど、Stockham のアルゴリズムは、
+何故あの <a href="recurrence.html">漸化式</a>
+が出てくるのか分からないという人に向けて書きました。
 みなさんは Stockham のアルゴリズムが実は Cooley-Tukey
 のアルゴリズムの単純な変形であることをご存知でしょうか？
 天下り式に与えられるあの漸化式も Cooley-Tukey
@@ -56,9 +73,13 @@ Stockham FFT 入門
 </p>
 <p>
 　まず、Cooley-Tukey のアルゴリズムは理解していることを前提に話を進めます。
-Cooley-Tukey のアルゴリズムって何？そもそも FFT って何？という人は次のページ
+Cooley-Tukey のアルゴリズムって何？そもそも FFT って何？という人は
+<a href="cooley-tukey.html">こちらのページ</a> をご覧ください。
+<!--
+次のページ
 <a href="http://www.kurims.kyoto-u.ac.jp/~ooura/fftman/index.html">(大浦さんのページ)</a>
 を参考にしてください。分かりやすく解説されています。
+-->
 </p>
 <p>
 　それでは、Cooley-Tukey のアルゴリズムを実装したコードを示しておきましょう。
@@ -96,33 +117,33 @@ void butterfly(int n, int q, complex_t* x) // バタフライ演算
     }
 }
 
-void bit_reverse(int n, complex_t* x) // ビット反転並べ替え
-// n : 系列長
+void bit_reverse(int N, complex_t* x) // ビット反転並べ替え
+// N : 系列長
 // x : ビット反転並べ替えする系列(入出力)
 {
-    for (int i = 0, j = 1; j &lt; n-1; j++) {
-        for (int k = n &gt;&gt; 1; k &gt; (i ^= k); k &gt;&gt;= 1);
+    for (int i = 0, j = 1; j &lt; N-1; j++) {
+        for (int k = N &gt;&gt; 1; k &gt; (i ^= k); k &gt;&gt;= 1);
         if (i &lt; j) std::swap(x[i], x[j]); // x[i]とx[j]を交換する
     }
 }
 
-void fft(int n, complex_t* x) // フーリエ変換
-// n : 系列長
+void fft(int N, complex_t* x) // フーリエ変換
+// N : 系列長
 // x : フーリエ変換する系列(入出力)
 {
-    butterfly(n, 0, x);
-    bit_reverse(n, x);
-    for (int k = 0; k &lt; n; k++) x[k] /= n;
+    butterfly(N, 0, x);
+    bit_reverse(N, x);
+    for (int k = 0; k &lt; N; k++) x[k] /= N;
 }
 
-void ifft(int n, complex_t* x) // 逆フーリエ変換
-// n : 系列長
+void ifft(int N, complex_t* x) // 逆フーリエ変換
+// N : 系列長
 // x : 逆フーリエ変換する系列(入出力)
 {
-    for (int p = 0; p &lt; n; p++) x[p] = conj(x[p]);
-    butterfly(n, 0, x);
-    bit_reverse(n, x);
-    for (int k = 0; k &lt; n; k++) x[k] = conj(x[k]);
+    for (int p = 0; p &lt; N; p++) x[p] = conj(x[p]);
+    butterfly(N, 0, x);
+    bit_reverse(N, x);
+    for (int k = 0; k &lt; N; k++) x[k] = conj(x[k]);
 }
 </pre>
 <p>
@@ -148,7 +169,9 @@ Stockham のアルゴリズムではビット反転並べ替えを行わなく�
 　しかし、出力を自然な順序にしたいだけなら、
 <code>bit_reverse()</code> を用いなくとも、
 Cooley-Tukey のアルゴリズムを使ってできないことはありません。
+<!--
 大浦さんのページにもサンプルコードで示されていますが、
+-->
 以下のようにしてやれば出力は自然な順序で並びます。
 </p>
 <a name="list:cooley-tukey2"></a>
@@ -187,25 +210,25 @@ void fft0(int n, int q, complex_t* x, complex_t* y)
     }
 }
 
-void fft(int n, complex_t* x) // フーリエ変換
-// n : 系列長
+void fft(int N, complex_t* x) // フーリエ変換
+// N : 系列長
 // x : フーリエ変換する系列(入出力)
 {
-    complex_t* y = new complex_t[n]; // 並べ替え用作業配列の確保
-    fft0(n, 0, x, y);
+    complex_t* y = new complex_t[N]; // 並べ替え用作業配列の確保
+    fft0(N, 0, x, y);
     delete[] y;
-    for (int k = 0; k &lt; n; k++) x[k] /= n;
+    for (int k = 0; k &lt; N; k++) x[k] /= N;
 }
 
-void ifft(int n, complex_t* x) // 逆フーリエ変換
-// n : 系列長
+void ifft(int N, complex_t* x) // 逆フーリエ変換
+// N : 系列長
 // x : 逆フーリエ変換する系列(入出力)
 {
-    for (int p = 0; p &lt; n; p++) x[p] = conj(x[p]);
-    complex_t* y = new complex_t[n]; // 並べ替え用作業配列の確保
-    fft0(n, 0, x, y);
+    for (int p = 0; p &lt; N; p++) x[p] = conj(x[p]);
+    complex_t* y = new complex_t[N]; // 並べ替え用作業配列の確保
+    fft0(N, 0, x, y);
     delete[] y;
-    for (int k = 0; k &lt; n; k++) x[k] = conj(x[k]);
+    for (int k = 0; k &lt; N; k++) x[k] = conj(x[k]);
 }
 </pre>
 <p>
@@ -330,25 +353,25 @@ void fft1(int n, int s, int q, complex_t* x, complex_t* y)
     }
 }
 
-void fft(int n, complex_t* x) // フーリエ変換
-// n : 系列長
+void fft(int N, complex_t* x) // フーリエ変換
+// N : 系列長
 // x : フーリエ変換する系列(入出力)
 {
-    complex_t* y = new complex_t[n]; // 並べ替え用作業配列の確保
-    fft0(n, 1, 0, x, y);
+    complex_t* y = new complex_t[N]; // 並べ替え用作業配列の確保
+    fft0(N, 1, 0, x, y);
     delete[] y;
-    for (int k = 0; k &lt; n; k++) x[k] /= n;
+    for (int k = 0; k &lt; N; k++) x[k] /= N;
 }
 
-void ifft(int n, complex_t* x) // 逆フーリエ変換
-// n : 系列長
+void ifft(int N, complex_t* x) // 逆フーリエ変換
+// N : 系列長
 // x : 逆フーリエ変換する系列(入出力)
 {
-    for (int p = 0; p &lt; n; p++) x[p] = conj(x[p]);
-    complex_t* y = new complex_t[n]; // 並べ替え用作業配列の確保
-    fft0(n, 1, 0, x, y);
+    for (int p = 0; p &lt; N; p++) x[p] = conj(x[p]);
+    complex_t* y = new complex_t[N]; // 並べ替え用作業配列の確保
+    fft0(N, 1, 0, x, y);
     delete[] y;
-    for (int k = 0; k &lt; n; k++) x[k] = conj(x[k]);
+    for (int k = 0; k &lt; N; k++) x[k] = conj(x[k]);
 }
 </pre>
 <p>
@@ -383,8 +406,9 @@ void ifft(int n, complex_t* x) // 逆フーリエ変換
 実はこれで Stockham のアルゴリズムになっています。
 めったにお目にかかれないと言うか、
 このサイト以外では見られないかもしれない再帰版の Stockham のアルゴリズムです。
-試しに \(m = 2^{L-h-1},~s = 2^h,~x_h(q,p) = x_h[q+sp]\)
-とおいてバタフライ演算を漸化式に書き換えてみてください。
+試しに \(n=2^{L-h}\),\(~m=2^{-1}n\),\(~s=2^h\),\(~x_h(q,p)=x_h[q+sp]\)
+とおいてバタフライ演算を <a href="recurrence.html">漸化式</a>
+に書き換えてみてください。
 以下のようになるはずです。\(x_h[~]\) は計算 \(h\) 段目の配列です。
 入力系列 \(x_0[~]\) から始めて \(x_L[~]\)
 を求めるとフーリエ変換出来ます(係数 \(\frac{1}{N}\) をかける必要があります)。
@@ -484,30 +508,31 @@ void fft1(int n, int s, int q, complex_t* x, complex_t* y)
     }
 }
 
-void fft(int n, complex_t* x) // フーリエ変換
-// n : 系列長
+void fft(int N, complex_t* x) // フーリエ変換
+// N : 系列長
 // x : フーリエ変換する系列(入出力)
 {
-    complex_t* y = new complex_t[n]; // 並べ替え用作業配列の確保
-    fft0(n, 1, 0, x, y);
+    complex_t* y = new complex_t[N]; // 並べ替え用作業配列の確保
+    fft0(N, 1, 0, x, y);
     delete[] y;
-    for (int k = 0; k &lt; n; k++) x[k] /= n;
+    for (int k = 0; k &lt; N; k++) x[k] /= N;
 }
 
-void ifft(int n, complex_t* x) // 逆フーリエ変換
-// n : 系列長
+void ifft(int N, complex_t* x) // 逆フーリエ変換
+// N : 系列長
 // x : 逆フーリエ変換する系列(入出力)
 {
-    for (int p = 0; p &lt; n; p++) x[p] = conj(x[p]);
-    complex_t* y = new complex_t[n]; // 並べ替え用作業配列の確保
-    fft0(n, 1, 0, x, y);
+    for (int p = 0; p &lt; N; p++) x[p] = conj(x[p]);
+    complex_t* y = new complex_t[N]; // 並べ替え用作業配列の確保
+    fft0(N, 1, 0, x, y);
     delete[] y;
-    for (int k = 0; k &lt; n; k++) x[k] = conj(x[k]);
+    for (int k = 0; k &lt; N; k++) x[k] = conj(x[k]);
 }
 </pre>
 <p>
-　どうでしょう。漸化式は Stockham のアルゴリズムになりましたね。おっと、
-時間間引きの場合 \(m = 2^h,~s = 2^{L-h-1},~x_h(q,p) = x_h[q+2sp]\)
+　どうでしょう。<a href="recurrence.html">漸化式</a>
+は Stockham のアルゴリズムになりましたね。おっと、
+時間間引きの場合 \(m=2^h\),\(~t=2^{L-h}\),\(~s=2^{-1}t\),\(~x_h(q,p)=x_h[q+tp]\)
 とおくのを忘れないでください。
 </p>
 <div style="font-size:141%;">
@@ -545,6 +570,7 @@ void ifft(int n, complex_t* x) // 逆フーリエ変換
 <hr>
 <b>Next:</b> <a href="node2.html">Stockham のアルゴリズムの完成</a>
 <b>Up:</b> <a href="stockham.html">トップページ</a>
-<b>Reference:</b> <a href="http://www.moon.sannet.ne.jp/okahisa/otfft-en/stockham1.html">English Page</a>
+<b>Reference:</b> <a href="http://www.moon.sannet.ne.jp/okahisa/otfft-en/stockham1.html">English Page</a>&nbsp;
+<b>おすすめ：</b> <a href="http://www.moon.sannet.ne.jp/okahisa/infinity/">実数とは何か？無限とは？</a>
 </body>
 </html>

@@ -75,25 +75,25 @@ void fft0(int n, int s, bool eo, complex_t* x, complex_t* y)
     }
 }
 
-void fft(int n, complex_t* x) // フーリエ変換
-// n : 系列長
+void fft(int N, complex_t* x) // フーリエ変換
+// N : 系列長
 // x : フーリエ変換する系列(入出力)
 {
-    complex_t* y = new complex_t[n];
-    fft0(n, 1, 0, x, y);
+    complex_t* y = new complex_t[N];
+    fft0(N, 1, 0, x, y);
     delete[] y;
-    for (int k = 0; k &lt; n; k++) x[k] /= n;
+    for (int k = 0; k &lt; N; k++) x[k] /= N;
 }
 
-void ifft(int n, complex_t* x) // 逆フーリエ変換
-// n : 系列長
+void ifft(int N, complex_t* x) // 逆フーリエ変換
+// N : 系列長
 // x : 逆フーリエ変換する系列(入出力)
 {
-    for (int p = 0; p &lt; n; p++) x[p] = conj(x[p]);
-    complex_t* y = new complex_t[n];
-    fft0(n, 1, 0, x, y);
+    for (int p = 0; p &lt; N; p++) x[p] = conj(x[p]);
+    complex_t* y = new complex_t[N];
+    fft0(N, 1, 0, x, y);
     delete[] y;
-    for (int k = 0; k &lt; n; k++) x[k] = conj(x[k]);
+    for (int k = 0; k &lt; N; k++) x[k] = conj(x[k]);
 }
 </pre>
 
@@ -198,35 +198,35 @@ void fft0(int n, int s, bool eo, complex_t* x, complex_t* y)
     }
 }
 
-void fft(int n, std::complex&lt;double&gt;* x) // フーリエ変換
-// n : 系列長
+void fft(int N, std::complex&lt;double&gt;* x) // フーリエ変換
+// N : 系列長
 // x : フーリエ変換する系列(入出力)
 {
-    complex_t* y = (complex_t*) _mm_malloc(n*sizeof(complex_t), 32);
-    complex_t* z = (complex_t*) _mm_malloc(n*sizeof(complex_t), 32);
-    for (int p = 0; p &lt; n; p++) {
+    complex_t* y = (complex_t*) _mm_malloc(N*sizeof(complex_t), 32);
+    complex_t* z = (complex_t*) _mm_malloc(N*sizeof(complex_t), 32);
+    for (int p = 0; p &lt; N; p++) {
         y[p].Re = x[p].real();
         y[p].Im = x[p].imag();
     }
-    fft0(n, 1, 0, y, z);
-    for (int k = 0; k &lt; n; k++)
-        x[k] = std::complex&lt;double&gt;(y[k].Re/n, y[k].Im/n);
+    fft0(N, 1, 0, y, z);
+    for (int k = 0; k &lt; N; k++)
+        x[k] = std::complex&lt;double&gt;(y[k].Re/N, y[k].Im/N);
     _mm_free(z);
     _mm_free(y);
 }
 
-void ifft(int n, std::complex&lt;double&gt;* x) // 逆フーリエ変換
-// n : 系列長
+void ifft(int N, std::complex&lt;double&gt;* x) // 逆フーリエ変換
+// N : 系列長
 // x : 逆フーリエ変換する系列(入出力)
 {
-    complex_t* y = (complex_t*) _mm_malloc(n*sizeof(complex_t), 32);
-    complex_t* z = (complex_t*) _mm_malloc(n*sizeof(complex_t), 32);
-    for (int p = 0; p &lt; n; p++) {
+    complex_t* y = (complex_t*) _mm_malloc(N*sizeof(complex_t), 32);
+    complex_t* z = (complex_t*) _mm_malloc(N*sizeof(complex_t), 32);
+    for (int p = 0; p &lt; N; p++) {
         y[p].Re =  x[p].real();
         y[p].Im = -x[p].imag();
     }
-    fft0(n, 1, 0, y, z);
-    for (int k = 0; k &lt; n; k++)
+    fft0(N, 1, 0, y, z);
+    for (int k = 0; k &lt; N; k++)
         x[k] = std::complex&lt;double&gt;(y[k].Re, -y[k].Im);
     _mm_free(z);
     _mm_free(y);
@@ -325,35 +325,35 @@ void fft0(int n, int s, bool eo, complex_t* x, complex_t* y)
     }
 }
 
-void fft(int n, std::complex&lt;double&gt;* x) // フーリエ変換
-// n : 系列長
+void fft(int N, std::complex&lt;double&gt;* x) // フーリエ変換
+// N : 系列長
 // x : フーリエ変換する系列(入出力)
 {
-    complex_t* y = (complex_t*) _mm_malloc(n*sizeof(complex_t), 32);
-    complex_t* z = (complex_t*) _mm_malloc(n*sizeof(complex_t), 32);
-    for (int p = 0; p &lt; n; p++) {
+    complex_t* y = (complex_t*) _mm_malloc(N*sizeof(complex_t), 32);
+    complex_t* z = (complex_t*) _mm_malloc(N*sizeof(complex_t), 32);
+    for (int p = 0; p &lt; N; p++) {
         y[p].Re = x[p].real();
         y[p].Im = x[p].imag();
     }
-    fft0(n, 1, 0, y, z);
-    for (int k = 0; k &lt; n; k++)
-        x[k] = std::complex&lt;double&gt;(y[k].Re/n, y[k].Im/n);
+    fft0(N, 1, 0, y, z);
+    for (int k = 0; k &lt; N; k++)
+        x[k] = std::complex&lt;double&gt;(y[k].Re/N, y[k].Im/N);
     _mm_free(z);
     _mm_free(y);
 }
 
-void ifft(int n, std::complex&lt;double&gt;* x) // 逆フーリエ変換
-// n : 系列長
+void ifft(int N, std::complex&lt;double&gt;* x) // 逆フーリエ変換
+// N : 系列長
 // x : 逆フーリエ変換する系列(入出力)
 {
-    complex_t* y = (complex_t*) _mm_malloc(n*sizeof(complex_t), 32);
-    complex_t* z = (complex_t*) _mm_malloc(n*sizeof(complex_t), 32);
-    for (int p = 0; p &lt; n; p++) {
+    complex_t* y = (complex_t*) _mm_malloc(N*sizeof(complex_t), 32);
+    complex_t* z = (complex_t*) _mm_malloc(N*sizeof(complex_t), 32);
+    for (int p = 0; p &lt; N; p++) {
         y[p].Re =  x[p].real();
         y[p].Im = -x[p].imag();
     }
-    fft0(n, 1, 0, y, z);
-    for (int k = 0; k &lt; n; k++)
+    fft0(N, 1, 0, y, z);
+    for (int k = 0; k &lt; N; k++)
         x[k] = std::complex&lt;double&gt;(y[k].Re, -y[k].Im);
     _mm_free(z);
     _mm_free(y);
