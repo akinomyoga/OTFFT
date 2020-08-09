@@ -76,8 +76,10 @@ $(OUTDIR)/ffttune_default.o: ffttune_default.cpp | $(OUTDIR)
 	$(CXX) -c $(CXXFLAGS) $< -o $@
 $(OUTDIR)/ffttune_default: $(OUTDIR)/ffttune_default.o
 	$(CXX) $^ $(LDFLAGS) $(ffttune_LIBS) -o $@
-$(HEADERS2): $(OUTDIR)/ffttune_default | $(OUTINC)
+$(OUTINC)/.otfft.stamp: $(OUTDIR)/ffttune_default | $(OUTINC)
 	cd $(OUTINC) && ../ffttune_default
+$(HEADERS2): $(OUTINC)/.otfft.stamp
+	@touch $@
 
 # tune してから headers を生成
 $(OUTDIR)/ffttune.o: ffttune.cpp $(HEADERS1) otfft/stopwatch.h | $(OUTDIR)
