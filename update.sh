@@ -7,6 +7,7 @@ function dispatch.original-web/remove-counter {
   (
     cd "$dir"
     for f in *.html; do
+      [[ -s $f ]] || continue
       # 2016-05-21 EUC-JP -> UTF-8 に変わった様だ。
       cat "$f" \
         | sed -r 's/\bcharset=EUC-JP\b/charset=utf-8/ ; /^(<IMG SRC="http:\/\/www\.sannet\.ne\.jp\/counter\/c[[:digit:]]\.gif" ALT="[[:digit:]]">)+?$/d' > "$f.part" \
@@ -17,17 +18,17 @@ function dispatch.original-web/remove-counter {
 }
 
 function dispatch.original-web {
-  wget -r http://www.moon.sannet.ne.jp/okahisa/stockham/stockham.html
-  stockham=www.moon.sannet.ne.jp/okahisa/stockham
+  wget -r http://wwwa.pikara.ne.jp/okojisan/stockham/index.html
+  stockham=wwwa.pikara.ne.jp/okojisan/stockham
   dispatch.original-web/remove-counter "$stockham"
-  mkd html && mv -f "$stockham"/* html/
+  mkd html/ja && mv -f "$stockham"/* html/ja
 
-  wget -r http://www.moon.sannet.ne.jp/okahisa/otfft-en/stockham1.html
-  otfften=www.moon.sannet.ne.jp/okahisa/otfft-en
+  wget -r http://wwwa.pikara.ne.jp/okojisan/otfft-en/stockham1.html
+  otfften=wwwa.pikara.ne.jp/okojisan/otfft-en
   dispatch.original-web/remove-counter "$otfften"
-  mkd html-en && mv -f "$otfften"/* html-en/
+  mkd html/en && mv -f "$otfften"/* html/en
 
-  rm -rf www.moon.sannet.ne.jp
+  rm -rf wwwa.pikara.ne.jp
 }
 
 function dispatch.modify-source {
