@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="description" content="高速フーリエ変換入門 -- Cooley-Tukey のアルゴリズム">
+<meta name="keywords" content="FFT,Cooley-Tukey,C++">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="stylesheet" href="stockham.css" type="text/css">
+<link rel="up" href="index.html">
+<link rel="prev" href="recurrence.html">
+
+<!--
+<script async src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+<script async src="ga.js"></script>
+-->
+
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-37705186-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-37705186-1');
+</script>
+
+<style>
+table { border-collapse: collapse; }
+table.bordered td { padding: 0.3em; text-align: center; border: solid 0.7px}
+</style>
+
+<title>高速フーリエ変換入門 -- Cooley-Tukey のアルゴリズム</title>
+</head>
+<body>
+<b>Up:</b> <a href="index.html">メニュー</a>
+<b>Prev:</b> <a href="recurrence.html">Stockham FFT の漸化式の解</a>
+<b>Reference:</b> <a href="stockham1.html">Stockham FFT 入門</a>
+<hr>
+
+<h1>高速フーリエ変換入門 -- Cooley-Tukey のアルゴリズム</h1>
+<p>
+　このページでは、Cooley-Tukey のアルゴリズムによる高速フーリエ変換 (FFT)
+について説明します。高速フーリエ変換とは、
+離散フーリエ変換を非常に高速に計算するアルゴリズムのことです。
+科学技術計算の分野では基本的な処理として多用されます。
+</p>
+<p>
+　それではまず、離散フーリエ変換について定義しましょう。
+系列長 \(N\) の離散フーリエ変換 \(F_N\) は以下のように定義されます。
+\(x[p]\) は入力配列、\(X[k]\) は変換結果の配列です。
+</p>
+<div style="font-size:120%">
+\[
+X[k] = F_N(x[p]) = \sum_{p=0}^{N-1}x[p]W_N^{kp},~W_N = \exp\left(-j\frac{2\pi}{N}\right),~j = \sqrt{-1}\\
+\]
+\[
+k = 0,1,\ldots,N-1 \\
+\]
+</div>
+<p>
+　係数 \(N^{-1}\) を乗算する流儀もありますが、ここでは後の説明を簡単にするため、
+係数なしを採用します。また、系列長 \(N\) は \(N = 2^L\) (\(L = 0,1,2,3,...\))
+に限定して考えます。
+</p>
+<p>
+　FFT は分割統治に基づいたアルゴリズムです。与えられた問題を小さな問題に分割し、
+その処理結果を統合することで元の問題を解決します。
+そこで、離散フーリエ変換 \(X[k]\) を求めるために、\(N \ge 2\) と仮定して、
+偶数位置成分 \(X[2k]\) と奇数位置成分 \(X[2k+1]\) を求めてみましょう。
+小さな問題への分割です。
+</p>
+<p>
+　\(W_n^{kn}=1~(n~は自然数, k~は整数)\) と
+\(W_{2n}^n=-1~(n~は自然数)\) という関係を使うと以下のように変形できます。
+</p>
+<div style="font-size:120%">
+\[
+\begin{eqnarray*}
+X[2k] & = & \sum_{p=0}^{N-1}x[p]W_N^{2kp} = \sum_{p=0}^{N-1}x[p]W_{N/2}^{kp} \\
+& = & \sum_{p=0}^{N/2-1}x[p]W_{N/2}^{kp}+\sum_{p=N/2}^{N-1}x[p]W_{N/2}^{kp} \\
+& = & \sum_{p=0}^{N/2-1}x[p]W_{N/2}^{kp}+\sum_{p=0}^{N/2-1}x[p+N/2]W_{N/2}^{k(p+N/2)} \\
+& = & \sum_{p=0}^{N/2-1}x[p]W_{N/2}^{kp}+\sum_{p=0}^{N/2-1}x[p+N/2]W_{N/2}^{kp} \\
+& = & \sum_{p=0}^{N/2-1}(x[p]+x[p+N/2])W_{N/2}^{kp} \\
+& = & F_{N/2}(x[p]+x[p+N/2]) \\
+X[2k+1] & = & \sum_{p=0}^{N-1}x[p]W_N^{(2k+1)p} = \sum_{p=0}^{N-1}x[p]W_N^pW_{N/2}^{kp} \\
+& = & \sum_{p=0}^{N/2-1}x[p]W_N^pW_{N/2}^{kp}+\sum_{p=N/2}^{N-1}x[p]W_N^pW_{N/2}^{kp} \\
+& = & \sum_{p=0}^{N/2-1}x[p]W_N^pW_{N/2}^{kp}+\sum_{p=0}^{N/2-1}x[p+N/2]W_N^{p+N/2}W_{N/2}^{k(p+N/2)} \\
+& = & \sum_{p=0}^{N/2-1}x[p]W_N^pW_{N/2}^{kp}-\sum_{p=0}^{N/2-1}x[p+N/2]W_N^pW_{N/2}^{kp} \\
+& = & \sum_{p=0}^{N/2-1}(x[p]-x[p+N/2])W_N^pW_{N/2}^{kp} \\
+& = & F_{N/2}\left((x[p]-x[p+N/2])W_N^p\right) \\
+\end{eqnarray*}
+\]
+</div>
+<p>
+　今、\(x^0[p]=x[p]+x[p+N/2]\), \(x^1[p]=(x[p]-x[p+N/2])W_N^p\)
+であるとすると、\(X[k] = F_N(x[p])\) は系列長が半分の離散フーリエ変換
+\(F_{N/2}(x^0[p])\), \(F_{N/2}(x^1[p])\) を統合することで計算できます。
+つまり、再帰呼び出しを使って\(F_N(x[p])\) が計算できるということです。
+再帰呼び出しを続けると、
+離散フーリエ変換の系列長は半分になり続け、いずれは系列長１になります。
+系列長１の離散フーリエ変換は単なる恒等変換なので、
+それ以上再帰呼び出しはせず入力をそのまま返すことで再帰を終了できます。
+</p>
+<p>
+　この再帰呼び出しの計算過程をプログラムにすると以下のようになります。
+</p>
+<pre style="border:1px solid gray;padding:4px;max-width:900px;overflow:auto">
+#include &lt;complex&gt;
+#include &lt;cmath&gt;
+
+typedef std::complex&lt;double&gt; complex_t;
+
+void F(int N, int q, complex_t* x)
+// N : 系列長
+// q : ブロックの開始位置(初期値は 0 を与える)
+// x : FFT する系列(入出力)
+{
+    const int m = N/2;
+    const double theta0 = 2*M_PI/N;
+
+    if (N &gt; 1) {
+        for (int p = 0; p &lt; m; p++) {
+            const complex_t wp = complex_t(cos(p*theta0), -sin(p*theta0));
+            const complex_t a = x[q + p + 0];
+            const complex_t b = x[q + p + m];
+            x[q + p + 0] =  a + b;
+            x[q + p + m] = (a - b) * wp;
+        }
+        F(N/2, q + 0, x); // 偶数位置成分
+        F(N/2, q + m, x); // 奇数位置成分
+    }
+}
+</pre>
+<p>
+　離散フーリエ変換を最初の定義をそのまま用いて計算すると、
+乗算回数のオーダーは \(O(N^2)\)
+になります (ただし、\(W_N^{kp}\) は予め計算しておいてテーブルから引くとします)。
+ところが、このプログラムをよく見てもらうと、
+乗算回数のオーダーは \(O(N\log_2 N)\) になっています。
+劇的に効率化できているわけです。
+</p>
+<p>
+　しかし、
+このプログラムのままではまだ離散フーリエ変換としては十分ではありません。
+Cooley-Tukey のアルゴリズムではビット反転並べ替えという現象が起こるため、
+このプログラムでは計算結果が自然な順序で並びません。
+</p>
+<p>
+　そこでここからは、ビット反転並べ替えについて説明します。
+まず、\(X^0[k]\) は \(X[k]\) の偶数位置成分を集めた配列を表すとします。
+また、\(X^1[k]\) は \(X[k]\) の奇数位置成分を集めた配列を表すとします。
+</p>
+<div style="font-size:120%">
+\[
+\begin{eqnarray*}
+X^0[k] & = & X[2k]   & = & F_{N/2}(x^0[p]) & = & F_{N/2}(x[p]+x[p+N/2]) \\
+X^1[k] & = & X[2k+1] & = & F_{N/2}(x^1[p]) & = & F_{N/2}\left((x[p]-x[p+N/2])W_N^p\right) \\
+\end{eqnarray*}
+\]
+\[
+k = 0,1,\ldots,N/2-1 \\
+\]
+</div>
+<p>
+同様に、\(X^{00}[k]\) は \(X^0[k]\) の偶数位置成分を集めた配列を表し、
+\(X^{01}[k]\) は \(X^0[k]\)
+の奇数位置成分を集めた配列を表すというふうに記号を定義します。
+すると以下のように、\(X^0[k]\), \(X^1[k]\) を
+\(X^{00}[k]\), \(X^{01}[k]\), \(X^{10}[k]\), \(X^{11}[k]\)
+に分割することができます。
+</p>
+<div style="font-size:120%">
+\[
+\begin{eqnarray*}
+X^{00}[k] & = & X^0[2k]   & = & X[4k]   & = & F_{N/4}(x^0[p]+x^0[p+N/4]) \\
+X^{01}[k] & = & X^0[2k+1] & = & X[4k+2] & = & F_{N/4}\left((x^0[p]-x^0[p+N/4])W_{N/2}^p\right) \\
+X^{10}[k] & = & X^1[2k]   & = & X[4k+1] & = & F_{N/4}(x^1[p]+x^1[p+N/4]) \\
+X^{11}[k] & = & X^1[2k+1] & = & X[4k+3] & = & F_{N/4}\left((x^1[p]-x^1[p+N/4])W_{N/2}^p\right) \\
+\end{eqnarray*}
+\]
+</div>
+<p>
+　上記のような分割を \(F_N\) の系列長
+\(N\) が８である場合で図示すると以下のようになります。
+</p>
+<table class="bordered" style="width:75em;font-size:90%">
+    <tr>
+        <td colspan="8">\(X[k]\)</td>
+    </tr>
+    <tr>
+        <td colspan="4">\(X^0[k]=X[2k]\)</td>
+        <td colspan="4">\(X^1[k]=X[2k+1]\)</td>
+    </tr>
+    <tr>
+        <td colspan="2">\(X^{00}[k]=X^0[2k]\)</td>
+        <td colspan="2">\(X^{01}[k]=X^0[2k+1]\)</td>
+        <td colspan="2">\(X^{10}[k]=X^1[2k]\)</td>
+        <td colspan="2">\(X^{11}[k]=X^1[2k+1]\)</td>
+    </tr>
+    <tr>
+        <td>\(X^{000}[k]=X^{00}[2k]\)</td>
+        <td>\(X^{001}[k]=X^{00}[2k+1]\)</td>
+        <td>\(X^{010}[k]=X^{01}[2k]\)</td>
+        <td>\(X^{011}[k]=X^{01}[2k+1]\)</td>
+        <td>\(X^{100}[k]=X^{10}[2k]\)</td>
+        <td>\(X^{101}[k]=X^{10}[2k+1]\)</td>
+        <td>\(X^{110}[k]=X^{11}[2k]\)</td>
+        <td>\(X^{111}[k]=X^{11}[2k+1]\)</td>
+    </tr>
+</table>
+<p>
+　偶数位置成分と奇数位置成分への分割を行うと、
+各配列の長さは元の半分になるので、
+\(N\) が８の場合、３段階分割した最下段の８つの \(X^{abc}[k]\) は、
+長さが１の配列になります。つまり \(k = 0\) の値のみがあります。
+この \(X^{abc}[k]\) の値を求めると FFT が完了します。
+</p>
+<p>
+　では、\(X^{abc}[0]\) がどのような値をとるのか確認してみましょう。
+確認は図の最下段から行います。また、ここでは数値を２進数で表現しています。
+</p>
+<table class="bordered" style="width:75em;font-size:90%">
+    <tr>
+        <td colspan="8">\(X[000]\),&nbsp;&nbsp;\(X[100]\),&nbsp;&nbsp;\(X[010]\),&nbsp;&nbsp;\(X[110]\),&nbsp;&nbsp;\(X[001]\),&nbsp;&nbsp;\(X[101]\),&nbsp;&nbsp;\(X[011]\),&nbsp;&nbsp;\(X[111]\)</td>
+    </tr>
+    <tr>
+        <td colspan="4">\(X^0[00]=X[000]\),&nbsp;&nbsp;\(X^0[10]=X[100]\),&nbsp;&nbsp;\(X^0[01]=X[010]\),&nbsp;&nbsp;\(X^0[11]=X[110]\)</td>
+        <td colspan="4">\(X^1[00]=X[001]\),&nbsp;&nbsp;\(X^1[10]=X[101]\),&nbsp;&nbsp;\(X^1[01]=X[011]\),&nbsp;&nbsp;\(X^1[11]=X[111]\)</td>
+    </tr>
+    <tr>
+        <td colspan="2">\(X^{00}[0]=X^0[00]\),&nbsp;&nbsp;\(X^{00}[1]=X^0[10]\)</td>
+        <td colspan="2">\(X^{01}[0]=X^0[01]\),&nbsp;&nbsp;\(X^{01}[1]=X^0[11]\)</td>
+        <td colspan="2">\(X^{10}[0]=X^1[00]\),&nbsp;&nbsp;\(X^{10}[1]=X^1[10]\)</td>
+        <td colspan="2">\(X^{11}[0]=X^1[01]\),&nbsp;&nbsp;\(X^{11}[1]=X^1[11]\)</td>
+    </tr>
+    <tr>
+        <td>\(X^{000}[0]=X^{00}[0]\)</td>
+        <td>\(X^{001}[0]=X^{00}[1]\)</td>
+        <td>\(X^{010}[0]=X^{01}[0]\)</td>
+        <td>\(X^{011}[0]=X^{01}[1]\)</td>
+        <td>\(X^{100}[0]=X^{10}[0]\)</td>
+        <td>\(X^{101}[0]=X^{10}[1]\)</td>
+        <td>\(X^{110}[0]=X^{11}[0]\)</td>
+        <td>\(X^{111}[0]=X^{11}[1]\)</td>
+    </tr>
+</table>
+<p>
+　途中の変形を省いて結果だけ抜き出すと以下のようになります。
+</p>
+<table class="bordered" style="width:75em;font-size:90%">
+    <tr>
+        <td>\(X^{000}[0]=X[000]\)</td>
+        <td>\(X^{001}[0]=X[100]\)</td>
+        <td>\(X^{010}[0]=X[010]\)</td>
+        <td>\(X^{011}[0]=X[110]\)</td>
+        <td>\(X^{100}[0]=X[001]\)</td>
+        <td>\(X^{101}[0]=X[101]\)</td>
+        <td>\(X^{110}[0]=X[011]\)</td>
+        <td>\(X^{111}[0]=X[111]\)</td>
+    </tr>
+</table>
+<p>
+　各結果の左辺 \(X^{abc}[0]\) の肩の数字 \(abc\) が計算結果の位置を表しますが、
+計算の値である右辺を見ると、
+ちょうど結果の位置のビットパターンを反転させた場所の
+\(X[k]\) の値と対応しています。
+つまり、Cooley-Tukey のアルゴリズムで離散フーリエ変換を計算すると、
+ビット反転並べ替えが起こるということです。
+</p>
+<p>
+　\(X^{011}[0]\) を例にビット反転並べ替えが起こる様子を見てみると、
+以下のようになります。ここでは２進数に \(b\) の添え字を付けて表現しています。
+</p>
+<div style="font-size:120%">
+\[
+X^{011}[0_b] = X^{01}[2\times 0_b+1] = X^{01}[1_b]
+             = X^0[2\times 1_b+1]    = X^{0}[11_b]
+             = X[2\times 11_b]       = X[110_b]
+\]
+</div>
+<p>
+　一般には、以下のようになります。
+</p>
+<div style="font-size:120%">
+\[
+X^{abc}[0] = X^{ab}[c] = X^{a}[cb] = X[cba]
+\]
+</div>
+<p>
+　少し考えれば分かりますが、
+ビット反転並べ替えの逆変換はビット反転並べ替えです。
+そこで、上記のプログラムの処理結果をビット反転並べ替えしてやれば、
+自然な順序で並んだ離散フーリエ変換が得られることになります。
+</p>
+<p>
+　ビット反転並べ替えのプログラムは以下のようになります。
+</p>
+<pre style="border:1px solid gray;padding:4px;max-width:900px;overflow:auto">
+#include &lt;complex&gt;
+#include &lt;utility&gt;
+
+typedef std::complex&lt;double&gt; complex_t;
+
+void bit_reverse(int N, complex_t* x) // ビット反転並べ替え
+// N : 系列長
+// x : ビット反転並べ替えする系列(入出力)
+{
+    for (int i = 0, j = 1; j &lt; N-1; j++) {
+        for (int k = N &gt;&gt; 1; k &gt; (i ^= k); k &gt;&gt;= 1);
+        if (i &lt; j) std::swap(x[i], x[j]); // x[i]とx[j]を交換する
+    }
+}
+</pre>
+<p>
+　以上のことをまとめると、FFT のプログラムは以下のようになります。
+逆フーリエ変換は \(\overline{x}\) を \(x\) の複素共役であるとすると、
+\(N^{-1}\overline{F_N(\overline{x[p]})}\) で求めることができます。
+</p>
+<div style="text-align:center;max-width:900px">
+    FFT のプログラム１
+</div>
+<pre style="border:1px solid gray;padding:4px;max-width:900px;overflow:auto">
+#include &lt;complex&gt;
+#include &lt;cmath&gt;
+#include &lt;utility&gt;
+
+typedef std::complex&lt;double&gt; complex_t;
+
+void F(int N, int q, complex_t* x)
+// N : 系列長
+// q : ブロックの開始位置
+// x : FFT する系列(入出力)
+{
+    const int m = N/2;
+    const double theta0 = 2*M_PI/N;
+
+    if (N &gt; 1) {
+        for (int p = 0; p &lt; m; p++) {
+            const complex_t wp = complex_t(cos(p*theta0), -sin(p*theta0));
+            const complex_t a = x[q + p + 0];
+            const complex_t b = x[q + p + m];
+            x[q + p + 0] =  a + b;
+            x[q + p + m] = (a - b) * wp;
+        }
+        F(N/2, q + 0, x); // 偶数位置成分
+        F(N/2, q + m, x); // 奇数位置成分
+    }
+}
+
+void bit_reverse(int N, complex_t* x) // ビット反転並べ替え
+// N : 系列長
+// x : ビット反転並べ替えする系列(入出力)
+{
+    for (int i = 0, j = 1; j &lt; N-1; j++) {
+        for (int k = N &gt;&gt; 1; k &gt; (i ^= k); k &gt;&gt;= 1);
+        if (i &lt; j) std::swap(x[i], x[j]); // x[i]とx[j]を交換する
+    }
+}
+
+void fft(int N, complex_t* x) // フーリエ変換
+// N : 系列長
+// x : フーリエ変換する系列(入出力)
+{
+    F(N, 0, x);
+    bit_reverse(N, x);
+}
+
+void ifft(int N, complex_t* x) // 逆フーリエ変換
+// N : 系列長
+// x : 逆フーリエ変換する系列(入出力)
+{
+    for (int p = 0; p &lt; N; p++) x[p] = conj(x[p]);
+    F(N, 0, x);
+    bit_reverse(N, x);
+    for (int k = 0; k &lt; N; k++) x[k] = conj(x[k])/double(N);
+}
+</pre>
+<p>
+　ところで、ビット反転並べ替えは２分岐していく再帰のせいで起きたものです。
+ならばそもそも、関数 <code>F()</code> 自身でビット反転並べ替えはできるはずです。
+ところが上記の FFT のプログラム１は、
+ビット反転並べ替えの関数 <code>bit_reverse()</code>
+を別に用意して実行しています。説明のためには、その方が都合が良かったのですが、
+プログラム的にはあまりエレガントではありません。
+</p>
+<p>
+　そこで、関数 <code>F()</code>
+の中でビット反転並べ替えも実行するように書き換えると以下のようになります。
+</p>
+<div style="text-align:center;max-width:900px">
+    FFT のプログラム２
+</div>
+<pre style="border:1px solid gray;padding:4px;max-width:900px;overflow:auto">
+#include &lt;complex&gt;
+#include &lt;cmath&gt;
+#include &lt;utility&gt;
+
+typedef std::complex&lt;double&gt; complex_t;
+
+void F(int N, int s, int q, int d, complex_t* x)
+// N : 系列長
+// s : ストライド(偶数成分や奇数成分の歩幅)
+// q : ブロックの開始位置
+// d : ブロックの開始位置のビット反転位置計算用変数
+// x : FFT する系列(入出力)
+{
+    const int m = N/2;
+    const double theta0 = 2*M_PI/N;
+
+    if (N &gt; 1) {
+        for (int p = 0; p &lt; m; p++) {
+            const complex_t wp = complex_t(cos(p*theta0), -sin(p*theta0));
+            const complex_t a = x[q + p + 0];
+            const complex_t b = x[q + p + m];
+            x[q + p + 0] =  a + b;
+            x[q + p + m] = (a - b) * wp;
+        }
+        F(N/2, 2*s, q + 0, d + 0, x); // 偶数位置成分
+        F(N/2, 2*s, q + m, d + s, x); // 奇数位置成分
+    }
+    else if (q &gt; d) std::swap(x[q], x[d]); // ビット反転並べ替え
+}
+
+void fft(int N, complex_t* x) // フーリエ変換
+// N : 系列長
+// x : フーリエ変換する系列(入出力)
+{
+    F(N, 1, 0, 0, x);
+}
+
+void ifft(int N, complex_t* x) // 逆フーリエ変換
+// N : 系列長
+// x : 逆フーリエ変換する系列(入出力)
+{
+    for (int p = 0; p &lt; N; p++) x[p] = conj(x[p]);
+    F(N, 1, 0, 0, x);
+    for (int k = 0; k &lt; N; k++) x[k] = conj(x[k])/double(N);
+}
+</pre>
+<p>
+　このページでは、最も基本的な FFT アルゴリズムとして
+Cooley-Tukey のアルゴリズムを紹介しましたが、
+より高速な Stockham のアルゴリズムに興味のある人は
+<a href="stockham1.html">こちらのページ</a>
+をご覧ください。また、筆者は Stockham のアルゴリズムを用いた高速な
+FFT ライブラリ OTFFT を開発しています。興味がある人は
+<a href="otfft1.html">こちらのページ</a>
+をご覧ください。
+</p>
+<hr>
+<b>Up:</b> <a href="index.html">メニュー</a>
+<b>Prev:</b> <a href="recurrence.html">Stockham FFT の漸化式の解</a>
+<b>Reference:</b> <a href="stockham1.html">Stockham FFT 入門</a>
+</body>
+</html>

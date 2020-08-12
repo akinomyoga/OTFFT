@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="description" content="配列へのアクセスを減らす最適化">
+<meta name="keywords" content="最適化,Stockham FFT">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="stylesheet" href="stockham.css" type="text/css">
+<link rel="up" href="index.html">
+<link rel="prev" href="stockham3.html">
+<link rel="next" href="optimization2.html">
+
+<!--
+<script async src="ga.js"></script>
+-->
+
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-37705186-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-37705186-1');
+</script>
+
+<title>配列へのアクセスを減らす最適化</title>
+</head>
+<body>
+<b>Up:</b> <a href="index.html">メニュー</a>
+<b>Prev:</b> <a href="stockham3.html">４基底の Stockham FFT</a>
+<b>Next:</b> <a href="optimization2.html">Stockham FFT の AVX による最適化</a>
+<b>Reference:</b> <a href="../otfft-en/optimization1.html">English Page</a>
+<hr>
+
+<h1>配列へのアクセスを減らす最適化</h1>
+<p>
+　<a href="stockham2.html">セクション２</a>
+で完成版 Stockham のアルゴリズムを示しましたが、ちょっとした工夫で、
+配列へのアクセスを減らすことができます。
+まずは、リスト７：完成版 Stockham のアルゴリズムを再掲しておきましょう。
+</p>
+<div style="text-align:center;max-width:900px">
+リスト７：完成版 Stockham のアルゴリズム
+</div>
+<pre style="border:1px solid gray;padding:4px;max-width:900px;overflow:auto">
+#include &lt;complex&gt;
+#include &lt;cmath&gt;
+
+typedef std::complex&lt;double&gt; complex_t;
+
+void fft0(int n, int s, bool eo, complex_t* x, complex_t* y)
+// n  : 系列長
+// s  : ストライド
+// eo : eo == 0 か false なら x が出力、eo == 1 か true なら y が出力
+// x  : フーリエ変換する入力系列(eo == 0 のとき出力)
+// y  : 作業用配列(eo == 1 のとき出力)
+{
+    const int m = n/2;
+    const double theta0 = 2*M_PI/n;
+
+    if (n == 1) { if (eo) for (int q = 0; q &lt; s; q++) y[q] = x[q]; }
+    else {
+        for (int p = 0; p &lt; m; p++) {
+            const complex_t wp = complex_t(cos(p*theta0), -sin(p*theta0));
+            for (int q = 0; q &lt; s; q++) {
+                const complex_t a = x[q + s*(p + 0)];
+                const complex_t b = x[q + s*(p + m)];
+                y[q + s*(2*p + 0)] =  a + b;
+                y[q + s*(2*p + 1)] = (a - b) * wp;
+            }
+        }
+        fft0(n/2, 2*s, !eo, y, x);
+    }
+}
+
+void fft(int N, complex_t* x) // フーリエ変換
+// N : 系列長
+// x : フーリエ変換する系列(入出力)
+{
+    complex_t* y = new complex_t[N];
+    fft0(N, 1, 0, x, y);
+    delete[] y;
+    for (int k = 0; k &lt; N; k++) x[k] /= N;
+}
+
+void ifft(int N, complex_t* x) // 逆フーリエ変換
+// N : 系列長
+// x : 逆フーリエ変換する系列(入出力)
+{
+    for (int p = 0; p &lt; N; p++) x[p] = conj(x[p]);
+    complex_t* y = new complex_t[N];
+    fft0(N, 1, 0, x, y);
+    delete[] y;
+    for (int k = 0; k &lt; N; k++) x[k] = conj(x[k]);
+}
+</pre>
+<p>
+　よく見ると <code>fft0</code> は <code>n == 1</code> の時、
+何も計算せずに配列のコピーを行っているだけです。
+つまり、このステップの前の計算でコピー先の配列へ計算結果を代入してやれば、
+このコピーは消去できます。そのように書き換えると以下のようになります。
+</p>
+
+<div style="text-align:center;max-width:900px">
+リスト１０：配列へのアクセスを減らした Stockham のアルゴリズム
+</div>
+<pre style="border:1px solid gray;padding:4px;max-width:900px;overflow:auto">
+#include &lt;complex&gt;
+#include &lt;cmath&gt;
+
+typedef std::complex&lt;double&gt; complex_t;
+
+void fft0(int n, int s, bool eo, complex_t* x, complex_t* y)
+// n  : 系列長
+// s  : ストライド
+// eo : eo == 0 か false なら x が出力、eo == 1 か true なら y が出力
+// x  : フーリエ変換する入力系列(eo == 0 のとき出力)
+// y  : 作業用配列(eo == 1 のとき出力)
+{
+    const int m = n/2;
+    const double theta0 = 2*M_PI/n;
+
+    if (n == 2) {
+        complex_t* z = eo ? y : x;
+        for (int q = 0; q &lt; s; q++) {
+            const complex_t a = x[q + 0];
+            const complex_t b = x[q + s];
+            z[q + 0] = a + b;
+            z[q + s] = a - b;
+        }
+    }
+    else if (n &gt;= 4) {
+        for (int p = 0; p &lt; m; p++) {
+            const complex_t wp = complex_t(cos(p*theta0), -sin(p*theta0));
+            for (int q = 0; q &lt; s; q++) {
+                const complex_t a = x[q + s*(p + 0)];
+                const complex_t b = x[q + s*(p + m)];
+                y[q + s*(2*p + 0)] =  a + b;
+                y[q + s*(2*p + 1)] = (a - b) * wp;
+            }
+        }
+        fft0(n/2, 2*s, !eo, y, x);
+    }
+}
+
+void fft(int N, complex_t* x) // フーリエ変換
+// N : 系列長
+// x : フーリエ変換する系列(入出力)
+{
+    complex_t* y = new complex_t[N];
+    fft0(N, 1, 0, x, y);
+    delete[] y;
+    for (int k = 0; k &lt; N; k++) x[k] /= N;
+}
+
+void ifft(int N, complex_t* x) // 逆フーリエ変換
+// N : 系列長
+// x : 逆フーリエ変換する系列(入出力)
+{
+    for (int p = 0; p &lt; N; p++) x[p] = conj(x[p]);
+    complex_t* y = new complex_t[N];
+    fft0(N, 1, 0, x, y);
+    delete[] y;
+    for (int k = 0; k &lt; N; k++) x[k] = conj(x[k]);
+}
+</pre>
+<p>
+　副作用として、<code>n == 2</code> の時のバタフライ演算が簡単になるため、
+1 を掛けるだけの無駄な乗算も消去できています。
+</p>
+<!--
+<p>
+　ところで、このページのアルゴリズムを用いた FFT ライブラリを作ってみました。
+興味のある人は、<a href="otfft1.html">こちらのページ</a>　へどうぞ。
+</p>
+-->
+
+<hr>
+<b>Up:</b> <a href="index.html">メニュー</a>
+<b>Prev:</b> <a href="stockham3.html">４基底の Stockham FFT</a>
+<b>Next:</b> <a href="optimization2.html">Stockham FFT の AVX による最適化</a>
+<b>Reference:</b> <a href="../otfft-en/optimization1.html">English Page</a>
+</body>
+</html>

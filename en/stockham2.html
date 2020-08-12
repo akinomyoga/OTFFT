@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="description" content="Iterative version of the Stockham FFT">
+<meta name="keywords" content="Iteration,Stockham FFT">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="stylesheet" href="otfft-en.css" type="text/css">
+<link rel="prev" href="stockham1.html">
+<link rel="next" href="stockham3.html">
+
+<!--
+<script async src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+<script async src="ga.js"></script>
+-->
+
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-37705186-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-37705186-1');
+</script>
+
+<title>Iterative version of the Stockham FFT</title>
+</head>
+<body>
+<b>Reference:</b>&nbsp;
+<a href="stockham1.html">Previous Page</a>&nbsp;&nbsp;
+<a href="stockham1.html">Top Page</a>&nbsp;&nbsp;
+<a href="stockham3.html">Next Page</a>&nbsp;&nbsp;
+<a href="index.html">OTFFT -- FFT library using AVX that is faster than FFTW</a>&nbsp;&nbsp;
+<a href="../stockham/stockham2.html">Japanese Page</a>
+<hr>
+
+<h1>Iterative version of the Stockham FFT</h1>
+<p>
+In <a href="stockham1.html">the previous page</a>,
+we led the Stockham algorithm from the Cooley-Tukey algorithm
+by simple transformation. However, this recursive algorithm does not have
+the advantage in speed against the Cooley-Tukey algorithm.
+Therefore, in this page, we further transform this algorithm and will lead
+high-speed iterative version of the Stockham algorithm.
+</p>
+<p>
+First, let's examine the behavior of the
+<a href="stockham1.html#list:selfsort1">List-3</a>.
+When I illustrate the recursive-call state of
+<code>fft0()</code> and <code>fft1()</code>,
+it will be as follows.
+</p>
+<pre style="border:1px solid gray;padding:4px;max-width:1000px;overflow:auto">
+[recursion stage-0]
+    fft0(8,1,0,x,y)
+     access to x[p]
+
+[recursion stage-1]
+    fft1(4,2,0,x,y)                       fft1(4,2,1,x,y)
+     access to x[2p+0]                     access to x[2p+1]
+
+[recursion stage-2]
+    fft0(2,4,0,x,y)    fft0(2,4,2,x,y)    fft0(2,4,1,x,y)    fft0(2,4,3,x,y)
+     access to x[4p+0]  access to x[4p+2]  access to x[4p+1]  access to x[4p+3]
+</pre>
+<div style="text-align:center;max-width:1000px">
+    Fig.1: Recursive-Call State of <code>fft0(n,s,q,x,y)</code> and <code>fft1(n,s,q,x,y)</code>
+</div>
+<p>
+Here, I have assumed that sequence length is 8.
+If we move <code>q</code> of <code>fft0(n,s,q,x,y)</code>
+from 0 to 3 (in other words, form 0 to <code>s-1</code>),
+this iteration becomes equivalent to recursion stage-2.
+Based on this fact, when we transform the
+<a href="stockham1.html#list:selfsort1">List-3</a>,
+it will be as follows.
+</p>
+<a name="list:selfsort2"></a>
+<div style="text-align:center;max-width:1000px">
+List-5: Iterative version of List-3
+</div>
+<pre style="border:1px solid gray;padding:4px;max-width:1000px;overflow:auto">
+#include &lt;complex&gt;
+#include &lt;cmath&gt;
+
+typedef std::complex&lt;double&gt; complex_t;
+
+void fft1(int n, int s, complex_t* x, complex_t* y);
+
+void fft0(int n, int s, complex_t* x, complex_t* y)
+// n : sequence length
+// s : stride
+// x : input/output sequence
+// y : work area
+{
+    const int m = n/2;
+    const double theta0 = 2*M_PI/n;
+
+    if (n == 1) {}
+    else {
+        for (int q = 0; q &lt; s; q++) { // Iteration for recursive-call
+            for (int p = 0; p &lt; m; p++) {
+                const complex_t wp = complex_t(cos(p*theta0), -sin(p*theta0));
+                const complex_t a = x[q + s*(p + 0)];
+                const complex_t b = x[q + s*(p + m)];
+                y[q + s*(2*p + 0)] =  a + b;
+                y[q + s*(2*p + 1)] = (a - b) * wp;
+            }
+        }
+        fft1(n/2, 2*s, y, x); // The number of recursive-calls is one because we tie calls with an iteration.
+    }
+}
+
+void fft1(int n, int s, complex_t* x, complex_t* y)
+// n : sequence length
+// s : stride
+// x : input sequence
+// y : output sequence
+{
+    const int m = n/2;
+    const double theta0 = 2*M_PI/n;
+
+    if (n == 1) { for (int q = 0; q &lt; s; q++) y[q] = x[q]; }
+    else {
+        for (int q = 0; q &lt; s; q++) { // Iteration for recursive-call
+            for (int p = 0; p &lt; m; p++) {
+                const complex_t wp = complex_t(cos(p*theta0), -sin(p*theta0));
+                const complex_t a = x[q + s*(p + 0)];
+                const complex_t b = x[q + s*(p + m)];
+                y[q + s*(2*p + 0)] =  a + b;
+                y[q + s*(2*p + 1)] = (a - b) * wp;
+            }
+        }
+        fft0(n/2, 2*s, y, x); // The number of recursive-calls is one because we tie calls with an iteration.
+    }
+}
+
+void fft(int n, complex_t* x) // Fourier transform
+// n : sequence length
+// x : input/output sequence
+{
+    complex_t* y = new complex_t[n]; // Allocation of work area
+    fft0(n, 1, x, y);
+    delete[] y;
+    for (int k = 0; k &lt; n; k++) x[k] /= n;
+}
+
+void ifft(int n, complex_t* x) // Inverse Fourier transform
+// n : sequence length
+// x : input/output sequence
+{
+    for (int p = 0; p &lt; n; p++) x[p] = conj(x[p]);
+    complex_t* y = new complex_t[n]; // Allocation of work area
+    fft0(n, 1, x, y);
+    delete[] y;
+    for (int k = 0; k &lt; n; k++) x[k] = conj(x[k]);
+}
+</pre>
+<p>
+The List-5 is still slow.
+However, if we swap p-loop and q-loop here,
+decisive difference of the speed appears.
+The reason why List-5 is slow is
+that the code accesses to an array with large intervals
+when the stride <code>s</code> becomes larger
+(when the recursion stage becomes deeper).
+The program will be as follows if we swap p-loop and q-loop.
+</p>
+<a name="list:selfsort3"></a>
+<div style="text-align:center;width:1000px">
+List-6: High-Speed Iterative version of the Stockham Algorithm
+</div>
+<pre style="border:1px solid gray;padding:4px;max-width:1000px;overflow:auto">
+#include &lt;complex&gt;
+#include &lt;cmath&gt;
+
+typedef std::complex&lt;double&gt; complex_t;
+
+void fft1(int n, int s, complex_t* x, complex_t* y);
+
+void fft0(int n, int s, complex_t* x, complex_t* y)
+// n : sequence length
+// s : stride
+// x : input/output sequence
+// y : work area
+{
+    const int m = n/2;
+    const double theta0 = 2*M_PI/n;
+
+    if (n == 1) {}
+    else {
+        for (int p = 0; p &lt; m; p++) {
+            const complex_t wp = complex_t(cos(p*theta0), -sin(p*theta0));
+            for (int q = 0; q &lt; s; q++) {
+                const complex_t a = x[q + s*(p + 0)];
+                const complex_t b = x[q + s*(p + m)];
+                y[q + s*(2*p + 0)] =  a + b;
+                y[q + s*(2*p + 1)] = (a - b) * wp;
+            }
+        }
+        fft1(n/2, 2*s, y, x);
+    }
+}
+
+void fft1(int n, int s, complex_t* x, complex_t* y)
+// n : sequence length
+// s : stride
+// x : input sequence
+// y : output sequence
+{
+    const int m = n/2;
+    const double theta0 = 2*M_PI/n;
+
+    if (n == 1) { for (int q = 0; q &lt; s; q++) y[q] = x[q]; }
+    else {
+        for (int p = 0; p &lt; m; p++) {
+            const complex_t wp = complex_t(cos(p*theta0), -sin(p*theta0));
+            for (int q = 0; q &lt; s; q++) {
+                const complex_t a = x[q + s*(p + 0)];
+                const complex_t b = x[q + s*(p + m)];
+                y[q + s*(2*p + 0)] =  a + b;
+                y[q + s*(2*p + 1)] = (a - b) * wp;
+            }
+        }
+        fft0(n/2, 2*s, y, x);
+    }
+}
+
+void fft(int n, complex_t* x) // Fourier transform
+// n : sequence length
+// x : input/output sequence
+{
+    complex_t* y = new complex_t[n];
+    fft0(n, 1, x, y);
+    delete[] y;
+    for (int k = 0; k &lt; n; k++) x[k] /= n;
+}
+
+void ifft(int n, complex_t* x) // Inverse Fourier transform
+// n : sequence length
+// x : input/output sequence
+{
+    for (int p = 0; p &lt; n; p++) x[p] = conj(x[p]);
+    complex_t* y = new complex_t[n];
+    fft0(n, 1, x, y);
+    delete[] y;
+    for (int k = 0; k &lt; n; k++) x[k] = conj(x[k]);
+}
+</pre>
+<p>
+Then, the stride of array access becomes 1.
+And it becomes further efficient
+by placing <code>cos()</code> and <code>sin()</code> to outer loop.
+The List-6 is fast.
+This is so-called Stockham algorithm.
+</p>
+<p>
+Well, it is wasteful to write twice about the almost same thing
+by a mutual recursion.
+So, it will be as follows if we delete the duplication.
+</p>
+<a name="list:selfsort4"></a>
+<div style="text-align:center;max-width:1000px">
+List-7: Final version of the Stockham Algorithm
+</div>
+<pre style="border:1px solid gray;padding:4px;max-width:1000px;overflow:auto">
+#include &lt;complex&gt;
+#include &lt;cmath&gt;
+
+typedef std::complex&lt;double&gt; complex_t;
+
+void fft0(int n, int s, bool eo, complex_t* x, complex_t* y)
+// n  : sequence length
+// s  : stride
+// eo : x is output if eo == 0, y is output if eo == 1
+// x  : input sequence(or output sequence if eo == 0)
+// y  : work area(or output sequence if eo == 1)
+{
+    const int m = n/2;
+    const double theta0 = 2*M_PI/n;
+
+    if (n == 1) { if (eo) for (int q = 0; q &lt; s; q++) y[q] = x[q]; }
+    else {
+        for (int p = 0; p &lt; m; p++) {
+            const complex_t wp = complex_t(cos(p*theta0), -sin(p*theta0));
+            for (int q = 0; q &lt; s; q++) {
+                const complex_t a = x[q + s*(p + 0)];
+                const complex_t b = x[q + s*(p + m)];
+                y[q + s*(2*p + 0)] =  a + b;
+                y[q + s*(2*p + 1)] = (a - b) * wp;
+            }
+        }
+        fft0(n/2, 2*s, !eo, y, x);
+    }
+}
+
+void fft(int n, complex_t* x) // Fourier transform
+// n : sequence length
+// x : input/output sequence
+{
+    complex_t* y = new complex_t[n];
+    fft0(n, 1, 0, x, y);
+    delete[] y;
+    for (int k = 0; k &lt; n; k++) x[k] /= n;
+}
+
+void ifft(int n, complex_t* x) // Inverse Fourier transform
+// n : sequence length
+// x : input/output sequence
+{
+    for (int p = 0; p &lt; n; p++) x[p] = conj(x[p]);
+    complex_t* y = new complex_t[n];
+    fft0(n, 1, 0, x, y);
+    delete[] y;
+    for (int k = 0; k &lt; n; k++) x[k] = conj(x[k]);
+}
+</pre>
+<p>
+By the way,
+I made the FFT library using the Stockham algorithm which we led here.
+If you are interested, please to <a href="index.html">this page</a>.
+People who are interested in optimization that reduce the accesses to an array,
+please to <a href="optimization1.html">this page</a>.
+In addition, I organized about kinds of Stockham algorithms in
+<a href="stockham3.html">the next page</a>.
+</p>
+
+<hr>
+<b>Reference:</b>&nbsp;
+<a href="stockham1.html">Previous Page</a>&nbsp;&nbsp;
+<a href="stockham1.html">Top Page</a>&nbsp;&nbsp;
+<a href="stockham3.html">Next Page</a>&nbsp;&nbsp;
+<a href="index.html">OTFFT -- FFT library using AVX that is faster than FFTW</a>&nbsp;&nbsp;
+<a href="../stockham/stockham2.html">Japanese Page</a>
+</body>
+</html>

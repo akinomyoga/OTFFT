@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="description" content="OktinyMP の解説">
+<meta name="keywords" content="OktinyMP,OpenMP,OTFFT">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="stylesheet" href="stockham.css" type="text/css">
+<link rel="up" href="oktinymp1.html">
+
+<!--
+<script async src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+-->
+<script async src="ga.js"></script>
+
+<title>OktinyMP -- OpenMP の簡単な代替実装</title>
+</head>
+<body>
+<b>Up:</b> <a href="oktinymp1.html">OpenMP を用いない OTFFT</a>
+<b>Download:</b> <a href="oktinympdl.html">OktinyMP 版 OTFFT のダウンロード</a>
+<hr>
+
+<h1>OktinyMP -- OpenMP の簡単な代替実装</h1>
+<p>
+　最近の GCC や Clang は OpenMP をサポートしていますが、
+GCC デフォルトの OpenMP は癖があり Linux に最適化されており、
+Mac や Cygwin では性能があまり良くありません。
+そこで性能の良い Intel OpenMP Runtime などを使おうとするのですが、
+cmake という最近流行りの変態なビルドシステムが使われているため、
+Cygwin ではビルドできません。ちゃんと設定すればビルドできるのかもしれませんが、
+私には分かりませんでした。
+</p>
+<p>
+　一方の Clang は、Mac では OpenMP 対応版が簡単にインストールできるのですが、
+Cygwin では簡単にインストールできません。
+</p>
+<p>
+　そこで、Cygwin 環境でもそこそこ性能の良い OpenMP 代替並列環境として、
+OktinyMP という簡単なライブラリを C++11 で作ってみました。このページでは、
+OktinyMP の使い方について大雑把に解説します。
+</p>
+<p>
+　まずは、OpenMP のサンプルと言ったらコレといういつものやつを例示して、
+それの OktinyMP 版を示すことで説明します。
+</p>
+<div style="text-align:center;max-width:900px">
+    π を計算する OpenMP によるプログラム
+</div>
+<pre style="border:1px solid gray;padding:4px;max-width:900px;overflow:auto">
+#include &lt;iostream&gt;
+#include &lt;chrono&gt;
+
+int main()
+{
+    using namespace std;
+    using namespace std::chrono;
+    static const int N = 10000000;
+    static const double dx = 1.0/N;
+    double sum = 0;
+    const auto t1 = system_clock::now();
+    #pragma omp parallel for reduction(+:sum)
+    for (int i = 0; i &lt; N; i++) {
+        const double x = (i + 0.5)/N;
+        sum += dx/(1 + x*x);
+    }
+    const auto t2 = system_clock::now();
+    cout &lt;&lt; "pi = " &lt;&lt; 4*sum &lt;&lt; endl;
+    cout &lt;&lt; "time = " &lt;&lt; duration_cast&lt;microseconds&gt;(t2 - t1).count() &lt;&lt; endl;
+    return 0;
+}
+</pre>
+<p>
+　π を計算する典型的な OpenMP の例題ですが、
+これを OktinyMP で書き換えると以下のようになります。
+</p>
+<div style="text-align:center;max-width:900px">
+    π を計算する OktinyMP によるプログラム
+</div>
+<pre style="border:1px solid gray;padding:4px;max-width:900px;overflow:auto">
+#include &lt;iostream&gt;
+#include "oktinymp.h" // OktinyMP を読み込むよ
+
+int main()
+{
+    using namespace std;
+    using namespace std::chrono;
+    using OktinyMP::Starter; // Starter クラスを使うよ
+    typedef Starter&lt;1&gt; okt, starter_t; // 名前を付けとこう
+    constexpr int N = 10000000;
+    constexpr double dx = 1.0/N;
+    starter_t s; // スレッドプールを起動するための starter_t オブジェクトを生成
+    double sum = 0;
+    const auto loop = [&amp;](int) noexcept { // 並列実行するためのコードを定義するよ
+        const int i0 = okt::i0(N); // それぞれのループ変数の初期値
+        const int iN = okt::iN(N); // それぞれのループ変数の終了値
+        double psum = 0; // それぞれのスレッドでの sum
+        //for (int i = 0; i &lt; N; i++)
+        for (int i = i0; i &lt; iN; i++) {
+            const double x = (i + 0.5)/N;
+            psum += dx/(1 + x*x);
+        }
+        s.critical([&amp;]{ sum += psum; }); // 全てのスレッドの sum を計算
+    };
+    s.fork(); // スレッドプールを起動するよ
+    auto t1 = system_clock::now();
+    s.go(loop); // さっき定義したコードを並列実行
+    auto t2 = system_clock::now();
+    s.join(); // スレッドプールを停止するよ
+    cout &lt;&lt; "pi = " &lt;&lt; 4*sum &lt;&lt; endl;
+    cout &lt;&lt; "time = " &lt;&lt; duration_cast&lt;microseconds&gt;(t2 - t1).count() &lt;&lt; endl;
+    return 0;
+}
+</pre>
+<p>
+　どうでしょう。Intel Threading Building Blocks (TBB) なんかに比べると、
+考え方が簡単だと私自身は思ってます。それでは、各部分を説明していきましょう。
+</p>
+<p>
+　まず、
+</p>
+<pre style="border:1px solid gray;padding:4px;max-width:900px;overflow:auto">
+typedef Starter&lt;1&gt; okt, starter_t; // 名前を付けとこう
+</pre>
+<p>
+ですが、<code>Starter&lt;1&gt;</code> オブジェクトに名前を付けています。
+OktinyMP はスレッドプールの待機中に、
+ここで指定したマイクロ秒だけループ毎にスリープします。
+<code>Starter&lt;1&gt;</code> ならループ毎に１マイクロ秒スリープします。
+<code>Starter&lt;0&gt;</code> なら一切スリープしません。
+つまりビジーループで待機するようになります。
+何マイクロ秒かスリープさせた方が良いのか、
+ビジーループが良いのかは問題によります。
+実際に動かしてみて決定するのが良いでしょう。
+</p>
+<p>
+　次に、
+</p>
+<pre style="border:1px solid gray;padding:4px;max-width:900px;overflow:auto">
+const int i0 = okt::i0(N); // それぞれのループ変数の初期値
+const int iN = okt::iN(N); // それぞれのループ変数の終了値
+</pre>
+<p>
+ですが、これは
+</p>
+<pre style="border:1px solid gray;padding:4px;max-width:900px;overflow:auto">
+for (int i = 0; i &lt; N; i++) { /* ... */ }
+</pre>
+<p>
+の形のループを分割して並列に実行する場合の、
+それぞれのループのループ変数の初期値と終了値を計算します。
+OpenMP で言うところの static schedule で分割します。
+もし、もっと凝った分割をしたいのなら自分で計算してやってください。
+以下の並列コードを定義する部分を、
+</p>
+<pre style="border:1px solid gray;padding:4px;max-width:900px;overflow:auto">
+const auto loop = [&amp;](int) noexcept { // 並列実行するためのコードを定義するよ
+</pre>
+<p>
+以下のように書き換えるとスレッド ID が取得できますので、
+それを頼りにオリジナルの分割を計算してやってください。
+</p>
+<pre style="border:1px solid gray;padding:4px;max-width:900px;overflow:auto">
+const auto loop = [&amp;](int id) noexcept {
+</pre>
+<p>
+スレッド ID は 0,1,2,... とスレッド数だけカウントされた数値です。
+マスタースレッドの ID は 0 です。
+スレッド ID は、<code>okt::get_id()</code> 関数でも取得できます。
+スレッドプールのスレッド数は
+<code>okt::get_concurrency()</code> 関数で取得できます。
+</p>
+<p>
+　次に、
+</p>
+<pre style="border:1px solid gray;padding:4px;max-width:900px;overflow:auto">
+s.critical([&amp;]{ sum += psum; }); // 全てのスレッドの sum を計算
+</pre>
+<p>
+ですが、critical メンバ関数に渡されたラムダ式はシリアルに実行されます。
+つまり、複数のスレッドが同時にこのラムダ式を実行することはありません。
+</p>
+<p>
+　次に、
+</p>
+<pre style="border:1px solid gray;padding:4px;max-width:900px;overflow:auto">
+s.fork(); // スレッドプールを起動するよ
+</pre>
+<p>
+ですが、ここでスレッドプールを起動して、
+並列に実行したいコードが与えられるのを待機するようになります。
+</p>
+<p>
+　次に、
+</p>
+<pre style="border:1px solid gray;padding:4px;max-width:900px;overflow:auto">
+s.go(loop); // さっき定義したコードを並列実行
+</pre>
+<p>
+ですが、ここで並列に実行したいコードを渡して実行します。
+</p>
+<p>
+　次に、
+</p>
+<pre style="border:1px solid gray;padding:4px;max-width:900px;overflow:auto">
+s.join(); // スレッドプールを停止するよ
+</pre>
+<p>
+ですが、待機しているスレッドプールを停止します。
+今回は、<code>go()</code> メンバ関数を１回しか実行しませんでしたが、
+スレッドプールが待機している間、
+何度も <code>go()</code> を実行することもできます。
+</p>
+<p>
+　最後に、上記のコードでは使われていませんが、
+<code>go()</code> メンバ関数から呼ばれたコード内では、
+<code>s.wait()</code> でバリア同期することができます。
+</p>
+
+<h2>【起動スレッド数を制御する環境変数】</h2>
+<p>
+　デフォルトでは、
+OktinyMP はそのコンピュータのスレッド数でスレッドプールを起動します。
+例えば４コア８スレッドの Core i7 だと８スレッドで起動します。しかし、
+一部の Linux などはスレッド数をフルで使うと劇的な性能の低下を起こしたりします。
+そこで、起動スレッド数を制限したい場合、環境変数 OKT_NUM_THREADS を設定します。
+例えば、OKT_NUM_THREADS を 7 に設定すると、起動スレッドが７つに制限されます。
+
+<h2>【OktinyMP のソースコード】</h2>
+<p>
+　OktinyMP ですが、上記のように非常に簡単なライブラリなので、
+ソースコードも非常にコンパクトです。どのくらいコンパクトかと言うと、
+このページに全体を掲示できるほとコンパクトです。
+以下に OktinyMP のソースコードを示します。
+ダウンロードは <a href="oktinympdl.html">こちらのページ</a> からどうぞ。
+</p>
+<div style="text-align:center;max-width:900px">
+    OktinyMP のソースコード
+</div>
+<pre style="border:1px solid gray;padding:4px;max-width:900px;overflow:auto">
+/******************************************************************************
+*  OktinyMP Version 2.1
+*
+*  Copyright (c) 2019 OK Ojisan(Takuya OKAHISA)
+*  Released under the MIT license
+*  http://opensource.org/licenses/mit-license.php
+******************************************************************************/
+
+#ifndef oktinymp_h
+#define oktinymp_h
+
+#include &lt;chrono&gt;
+#include &lt;atomic&gt;
+#include &lt;vector&gt;
+#include &lt;thread&gt;
+#include &lt;functional&gt;
+#include &lt;mutex&gt;
+
+namespace OktinyMP {
+
+template &lt;int TSLEEP&gt; struct usleep_for
+{
+    inline void operator()() const noexcept
+    {
+        std::this_thread::sleep_for(std::chrono::microseconds(TSLEEP));
+        //std::this_thread::sleep_for(std::chrono::nanoseconds(TSLEEP));
+    }
+};
+template &lt;&gt; struct usleep_for&lt;0&gt;
+{
+    //inline void operator()() const noexcept {}
+    inline void operator()() const noexcept { std::this_thread::yield(); }
+};
+
+template &lt;int TSLEEP&gt; class Trigger
+{
+    const int n;
+    std::atomic&lt;int&gt; counter {0};
+    std::atomic&lt;bool&gt; x {false};
+
+    public:
+    Trigger(const int n) noexcept: n(n) {}
+    Trigger(const Trigger&amp;) = delete;
+    Trigger&amp; operator=(const Trigger&amp;) = delete;
+
+    void wait() noexcept
+    {
+        const bool y = !x;
+        counter++;
+        while (x != y) usleep_for&lt;TSLEEP&gt;()();
+    }
+
+    void start() noexcept
+    {
+        while (counter &lt; n-1) usleep_for&lt;TSLEEP&gt;()();
+        const bool y = !x;
+        counter = 0; x = y;
+    }
+
+    void end() noexcept
+    {
+        while (counter &lt; n-1) usleep_for&lt;TSLEEP&gt;()();
+    }
+};
+
+template &lt;int TSLEEP&gt; class Barrier
+{
+    const int n;
+    std::atomic&lt;int&gt; counter {0};
+    std::atomic&lt;bool&gt; x {false};
+
+    public:
+    Barrier(const int n) noexcept: n(n) {}
+    Barrier(const Barrier&amp;) = delete;
+    Barrier&amp; operator=(const Barrier&amp;) = delete;
+
+    void wait() noexcept
+    {
+        const bool y = !x;
+        if (++counter &lt; n)
+            while (x != y) usleep_for&lt;TSLEEP&gt;()();
+        else {
+            counter = 0;
+            x = y;
+        }
+    }
+};
+
+template &lt;int TSLEEP&gt; class Starter
+{
+    const int n;
+    Trigger&lt;TSLEEP&gt; trigger;
+    Barrier&lt;TSLEEP&gt; barrier;
+    std::vector&lt;std::thread&gt; tg;
+    std::function&lt;void(int)&gt; f;
+    std::atomic&lt;bool&gt; done {true};
+    std::mutex mtx;
+    thread_local static int tid;
+    static int ncores;
+
+    public:
+    Starter(): n(get_concurrency()), trigger(n), barrier(n) { ncores = n; }
+    Starter(const Starter&amp;) = delete;
+    Starter&amp; operator=(const Starter&amp;) = delete;
+    ~Starter() { join(); }
+
+    void fork()
+    {
+        if (!done) return;
+        done = false;
+        tg.clear();
+        for (int id = 1; id &lt; n; id++) {
+            const auto loop = [&amp;](const int i) noexcept {
+                tid = i;
+                for (;;) {
+                    trigger.wait();
+                    if (done) break;
+                    f(i);
+                }
+            };
+            tg.push_back(std::thread(loop, id));
+        }
+    }
+
+    inline void go(const std::function&lt;void(int)&gt;&amp; code) noexcept
+    {
+        f = code; 
+        fork();
+        trigger.start();
+        code(0);
+        trigger.end();
+    }
+
+    void join()
+    {
+        if (done) return;
+        done = true;
+        trigger.start();
+        for (auto&amp; t : tg) t.join();
+        tg.clear();
+    }
+
+    inline void wait() noexcept { barrier.wait(); }
+
+    inline void critical(const std::function&lt;void()&gt;&amp; code)
+    {
+        std::lock_guard&lt;std::mutex&gt; lck(mtx);
+        code();
+    }
+
+#ifdef _MSC_VER
+    static int get_concurrency() noexcept
+    {
+        if (ncores &gt; 0) return ncores;
+        char* value = 0; size_t sz = 0;
+        if (_dupenv_s(&amp;value, &amp;sz, "OKT_NUM_THREADS") == 0) {
+            if (value) {
+                const int n = atoi(value);
+                free(value);
+                return n;
+            }
+        }
+        return std::thread::hardware_concurrency();
+    }
+#else
+    static int get_concurrency() noexcept
+    {
+        const char* value = getenv("OKT_NUM_THREADS");
+        return ncores &gt; 0 ? ncores :
+            value ? atoi(value) : std::thread::hardware_concurrency();
+    }
+#endif
+
+    static inline int get_id() noexcept { return tid; }
+
+    static inline int i0(const int N) noexcept
+    {
+        typedef long long ll;
+        return static_cast&lt;int&gt;(ll(N)*ll(tid)/ncores);
+    }
+
+    static inline int iN(const int N) noexcept
+    {
+        typedef long long ll;
+        return static_cast&lt;int&gt;(ll(N)*ll(tid+1)/ncores);
+    }
+};
+
+template &lt;int TSLEEP&gt; thread_local int Starter&lt;TSLEEP&gt;::tid = 0;
+template &lt;int TSLEEP&gt; int Starter&lt;TSLEEP&gt;::ncores = 0;
+
+} // namespace OktinyMP
+
+#endif // oktinymp_h
+</pre>
+
+<hr>
+<b>Up:</b> <a href="oktinymp1.html">OpenMP を用いない OTFFT</a>
+<b>Download:</b> <a href="oktinympdl.html">OktinyMP 版 OTFFT のダウンロード</a>
+</body>
+</html>

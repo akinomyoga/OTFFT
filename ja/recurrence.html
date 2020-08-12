@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="description" content="Stockham FFT の漸化式の解">
+<meta name="keywords" content="Stockham FFT,FFT,C++">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="stylesheet" href="stockham.css" type="text/css">
+<link rel="up" href="index.html">
+<link rel="prev" href="oktinymp1.html">
+<link rel="next" href="cooley-tukey.html">
+
+<!--
+<script async src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+<script async src="ga.js"></script>
+-->
+
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-37705186-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-37705186-1');
+</script>
+
+<title>Stockham FFT の漸化式の解</title>
+</head>
+<body>
+<b>Up:</b> <a href="index.html">メニュー</a>
+<b>Prev:</b> <a href="oktinymp1.html">OpenMP を用いない OTFFT</a>
+<b>Next:</b> <a href="cooley-tukey.html">高速フーリエ変換入門</a>
+<b>Reference:</b> <a href="stockham1.html">Stockham FFT 入門</a>
+<hr>
+
+<h1>Stockham FFT の漸化式の解</h1>
+<p>
+　このページでは、Stockham のアルゴリズムの漸化式の解について調べてみます。
+まずは、周波数間引き(DIF)の Stockham FFT の漸化式を見てみましょう。
+ただし、\(W_N=\exp\left(-j\frac{2\pi}{N}\right)\),\(~j=\sqrt{-1}\) とします。
+</p>
+<div style="font-size:141%">
+\[
+\begin{eqnarray*}
+    x_{h+1}(q,p)   & = & x_h(q,p) + x_h(q,p + m) \\
+    x_{h+1}(q+s,p) & = & \left(x_h(q,p) - x_h(q,p + m)\right)W_N^{sp} \\
+    q              & = & 0,1,\ldots,s-1 \\
+    p              & = & 0,1,\ldots,m-1
+\end{eqnarray*}
+\]
+</div>
+<p>
+　離散フーリエ変換の系列長を \(N\) とするとき (\(N=2^L,~L=0,1,2,3,\ldots\))、
+離散フーリエ変換に係数 \(N^{-1}\)
+を付けるか付けないかで漸化式に定数倍の差がありますが、
+ここでは係数 \(N^{-1}\) を付けない流儀で考えます。
+</p>
+<p>
+　\(n=2^{L-h}\),\(~m=2^{-1}n\),\(~s=2^h\),\(~x_h(q,p)=x_h[q+sp]\) とおくと、
+\(x_h[~]\) が計算 \(h\) 段目の配列を表します。
+入力系列 \(x_0[~]\) から始めて \(x_L[~]\)
+を求めると離散フーリエ変換出来ます。
+この漸化式の解は、天下り式になってしまいますが以下のようになります。
+</p>
+<div style="font-size:141%">
+\[
+x_h(q,p) = \left(\sum_{r=0}^{s-1}x_0[p+rn]W_s^{qr}\right)W_N^{qp}\\
+q = 0,1,\ldots,s-1 \\
+p = 0,1,\ldots,n-1
+\]
+</div>
+<p>
+　本当に解になっているか確認してみましょう。まずは \(h=0\) のときと
+\(h=L\) のときの値を確認してみます。\(h=0\) のとき
+\(q\) のとりうる範囲は \(q=0\) のみです。また、\(h=L\) のとき \(p\)
+のとりうる範囲は \(p=0\) のみです。
+以上のことを踏まえて式を変形すると以下のようになります。
+</p>
+<div style="font-size:141%">
+\[
+\begin{eqnarray*}
+x_0(0,p) & = & x_0[p] \\
+x_L(q,0) & = & \sum_{r=0}^{N-1}x_0[r]W_N^{qr}
+\end{eqnarray*}
+\]
+</div>
+<p>
+　確かに、\(h=0\) のときに入力系列になり、
+\(h=L\) のときにその離散フーリエ変換になっています。
+それでは、途中経過を確認してみましょう。\(W_N^{qm} = W_{2s}^q\),
+\(W_{2s}^{sr} = (-1)^r\)
+という関係が成り立つことに注意して、
+漸化式の左辺と右辺をそれぞれ計算すると以下のようになります。
+</p>
+<div style="font-size:120%">
+\[
+\begin{eqnarray*}
+x_{h+1}(q,p) & = & \left(\sum_{r=0}^{2s-1}x_0[p+rm]W_{2s}^{qr}\right)W_N^{qp} \\
+x_h(q,p)+x_h(q,p+m) & = &
+    \left(\sum_{r=0}^{s-1}x_0[p+rn]W_s^{qr}\right)W_N^{qp} +
+    \left(\sum_{r=0}^{s-1}x_0[p+m+rn]W_s^{qr}\right)W_N^{q(p+m)} \\
+& = &
+\left(\sum_{r=0}^{s-1}x_0[p+2rm]W_{2s}^{2qr}\right)W_N^{qp} +
+\left(\sum_{r=0}^{s-1}x_0[p+m+2rm]W_{2s}^{2qr}\right)W_N^{qp+qm} \\
+& = &
+\left(\sum_{r=0}^{s-1}x_0[p+(2r)m]W_{2s}^{q(2r)}\right)W_N^{qp} +
+\left(\sum_{r=0}^{s-1}x_0[p+(2r+1)m]W_{2s}^{q(2r)}\right)W_N^{qp}W_{2s}^q \\
+& = &
+\left(\sum_{r=0}^{s-1}x_0[p+(2r)m]W_{2s}^{q(2r)}\right)W_N^{qp} +
+\left(\sum_{r=0}^{s-1}x_0[p+(2r+1)m]W_{2s}^{q(2r+1)}\right)W_N^{qp} \\
+& = &
+\left(\sum_{r=0}^{2s-1}x_0[p+rm]W_{2s}^{qr}\right)W_N^{qp}
+\end{eqnarray*}
+\]
+</div>
+<div style="font-size:120%">
+\[
+\begin{eqnarray*}
+x_{h+1}(q+s,p) & = &
+    \left(\sum_{r=0}^{2s-1}x_0[p+rm]W_{2s}^{(q+s)r}\right)W_N^{(q+s)p} \\
+& = &
+\left(\sum_{r=0}^{2s-1}x_0[p+rm]W_{2s}^{qr+sr}\right)W_N^{(q+s)p} \\
+& = &
+\left(\sum_{r=0}^{2s-1}x_0[p+rm]W_{2s}^{qr}(-1)^r\right)W_N^{(q+s)p} \\
+& = &
+\left(\sum_{r=0}^{s-1}x_0[p+(2r)m]W_{2s}^{q(2r)} -
+\sum_{r=0}^{s-1}x_0[p+(2r+1)m]W_{2s}^{q(2r+1)}\right)W_N^{(q+s)p} \\
+\left(x_h(q,p)-x_h(q,p + m)\right)W_N^{sp} & = &
+\left(\left(\sum_{r=0}^{s-1}x_0[p+(2r)m]W_{2s}^{q(2r)}\right)W_N^{qp} -
+\left(\sum_{r=0}^{s-1}x_0[p+(2r+1)m]W_{2s}^{q(2r+1)}\right)W_N^{qp}\right)W_N^{sp} \\
+& = &
+\left(\sum_{r=0}^{s-1}x_0[p+(2r)m]W_{2s}^{q(2r)} -
+\sum_{r=0}^{s-1}x_0[p+(2r+1)m]W_{2s}^{q(2r+1)}\right)W_N^{(q+s)p}
+\end{eqnarray*}
+\]
+</div>
+<p>
+　確かに漸化式を満たすようです。これでこの式が、
+間違いなく Stockham のアルゴリズムの漸化式の解だと確認されました。
+しかし、この漸化式を満たす式はこの解だけではありません。
+実は、以下のような式もその解になります。
+</p>
+<div style="font-size:141%">
+\[
+\begin{eqnarray*}
+x_h(q,p) & = & \frac{1}{n}\sum_{r=0}^{n-1}y[q+rs]W_n^{-pr} \\
+q & = & 0,1,\ldots,s-1 \\
+p & = & 0,1,\ldots,n-1
+\end{eqnarray*}
+\]
+</div>
+<p>
+　これも確認してみましょう。\(W_n^{-mr}=(-1)^r\), \(W_N^{sp}=W_n^p\)
+という関係に注意して、
+漸化式の右辺と左辺をそれぞれ計算すると以下のようになります。
+</p>
+<div style="font-size:120%">
+\[
+\begin{eqnarray*}
+x_{h+1}(q,p) & = & \frac{1}{m}\sum_{r=0}^{m-1}y[q+2rs]W_m^{-pr} \\
+x_h(q,p)+x_h(q,p+m) & = &
+    \frac{1}{n}\sum_{r=0}^{n-1}y[q+rs]W_n^{-pr} +
+    \frac{1}{n}\sum_{r=0}^{n-1}y[q+rs]W_n^{-(p+m)r} \\
+& = & \frac{1}{n}\sum_{r=0}^{n-1}y[q+rs]W_n^{-pr}(1+W_n^{-mr}) \\
+& = & \frac{1}{n}\sum_{r=0}^{n-1}y[q+rs]W_n^{-pr}(1+(-1)^r) \\
+& = & \frac{2}{n}\sum_{r=0}^{m-1}y[q+2rs]W_n^{-2pr} \\
+& = & \frac{1}{m}\sum_{r=0}^{m-1}y[q+2rs]W_m^{-pr}
+\end{eqnarray*}
+\]
+</div>
+<div style="font-size:120%">
+\[
+\begin{eqnarray*}
+x_{h+1}(q+s,p) & = & \frac{1}{m}\sum_{r=0}^{m-1}y[q+s+2rs]W_m^{-pr} \\
+    & = & \frac{1}{m}\sum_{r=0}^{m-1}y[q+(2r+1)s]W_m^{-pr} \\
+\left(x_h(q,p)-x_h(q,p+m)\right)W_N^{sp} & = &
+    \left(\frac{1}{n}\sum_{r=0}^{n-1}y[q+rs]W_n^{-pr} -
+    \frac{1}{n}\sum_{r=0}^{n-1}y[q+rs]W_n^{-(p+m)r}\right)W_N^{sp} \\
+& = &
+\left(\frac{1}{n}\sum_{r=0}^{n-1}y[q+rs]W_n^{-pr}(1-W_n^{-mr})\right)W_n^p \\
+& = &
+\left(\frac{1}{n}\sum_{r=0}^{n-1}y[q+rs]W_n^{-pr}(1-(-1)^r)\right)W_n^p \\
+& = &
+\left(\frac{2}{n}\sum_{r=0}^{m-1}y[q+(2r+1)s]W_n^{-p(2r+1)}\right)W_n^p \\
+& = & \frac{1}{m}\sum_{r=0}^{m-1}y[q+(2r+1)s]W_n^{-2pr} \\
+& = & \frac{1}{m}\sum_{r=0}^{m-1}y[q+(2r+1)s]W_m^{-pr}
+\end{eqnarray*}
+\]
+</div>
+<p>
+　確かに途中経過は OK のようです。
+では、\(h=0\) のときと \(h=L\) のときはどうでしょうか？
+それぞれ計算してみると以下のようになります。
+</p>
+<div style="font-size:141%">
+\[
+\begin{eqnarray*}
+x_0(0,p) & = & \frac{1}{N}\sum_{r=0}^{N-1}y[r]W_N^{-pr} \\
+x_L(q,0) & = & y[q]
+\end{eqnarray*}
+\]
+</div>
+<p>
+　何と、入力系列が出力系列の逆離散フーリエ変換になってしまいました。
+ちょうど、先の解を逆に考えたものになっているわけです。
+これはすなわち、
+漸化式を \(x_{h+1}(q,p)\) から \(x_h(q,p)\)
+を求めて逆にたどると、逆離散フーリエ変換できるということです。
+実際、そのように漸化式を解いてみましょう。以下のようになります。
+</p>
+<div style="font-size:141%">
+\[
+\begin{eqnarray*}
+x_h(q,p)   & = & \frac{1}{2}\left(x_{h+1}(q,p)+x_{h+1}(q+s,p)W_N^{-sp}\right) \\
+x_h(q,p+m) & = & \frac{1}{2}\left(x_{h+1}(q,p)-x_{h+1}(q+s,p)W_N^{-sp}\right)
+\end{eqnarray*}
+\]
+</div>
+<p>
+　漸化式の定数倍は、離散フーリエ変換に係数 \(N^{-1}\)
+を付けるか付けないかの差なので、ちょっと定数を省略してみましょう。
+以下のようになります。
+</p>
+<div style="font-size:141%">
+\[
+\begin{eqnarray*}
+x_h(q,p)   & = & x_{h+1}(q,p)+x_{h+1}(q+s,p)W_N^{-sp} \\
+x_h(q,p+m) & = & x_{h+1}(q,p)-x_{h+1}(q+s,p)W_N^{-sp}
+\end{eqnarray*}
+\]
+</div>
+<p>
+　ん？これどこかで見たことあるぞ。
+そうこれは時間間引き(DIT)の漸化式そっくりです。
+\(h\) の増え方が逆になっていることと、\(W_N^{sp}\) が \(W_N^{-sp}\)
+になっているところが違いますが、全体の形は DIT の漸化式そのものです。
+</p>
+<p>
+　フーリエ変換あるいは逆フーリエ変換の入力系列をその複素共役で置き換え、
+変換の式全体の複素共役をとると、
+フーリエ変換と逆フーリエ変換は定数倍を除いて互いに入れ替わります。
+すなわち、\(y[~]\) をその複素共役で置き換えて、
+漸化式全体の複素共役をとると、
+逆フーリエ変換の漸化式はフーリエ変換の漸化式になります。
+さらに、\(h+1=L-i\) と置いて \(h\) を \(i\)
+に番号を付け替えて考えると漸化式は以下のようになります
+</p>
+<div style="font-size:141%">
+\[
+\begin{eqnarray*}
+y_{i+1}(q,p)   & = & y_i(q,p)+y_i(q+s,p)W_N^{sp} \\
+y_{i+1}(q,p+m) & = & y_i(q,p)-y_i(q+s,p)W_N^{sp}
+\end{eqnarray*}
+\]
+</div>
+<p>
+　おお、DIT の漸化式になりましたね。ここで、
+\(t=2^{L-i}\),\(~s=2^{-1}t\),\(~m=2^i,~y_i(q,p)=y_i[q+tp]\) とおくと、
+\(y_i[~]\) が計算 \(i\) 段目の配列を表します。
+入力系列 \(y_0[~]\) から始めて \(y_L[~]\)
+を求めると離散フーリエ変換出来ます。このように、
+DIF の漸化式と DIT の漸化式は互いに逆の関係にあると考えることができます。
+</p>
+<p>
+　最後に、DIT の漸化式の解の正式版を示しておきましょう。
+定数倍を省略したり、複素共役をとったり、
+添え字を \(h\) から \(i\) に付け替えたりしたので、
+最初のものから少し形が変わります。
+</p>
+<div style="font-size:141%">
+\[
+\begin{eqnarray*}
+y_i(q,p) & = & \sum_{r=0}^{m-1}y_0[q+rt]W_m^{pr} \\
+q & = & 0,1,\ldots,t-1 \\
+p & = & 0,1,\ldots,m-1
+\end{eqnarray*}
+\]
+</div>
+
+<hr>
+<b>Up:</b> <a href="index.html">メニュー</a>
+<b>Prev:</b> <a href="oktinymp1.html">OpenMP を用いない OTFFT</a>
+<b>Next:</b> <a href="cooley-tukey.html">高速フーリエ変換入門</a>
+<b>Reference:</b> <a href="stockham1.html">Stockham FFT 入門</a>
+</body>
+</html>

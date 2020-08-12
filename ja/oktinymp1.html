@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="description" content="OpenMP を用いない OTFFT">
+<meta name="keywords" content="OpenMP,OTFFT">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="stylesheet" href="stockham.css" type="text/css">
+<link rel="up" href="index.html">
+<link rel="prev" href="otfftdl.html">
+<link rel="next" href="recurrence.html">
+
+<!--
+<script async src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+-->
+<script async src="ga.js"></script>
+
+<title>OpenMP を用いない OTFFT</title>
+</head>
+<body>
+<b>Up:</b> <a href="index.html">メニュー</a>
+<b>Prev:</b> <a href="otfftdl.html">OTFFT のダウンロード</a>
+<b>Next:</b> <a href="recurrence.html">Stockham FFT の漸化式の解</a>
+<b>Reference:</b> <a href="oktinymp2.html">OktinyMP -- OpenMP の簡単な代替実装</a>
+<hr>
+
+<h1>OpenMP を用いない OTFFT</h1>
+<p>
+　<a href="otfft1.html">こちらのページ</a> で紹介した OTFFT は、
+並列処理に OpenMP を用いています。最近の GCC や Clang などのコンパイラは、
+OpenMP に対応しているのですが、
+GCC デフォルトの OpenMP には癖があって Linux に最適化されており、
+Mac や Cygwin 環境であまり性能が良くありません。
+かと言って、性能の良い Intel OpenMP Runtime を使おうとしても、
+cmake と言う最近流行りの変態なビルドシステムを使っており、
+Cygwin ではビルドできません。まあ、
+ちゃんと設定すれば大丈夫なのかもしれませんが、そんなの分からないし。
+</p>
+<p>
+　一方の Clang ですが、Mac では OpenMP 対応版を簡単にインストールできますが、
+Cygwin では OpenMP 対応版を簡単にインストールできません。
+そんなわけで、長らく Cygwin on Windows の環境では、
+OTFFT の実力を発揮できませんでした。
+</p>
+<p>
+　そこで、仕方ねー、ないなら作るかと、
+OpenMP 相当の機能を C++11 を使って自分で実装してみました。
+その名も <a href="oktinymp2.html">OktinyMP</a> です。
+まあ、そんな大げさなものではなく、
+スレッドプールを起動するだけの最低限のコードなんですけどね。
+</p>
+<p>
+　OktinyMP で書き直された OTFFT のソースコードは
+<a href="oktinympdl.html">ダウンロードのページ</a>
+で otfft-11.3x.tar.gz の名前で公開してあります。
+興味があったら使ってみてください。
+OpenMP 版よりちょっとだけ性能が良いです。
+</p>
+<p>
+　このページでは、OktinyMP 版を使う時の注意点を書いてあります。
+OktinyMP は OpenMP と違って、
+空気を読んで必要に応じてスレッドプールを起動したり停止したりはしません。
+そう！手動でやるんです！！イカすぜ OktinyMP 空気なんか読むな！！！
+</p>
+
+<h2>【スレッドプールの停止】</h2>
+<p>
+　まずは、一番重要なスレッドプールの停止について説明しておきます。
+OktinyMP 版 OTFFT は FFT オブジェクトを生成すると、
+その瞬間からスレッドプールを生成して、
+ビジーループで仕事が来るのを待機するようになります。
+ですから、FFT オブジェクトを生成したらすぐに FFT を実行してください。
+そして、もうそれ以上 FFT を実行しないと分かったら、
+さっさとスレッドプールを停止する必要があります。
+そうしないと、その後もスレッドプールはビジーループで待機し続け、
+他のスレッドの邪魔をしてしまいます。
+スレッドプールを停止するには、FFT オブジェクトの stop()
+メンバ関数を呼び出します。具体的には以下のようにします。
+</p>
+<pre style="border:1px solid gray;padding:4px;max-width:900px;overflow:auto">
+    OTFFT::FFT fft(N); // サイズ N の FFT オブジェクトの生成。ここでスレッドプール起動
+    fft.fwd(x);        // FFT の実行
+    fft.inv(x);        // 今度は逆変換を実行
+    fft.stop();        // スレッドプールの停止
+</pre>
+<p>
+　また、FFT オブジェクトは破棄される時にスレッドプールを停止しますので、
+FFT を実行したらすぐ関数から抜けるような場合は
+stop() 関数を呼ぶ必要はありません。なので、以下のような書き方もできます。
+</p>
+<pre style="border:1px solid gray;padding:4px;max-width:900px;overflow:auto">
+    OTFFT::FFT(N).fwd(x); // FFT オブジェクトを生成してすぐ FFT 実行、そのまま破棄
+</pre>
+<p>
+　しかし、この書き方は、ループの中で複数回使うような場合は不適切です。
+実行のたんびに FFT オブジェクトを生成する処理が実行されます。
+</p>
+<p>
+　ちなみに、スレッドプールが停止された状態で FFT を実行すると、
+自動的にスレッドプールが起動されます。ただし、
+スレッドプール起動のコストは FFT の実行に含まれるようになりますので、
+ベンチマークする時にそのような使い方をすると、
+成績は振るわないかもしれません。
+</p>
+<p>
+　それにしても、ビジーループで待機するなんてダサすぎるぜ、
+と思うかもしれませんが。いろいろ試した結果、
+ビジーループが一番性能が良かったので仕方がありません。
+いや、本当のところ OpenMP とか内部でどうやってるんでしょうね。
+</p>
+
+<h2>【もっと柔軟にスレッドプールを制御する】</h2>
+<p>
+　ベンチマークを実行する時などは、
+もっと柔軟にスレッドプールの起動と停止を制御したいかもしれません。
+そのような場合、oktinymp グローバル変数を使えば制御できます。
+</p>
+<pre style="border:1px solid gray;padding:4px;max-width:900px;overflow:auto">
+    oktinymp.fork(1);  // スレッドプール起動
+    OTFFT::FFT fft(N); // FFT オブジェクト生成
+    fft.fwd(x);        // FFT 実行
+    oktinymp.join(1)   // スレッドプール停止
+    do_something();    // 何か重い処理をする
+    oktinymp.fork(1);  // スレッドプール起動
+    fft.inv(x);        // 逆フーリエ変換実行
+    oktinymp.join(1);  // スレッドプール停止
+</pre>
+<p>
+　oktinymp.fork(1) でスレッドプールを起動すると、
+FFT オブジェクトの破棄時にスレッドプールの自動停止は行われなくなります。
+明示的に oktinymp.join(1) を呼ばないと、スレッドプールは停止しません。
+</p>
+<p>
+　また、FFT のサイズが小さい場合、
+スレッドプールを起動すると却って性能が低下します。
+FFT オブジェクトの生成では、
+内部で適切なサイズを判断して不必要なスレッドプールの起動は行いませんが、
+oktinymp グローバル変数を使うとサイズは考慮しません。
+ですので、自分でサイズに応じて起動しないように制御する必要があります。
+具体的には以下のようにした方が良いでしょう。
+</p>
+<pre style="border:1px solid gray;padding:4px;max-width:900px;overflow:auto">
+    if (N &gt;= 4096) oktinymp.fork(1); // N &gt;= 4096 ならスレッドプール起動
+    OTFFT::FFT fft(N);               // FFT オブジェクト生成
+    fft.fwd(x);                      // FFT 実行
+    oktinymp.join(1);                // スレッドプール停止(停止中に停止しても OK)
+    do_something();                  // 何か重い処理をする
+    if (N &gt;= 4096) oktinymp.fork(1); // N &gt;= 4096 ならスレッドプールの起動
+    fft.inv(x);                      // 逆フーリエ変換実行
+    oktinymp.join(1);                // スレッドプール停止(停止中に停止しても OK)
+</pre>
+
+<h2>【起動スレッド数を制御する環境変数】</h2>
+<p>
+　デフォルトでは、
+OktinyMP はそのコンピュータのスレッド数でスレッドプールを起動します。
+例えば４コア８スレッドの Core i7 だと８スレッドで起動します。しかし、
+一部の Linux などはスレッド数をフルで使うと劇的な性能の低下を起こしたりします。
+そこで、起動スレッド数を制限したい場合、環境変数 OKT_NUM_THREADS を設定します。
+例えば、OKT_NUM_THREADS を 7 に設定すると、起動スレッドが７つに制限されます。
+
+</p>
+<hr>
+<b>Up:</b> <a href="index.html">メニュー</a>
+<b>Prev:</b> <a href="otfftdl.html">OTFFT のダウンロード</a>
+<b>Next:</b> <a href="recurrence.html">Stockham FFT の漸化式の解</a>
+<b>Reference:</b> <a href="oktinymp2.html">OktinyMP -- OpenMP の簡単な代替実装</a>
+</body>
+</html>

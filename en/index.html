@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="description" content="This page is the homepage proposing OTFFT which is a FFT library that is faster than FFTW. OTFFT is implemented with AVX and the Stockham algorithm.">
+<meta name="keywords" content="Stockham FFT,benchmark,AVX,OpenMP">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="stylesheet" href="otfft-en.css" type="text/css">
+<link rel="canonical" href="http://wwwa.pikara.ne.jp/okojisan/otfft-en/index.html">
+<link rel="alternate" hreflang="ja" href="http://wwwa.pikara.ne.jp/okojisan/stockham/otfft1.html">
+<link rel="alternate" hreflang="en" href="http://wwwa.pikara.ne.jp/okojisan/otfft-en/index.html">
+
+<!--
+<script async src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+<script async src="ga.js"></script>
+-->
+
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-37705186-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-37705186-1');
+</script>
+
+<title>OTFFT -- FFT library using AVX that is faster than FFTW</title>
+</head>
+<body>
+<b>Reference:</b>&nbsp;
+<a href="download.html">Download</a>&nbsp;&nbsp;
+<a href="documentation.html">Documentation</a>&nbsp;&nbsp;
+<a href="stockham1.html">Introduction to the Stockham FFT</a>&nbsp;&nbsp;
+<a href="../stockham/otfft1.html">Japanese Page</a>
+<hr>
+
+<h1>OTFFT -- FFT library using AVX that is faster than FFTW</h1>
+<p>
+In the page of <a href="stockham1.html">"Introduction to the Stockham FFT"</a>,
+I led the Stockham algorithm
+that is a high-speed Fast Fourier Transform (FFT) algorithm.
+Therefore, in order to verify its performance,
+I tried to make a FFT library using the Stockham algorithm.
+The name is OTFFT.
+</p>
+<p>
+OTFFT is a high-speed FFT library using Stockham algorithm
+and Intel AVX and Six-Step FFT algorithm and C++ template meta-programming.
+In addition, OTFFT is a parallel FFT using OpenMP.
+And, OTFFT has the interface for C++ and C99 and Fortran2003.
+OTFFT is faster than FFTW at sequence length \(2^1,2^2,...,2^{24}\).
+</p>
+<p>
+The download page for the source code is <a href="download.html">here</a>.
+The license for OTFFT is the MIT license.
+</p>
+<p>
+I did the following benchmarks.
+</p>
+<OL>
+    <LI><a href="#multithread">Multi-Thread Benchmark</a></LI>
+    <LI><a href="#singlethread">Single-Thread Benchmark</a></LI>
+    <!--
+    <LI><a href="#amazonec2">32-Threads Benchmark by Amazon EC2</a></LI>
+    -->
+</OL>
+<hr>
+
+<p><a name="multithread">
+First of all, I show the multi-thread benchmark.
+Conditions of the benchmark are as follows.
+</p>
+<table style="padding-left:1em">
+<tr>
+    <td>Machine:</td><td>Amazon EC2 m5.2xlarge</td>
+</tr>
+<tr>
+    <td>OS:</td><td>Ubuntu 18.04</td>
+</tr>
+<tr>
+    <td>Compiler:</td><td>GCC 7.4</td>
+</tr>
+<tr>
+    <td>OpenMP Runtime:</td><td>libgomp (GCC default)</td>
+</tr>
+<tr>
+    <td>cores/threads:</td><td>8 cores/8 threads</td>
+</tr>
+<tr>
+    <td>FFTW Version:</td><td>3.3.8</td>
+</tr>
+<tr>
+    <td>FFTW Mode:</td><td>FFTW_MEASURE (AVX-512 enabled)</td>
+</tr>
+<tr>
+    <td>Floating point precision:</td><td>double</td>
+</tr>
+</table>
+
+<p>
+Multi-Thread Benchmark is as follows.
+</p>
+<pre>
+------+-----------+-----------------+-----------------+-----------------+---
+length|FFTW3[usec]|   OOURA   [usec]| SimpleFFT [usec]|   OTFFT   [usec]|err
+------+-----------+-----------------+-----------------+-----------------+---
+2^( 1)|       0.02|       0.02( 83%)|       0.02( 97%)|       0.01( 65%)| -
+2^( 2)|       0.03|       0.03(115%)|       0.04(169%)|       0.02( 65%)| -
+2^( 3)|       0.04|       0.05(137%)|       0.08(236%)|       0.02( 64%)|-28
+2^( 4)|       0.07|       0.11(151%)|       0.15(215%)|       0.04( 61%)|-27
+2^( 5)|       0.15|       0.32(214%)|       0.35(235%)|       0.09( 59%)|-27
+2^( 6)|       0.26|       0.73(277%)|       0.68(259%)|       0.19( 71%)|-26
+2^( 7)|       0.50|       1.58(314%)|       1.69(335%)|       0.39( 78%)|-25
+2^( 8)|       1.05|       3.45(328%)|       3.27(311%)|       0.84( 80%)|-24
+2^( 9)|       2.41|       7.59(314%)|       8.35(346%)|       2.12( 88%)|-23
+2^(10)|       5.49|      16.46(300%)|      15.74(287%)|       4.44( 81%)|-23
+2^(11)|      12.51|      36.42(291%)|      41.95(335%)|      10.49( 84%)|-22
+2^(12)|      30.93|      79.78(258%)|      96.42(312%)|      28.92( 93%)|-21
+2^(13)|      66.13|     263.41(398%)|     275.81(417%)|      44.65( 68%)|-20
+2^(14)|     257.42|     470.51(183%)|     494.81(192%)|      71.23( 28%)|-20
+2^(15)|     375.95|     810.45(216%)|     852.00(227%)|     130.95( 35%)|-19
+2^(16)|     549.83|    1611.12(293%)|    1551.18(282%)|     283.60( 52%)|-19
+2^(17)|    1056.07|    3197.87(303%)|    3044.32(288%)|     628.98( 60%)|-18
+2^(18)|    1945.74|    6314.46(325%)|    5297.66(272%)|    1333.40( 69%)|-17
+2^(19)|    5822.68|    9853.01(169%)|   10823.18(186%)|    2523.95( 43%)|-16
+2^(20)|   14376.30|   24093.52(168%)|   23898.31(166%)|    6965.61( 48%)|-16
+2^(21)|   32449.85|   51240.93(158%)|   59484.48(183%)|   18572.95( 57%)|-15
+2^(22)|   69312.50|  124160.37(179%)|  160015.50(231%)|   44645.45( 64%)|-15
+2^(23)|  141994.60|  226413.23(159%)|  367998.46(259%)|  105419.03( 74%)|-14
+2^(24)|  297037.80|  509076.86(171%)|  832253.21(280%)|  201982.33( 68%)|-14
+------+-----------+-----------------+-----------------+-----------------+---
+ cost |  150344.96|  316015.09(210%)|  363115.84(242%)|   92014.39( 61%)|
+------+-----------+-----------------+-----------------+-----------------+---
+</pre>
+<p>
+This benchmark represents the sum of the processing time of DFT and IDFT.
+The unit of time is microseconds.
+Column of "FFTW3" is the processing time of FFTW Vestion 3.3.8.
+Column of "OOURA" is the processing time of <a href="http://www.kurims.kyoto-u.ac.jp/~ooura/fft.html">OOURA's FFT Package</a>.
+Column of "SimpleFFT" is the processing time of Cooley-Tukey algorithm.
+Column of "OTFFT" is the processing time of OTFFT.
+Numbers in the parentheses are the percentage
+against processing time of "FFTW3".
+Row of "Cost" is the average of the speed measure. Smaller is faster.
+</p>
+<!--
+<p>
+People who want to use Intel AVX and Intel OpenMP Runtime in MacPorts GCC,
+please refer to <a href="libiomp5.html">this page</a>.
+</p>
+-->
+<hr>
+
+<p><a name="singlethread">
+Next, I show the single-thread benchmark.
+Conditions of the benchmark are as follows.
+</p>
+<table style="padding-left:1em">
+<tr>
+    <td>Machine:</td><td>MacBook Pro 15 inch Late 2016 (Core i7 2.6GHz)</td>
+</tr>
+<tr>
+    <td>OS:</td><td>macOS Mojave</td>
+</tr>
+<tr>
+    <td>Compiler:</td><td>Clang 8.0</td>
+</tr>
+<tr>
+    <td>cores/threads:</td><td>4 cores/1 thread</td>
+</tr>
+<tr>
+    <td>FFTW Version:</td><td>3.3.8</td>
+</tr>
+<tr>
+    <td>FFTW Mode:</td><td>FFTW_MEASURE (AVX2 enabled)</td>
+</tr>
+<tr>
+    <td>Floating point precision:</td><td>double</td>
+</tr>
+</table>
+
+<p>
+Single-Thread Benchmark is as follows.
+</p>
+<pre>
+------+-----------+-----------------+-----------------+-----------------+---
+length|FFTW3[usec]|   OOURA   [usec]| SimpleFFT [usec]|   OTFFT   [usec]|err
+------+-----------+-----------------+-----------------+-----------------+---
+2^( 1)|       0.02|       0.01( 61%)|       0.01( 62%)|       0.01( 40%)| -
+2^( 2)|       0.03|       0.02( 77%)|       0.04(138%)|       0.01( 44%)| -
+2^( 3)|       0.03|       0.04(104%)|       0.06(172%)|       0.02( 59%)|-28
+2^( 4)|       0.06|       0.07(117%)|       0.13(233%)|       0.03( 58%)|-27
+2^( 5)|       0.12|       0.23(199%)|       0.26(223%)|       0.07( 62%)|-26
+2^( 6)|       0.22|       0.53(242%)|       0.64(292%)|       0.15( 67%)|-26
+2^( 7)|       0.44|       1.27(288%)|       1.31(298%)|       0.37( 84%)|-25
+2^( 8)|       1.18|       2.79(236%)|       3.19(270%)|       0.76( 64%)|-24
+2^( 9)|       2.24|       6.49(290%)|       6.59(294%)|       1.73( 77%)|-23
+2^(10)|       5.39|      14.20(263%)|      15.56(289%)|       4.10( 76%)|-23
+2^(11)|      12.35|      32.51(263%)|      34.64(280%)|      10.73( 87%)|-22
+2^(12)|      30.44|      70.45(231%)|      96.67(318%)|      27.51( 90%)|-21
+2^(13)|      71.77|     158.31(221%)|     223.45(311%)|      60.48( 84%)|-21
+2^(14)|     170.92|     339.09(198%)|     505.11(296%)|     142.77( 84%)|-20
+2^(15)|     414.19|     761.44(184%)|    1184.86(286%)|     310.04( 75%)|-19
+2^(16)|     813.94|    1635.32(201%)|    2718.50(334%)|     814.79(100%)|-19
+2^(17)|    2092.09|    3733.19(178%)|    5830.90(279%)|    2230.98(107%)|-18
+2^(18)|    7189.92|    8010.17(111%)|   18604.19(259%)|    6762.49( 94%)|-17
+2^(19)|   19027.48|   19948.71(105%)|   56535.51(297%)|   15269.63( 80%)|-16
+2^(20)|   39730.27|   49774.56(125%)|  154435.58(389%)|   33916.37( 85%)|-16
+2^(21)|   79578.31|  105574.35(133%)|  364186.08(458%)|   74751.57( 94%)|-16
+2^(22)|  179210.13|  224649.25(125%)|  767693.42(428%)|  158461.42( 88%)|-14
+2^(23)|  370988.64|  464596.93(125%)| 1695200.08(457%)|  315307.83( 85%)|-14
+2^(24)|  797424.80|  989652.20(124%)| 3728332.46(468%)|  655610.20( 82%)|-13
+------+-----------+-----------------+-----------------+-----------------+---
+ cost |  273401.52|  390609.18(143%)|  977864.93(358%)|  229296.61( 84%)|
+------+-----------+-----------------+-----------------+-----------------+---
+</pre>
+<p>
+Because the processing is a single-thread, there is no influence of parallel
+processing. <a href="stockham1.html">Stockham algorithm</a> is best match to
+Intel AVX. As a result, OTFFT becomes superior to FFTW.
+</p>
+<!--
+<hr>
+
+<p><a name="amazonec2">
+Last, I show the 32-threads benchmark by Amazon EC2.
+Conditions of the benchmark are as follows.
+</p>
+<table style="padding-left:1em">
+<tr>
+    <td>Machine:</td><td>Amazon EC2 c4.8xlarge (Intel Xeon E5-2666 v3 (Haswell))</td>
+</tr>
+<tr>
+    <td>OS:</td><td>Ubuntu 14.04</td>
+</tr>
+<tr>
+    <td>Compiler:</td><td>GCC 4.8</td>
+</tr>
+<tr>
+    <td>OpenMP Runtime:</td><td>libgomp</td>
+</tr>
+<tr>
+    <td>cores/threads:</td><td>36 cores/32 threads</td>
+</tr>
+<tr>
+    <td>FFTW Version:</td><td>3.3.4</td>
+</tr>
+<tr>
+    <td>FFTW Mode:</td><td>FFTW_MEASURE (AVX enabled)</td>
+</tr>
+<tr>
+    <td>Floating point precision:</td><td>double</td>
+</tr>
+</table>
+
+<p>
+32-Threads Benchmark is as follows.
+</p>
+<pre>
+------+-----------+-----------------+-----------------+-----------------+---
+length|FFTW3[usec]|   OOURA   [usec]| SimpleFFT [usec]|   OTFFT   [usec]|err
+------+-----------+-----------------+-----------------+-----------------+---
+2^( 1)|       0.02|       0.02( 70%)|       0.02( 82%)|       0.01( 42%)| -
+2^( 2)|       0.03|       0.02( 83%)|       0.05(192%)|       0.01( 47%)| -
+2^( 3)|       0.04|       0.05(136%)|       0.08(223%)|       0.02( 59%)|-29
+2^( 4)|       0.07|       0.10(145%)|       0.18(254%)|       0.04( 62%)|-27
+2^( 5)|       0.13|       0.31(240%)|       0.35(269%)|       0.11( 82%)|-26
+2^( 6)|       0.26|       0.69(270%)|       0.82(318%)|       0.21( 81%)|-26
+2^( 7)|       0.53|       1.51(284%)|       1.65(310%)|       0.47( 89%)|-25
+2^( 8)|       1.15|       3.30(285%)|       3.80(329%)|       0.94( 82%)|-24
+2^( 9)|       2.89|       7.37(255%)|       7.94(275%)|       2.12( 73%)|-24
+2^(10)|       6.07|      15.90(262%)|      18.04(297%)|       5.63( 93%)|-23
+2^(11)|      14.59|      35.09(240%)|      39.01(267%)|      13.97( 96%)|-22
+2^(12)|      39.91|      76.58(192%)|      96.74(242%)|      37.36( 94%)|-22
+2^(13)|      91.26|     363.99(399%)|     222.26(244%)|      68.76( 75%)|-21
+2^(14)|     430.96|     631.70(147%)|     548.45(127%)|     102.53( 24%)|-20
+2^(15)|     490.39|    1622.79(331%)|     574.92(117%)|     155.93( 32%)|-19
+2^(16)|     685.82|    2606.08(380%)|     997.28(145%)|     190.50( 28%)|-18
+2^(17)|    1768.92|    4800.66(271%)|    1975.08(112%)|     513.25( 29%)|-18
+2^(18)|    2986.75|   10210.49(342%)|    3948.64(132%)|    1069.66( 36%)|-18
+2^(19)|    5680.60|   18213.53(321%)|    7588.40(134%)|    2374.12( 42%)|-17
+2^(20)|   12611.05|   39689.21(315%)|   17496.53(139%)|    4202.05( 33%)|-16
+2^(21)|   31438.22|   81514.44(259%)|   45894.56(146%)|   17140.33( 55%)|-15
+2^(22)|   65763.25|  133205.00(203%)|  150870.25(229%)|   38706.75( 59%)|-15
+2^(23)|  126062.00|  250981.50(199%)|  340597.00(270%)|   75403.00( 60%)|-14
+2^(24)|  238763.00|  552399.00(231%)|  707523.00(296%)|  225122.00( 94%)|-13
+------+-----------+-----------------+-----------------+-----------------+---
+ cost |  167651.48|  409025.60(244%)|  321656.65(192%)|   90864.82( 54%)|
+------+-----------+-----------------+-----------------+-----------------+---
+</pre>
+-->
+<hr>
+<b>Reference:</b>&nbsp;
+<a href="download.html">Download</a>&nbsp;&nbsp;
+<a href="documentation.html">Documentation</a>&nbsp;&nbsp;
+<a href="stockham1.html">Introduction to the Stockham FFT</a>&nbsp;&nbsp;
+<a href="../stockham/otfft1.html">Japanese Page</a>
+</body>
+</html>

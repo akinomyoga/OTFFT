@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="description" content="Introduction to FFT -- Cooley-Tukey Algorithm">
+<meta name="keywords" content="FFT,Cooley-Tukey,C++">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="stylesheet" href="otfft-en.css" type="text/css">
+<link rel="up" href="stockham1.html">
+<link rel="prev" href="sixstepfft.html">
+
+<!--
+<script async src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+<script async src="ga.js"></script>
+-->
+
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-37705186-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-37705186-1');
+</script>
+
+<style>
+/*
+html { font-size: 1em; font-family: "Meiryo", "Times", Serif; }
+code,pre {
+    font-size: 1.1em; line-height: 1.1em;
+    font-family: "Inconsolata", "Consolas", "Menlo", monospace;
+}
+*/
+table { border-collapse: collapse; }
+table.bordered td { padding: 0.3em; text-align: center; border: solid 0.7px}
+</style>
+
+<title>Introduction to FFT -- Cooley-Tukey Algorithm</title>
+</head>
+<body>
+<b>Reference:</b>&nbsp;
+<a href="sixstepfft.html">Previous Page</a> &nbsp;&nbsp;
+<a href="stockham1.html">Top Page</a> &nbsp;&nbsp;
+<a href="stockham1.html">Introduction to the Stochham FFT</a> &nbsp;&nbsp;
+<a href="index.html">OTFFT -- FFT library using AVX that is faster than FFTW</a>
+<hr>
+
+<h1>Introduction to FFT -- Cooley-Tukey Algorithm</h1>
+<p>
+This page is a homepage explaining the Cooley-Tukey FFT algorithm
+which is a kind of fast Fourier transforms.
+Fast Fourier transform,
+it is an algorithm that calculates discrete Fourier transform very fast.
+It is heavily used as a basic process
+in the field of scientific and technical computing.
+</p>
+<p>
+Let's first define the discrete Fourier transform.
+The discrete Fourier transform \(F_N\) whose sequence length is \(N\)
+is defined as follows.
+\(x[p]\) is the input array,
+\(X[k]\) is the array of transformation result.
+</p>
+<div style="font-size:120%">
+\[
+X[k] = F_N(x[p]) = \sum_{p=0}^{N-1}x[p]W_N^{kp},~W_N = \exp\left(-j\frac{2\pi}{N}\right),~j = \sqrt{-1}\\
+\]
+\[
+k = 0,1,\ldots,N-1 \\
+\]
+</div>
+<p>
+Here, we think in the way that
+we does not attach the coefficient \(N^{-1}\) to the discrete Fourier transform.
+Also, we consider \(N\) to be limited to \(N=2^L\) (\(L=0,1,2,3,\ldots\)).
+</p>
+<p>
+FFT is an algorithm based on divide and conquer.
+We divide the given problem into smaller problems
+and solve the original problem by integrating the processing results.
+Therefore, in order to calculate the discrete Fourier transform \(X[k]\),
+let's calculate the even position component \(X[2k]\)
+and the odd position component \(X[2k+1]\) by assuming that \(N \ge 2\).
+In other words, it is a division into smaller problems.
+</p>
+<p>
+Using the relationship
+\(W_n^{kn}=1\)(\(n\) is a natural number, \(k\) is an integer)
+and \(W_{2n}^n=-1\)(\(n\) is a natural number),
+each component can be transformed as follows.
+</p>
+<div style="font-size:120%">
+\[
+\begin{eqnarray*}
+X[2k] & = & \sum_{p=0}^{N-1}x[p]W_N^{2kp} = \sum_{p=0}^{N-1}x[p]W_{N/2}^{kp} \\
+& = & \sum_{p=0}^{N/2-1}x[p]W_{N/2}^{kp}+\sum_{p=N/2}^{N-1}x[p]W_{N/2}^{kp} \\
+& = & \sum_{p=0}^{N/2-1}x[p]W_{N/2}^{kp}+\sum_{p=0}^{N/2-1}x[p+N/2]W_{N/2}^{k(p+N/2)} \\
+& = & \sum_{p=0}^{N/2-1}x[p]W_{N/2}^{kp}+\sum_{p=0}^{N/2-1}x[p+N/2]W_{N/2}^{kp} \\
+& = & \sum_{p=0}^{N/2-1}(x[p]+x[p+N/2])W_{N/2}^{kp} \\
+& = & F_{N/2}(x[p]+x[p+N/2]) \\
+X[2k+1] & = & \sum_{p=0}^{N-1}x[p]W_N^{(2k+1)p} = \sum_{p=0}^{N-1}x[p]W_N^pW_{N/2}^{kp} \\
+& = & \sum_{p=0}^{N/2-1}x[p]W_N^pW_{N/2}^{kp}+\sum_{p=N/2}^{N-1}x[p]W_N^pW_{N/2}^{kp} \\
+& = & \sum_{p=0}^{N/2-1}x[p]W_N^pW_{N/2}^{kp}+\sum_{p=0}^{N/2-1}x[p+N/2]W_N^{p+N/2}W_{N/2}^{k(p+N/2)} \\
+& = & \sum_{p=0}^{N/2-1}x[p]W_N^pW_{N/2}^{kp}-\sum_{p=0}^{N/2-1}x[p+N/2]W_N^pW_{N/2}^{kp} \\
+& = & \sum_{p=0}^{N/2-1}(x[p]-x[p+N/2])W_N^pW_{N/2}^{kp} \\
+& = & F_{N/2}\left((x[p]-x[p+N/2])W_N^p\right) \\
+\end{eqnarray*}
+\]
+</div>
+<p>
+Now, If \(x^0[p]=x[p]+x[p+N/2]\) and \(x^1[p]=(x[p]-x[p+N/2])W_N^p\),
+\(F_N(x[p])\) can be calculated by integrating discrete Fourier transforms
+of half sequence length \(F_{N/2}(x^0[p])\), \(F_{N/2}(x^1[p])\).
+In other words, \(F_N(x[p])\) can be calculated using recursive calls.
+When we continue recursive calls,
+the sequence length of the discrete Fourier transform
+is halved one after another,
+and the sequence length will become 1 sometime.
+Since the discrete Fourier transform whose sequence length is 1
+is just an identity transform,
+we can finish the recursion by returning the input as is.
+</p>
+<p>
+When we program the calculation process of this recursive call,
+it becomes as follows.
+</p>
+<pre style="border:1px solid gray;padding:4px;max-width:900px;overflow:auto">
+#include &lt;complex&gt;
+#include &lt;cmath&gt;
+
+typedef std::complex&lt;double&gt; complex_t;
+
+void F(int N, int q, complex_t* x)
+// N : sequence length
+// q : block start point (initial value is 0)
+// x : input/output sequence
+{
+    const int m = N/2;
+    const double theta0 = 2*M_PI/N;
+
+    if (N &gt; 1) {
+        for (int p = 0; p &lt; m; p++) {
+            const complex_t wp = complex_t(cos(p*theta0), -sin(p*theta0));
+            const complex_t a = x[q + p + 0];
+            const complex_t b = x[q + p + m];
+            x[q + p + 0] =  a + b;
+            x[q + p + m] = (a - b) * wp;
+        }
+        F(N/2, q + 0, x); // even position components
+        F(N/2, q + m, x); // odd position components
+    }
+}
+</pre>
+<p>
+If we calculate the discrete Fourier transform
+using the original definition as is,
+the complexity of multiplication is \(O(N^2)\).
+But, we suppose that we calculate \(W_N^{kp}\) in advance
+and refer to it from the table.
+However, if you view this program carefully,
+the complexity of multiplication is \(O(N\log_2 N)\).
+The computational complexity has been dramatically improved.
+</p>
+<p>
+However, this program is still not enough as a discrete Fourier transform.
+In Cooley-Tukey algorithm, the phenomenon called bit reversal sorting occurs,
+so in this program the results are not sorted in natural order.
+</p>
+<p>
+So, from here on, we will explain bit reversal sorting.
+First, we suppose that \(X^0[k]\) represents an array of
+even position components of \(X[k]\).
+Also, we suppose that \(X^1[k]\) represents an array of
+odd position components of \(X[k]\).
+</p>
+<div style="font-size:120%">
+\[
+\begin{eqnarray*}
+X^0[k] & = & X[2k]   & = & F_{N/2}(x^0[p]) & = & F_{N/2}(x[p]+x[p+N/2]) \\
+X^1[k] & = & X[2k+1] & = & F_{N/2}(x^1[p]) & = & F_{N/2}\left((x[p]-x[p+N/2])W_N^p\right) \\
+\end{eqnarray*}
+\]
+\[
+k = 0,1,\ldots,N/2-1 \\
+\]
+</div>
+<p>
+Similarly, \(X^{00}[k]\) represents
+an array of even position components of \(X^0[k]\).
+\(X^{01}[k]\) represents
+an array of odd position components of \(X^0[k]\).
+Like this example, we define the symbols.
+Then we can decompose \(X^0[k]\),\(~X^1[k]\) into
+\(X^{00}[k]\),\(~X^{01}[k]\),\(~X^{10}[k]\),\(~X^{11}[k]\) as follows.
+</p>
+<div style="font-size:120%">
+\[
+\begin{eqnarray*}
+X^{00}[k] & = & X^0[2k]   & = & X[4k]   & = & F_{N/4}(x^0[p]+x^0[p+N/4]) \\
+X^{01}[k] & = & X^0[2k+1] & = & X[4k+2] & = & F_{N/4}\left((x^0[p]-x^0[p+N/4])W_{N/2}^p\right) \\
+X^{10}[k] & = & X^1[2k]   & = & X[4k+1] & = & F_{N/4}(x^1[p]+x^1[p+N/4]) \\
+X^{11}[k] & = & X^1[2k+1] & = & X[4k+3] & = & F_{N/4}\left((x^1[p]-x^1[p+N/4])W_{N/2}^p\right) \\
+\end{eqnarray*}
+\]
+</div>
+<p>
+When \(N\) of \(F_N\) is 8, if we illustrate the above decomposition,
+it becomes as follows.
+</p>
+<table class="bordered" style="width:75em;font-size:90%">
+    <tr>
+        <td colspan="8">\(X[k]\)</td>
+    </tr>
+    <tr>
+        <td colspan="4">\(X^0[k]=X[2k]\)</td>
+        <td colspan="4">\(X^1[k]=X[2k+1]\)</td>
+    </tr>
+    <tr>
+        <td colspan="2">\(X^{00}[k]=X^0[2k]\)</td>
+        <td colspan="2">\(X^{01}[k]=X^0[2k+1]\)</td>
+        <td colspan="2">\(X^{10}[k]=X^1[2k]\)</td>
+        <td colspan="2">\(X^{11}[k]=X^1[2k+1]\)</td>
+    </tr>
+    <tr>
+        <td>\(X^{000}[k]=X^{00}[2k]\)</td>
+        <td>\(X^{001}[k]=X^{00}[2k+1]\)</td>
+        <td>\(X^{010}[k]=X^{01}[2k]\)</td>
+        <td>\(X^{011}[k]=X^{01}[2k+1]\)</td>
+        <td>\(X^{100}[k]=X^{10}[2k]\)</td>
+        <td>\(X^{101}[k]=X^{10}[2k+1]\)</td>
+        <td>\(X^{110}[k]=X^{11}[2k]\)</td>
+        <td>\(X^{111}[k]=X^{11}[2k+1]\)</td>
+    </tr>
+</table>
+<p>
+The sequence length is halved if we decompose the sequence
+into even position components and odd position componebts.
+And so, when N is 8, the eight \(X^{abc}[k]\) at the bottom
+which was decomposed with 3 step decomposition
+become the array whose length is 1.
+In other words, the value only exists on \(k=0\).
+</p>
+<p>
+Let's confirm what value \(X^{abc}[0]\) takes.
+Confirmation is done from the bottom of the figure.
+Here, the numerical values are represented by binary numbers.
+</p>
+<table class="bordered" style="width:75em;font-size:90%">
+    <tr>
+        <td colspan="8">\(X[000]\),&nbsp;&nbsp;\(X[100]\),&nbsp;&nbsp;\(X[010]\),&nbsp;&nbsp;\(X[110]\),&nbsp;&nbsp;\(X[001]\),&nbsp;&nbsp;\(X[101]\),&nbsp;&nbsp;\(X[011]\),&nbsp;&nbsp;\(X[111]\)</td>
+    </tr>
+    <tr>
+        <td colspan="4">\(X^0[00]=X[000]\),&nbsp;&nbsp;\(X^0[10]=X[100]\),&nbsp;&nbsp;\(X^0[01]=X[010]\),&nbsp;&nbsp;\(X^0[11]=X[110]\)</td>
+        <td colspan="4">\(X^1[00]=X[001]\),&nbsp;&nbsp;\(X^1[10]=X[101]\),&nbsp;&nbsp;\(X^1[01]=X[011]\),&nbsp;&nbsp;\(X^1[11]=X[111]\)</td>
+    </tr>
+    <tr>
+        <td colspan="2">\(X^{00}[0]=X^0[00]\),&nbsp;&nbsp;\(X^{00}[1]=X^0[10]\)</td>
+        <td colspan="2">\(X^{01}[0]=X^0[01]\),&nbsp;&nbsp;\(X^{01}[1]=X^0[11]\)</td>
+        <td colspan="2">\(X^{10}[0]=X^1[00]\),&nbsp;&nbsp;\(X^{10}[1]=X^1[10]\)</td>
+        <td colspan="2">\(X^{11}[0]=X^1[01]\),&nbsp;&nbsp;\(X^{11}[1]=X^1[11]\)</td>
+    </tr>
+    <tr>
+        <td>\(X^{000}[0]=X^{00}[0]\)</td>
+        <td>\(X^{001}[0]=X^{00}[1]\)</td>
+        <td>\(X^{010}[0]=X^{01}[0]\)</td>
+        <td>\(X^{011}[0]=X^{01}[1]\)</td>
+        <td>\(X^{100}[0]=X^{10}[0]\)</td>
+        <td>\(X^{101}[0]=X^{10}[1]\)</td>
+        <td>\(X^{110}[0]=X^{11}[0]\)</td>
+        <td>\(X^{111}[0]=X^{11}[1]\)</td>
+    </tr>
+</table>
+<p>
+Confirmation will be as follows
+if you omit the transformation in the middle and extract only the result.
+</p>
+<table class="bordered" style="width:75em;font-size:90%">
+    <tr>
+        <td>\(X^{000}[0]=X[000]\)</td>
+        <td>\(X^{001}[0]=X[100]\)</td>
+        <td>\(X^{010}[0]=X[010]\)</td>
+        <td>\(X^{011}[0]=X[110]\)</td>
+        <td>\(X^{100}[0]=X[001]\)</td>
+        <td>\(X^{101}[0]=X[101]\)</td>
+        <td>\(X^{110}[0]=X[011]\)</td>
+        <td>\(X^{111}[0]=X[111]\)</td>
+    </tr>
+</table>
+<p>
+\(abc\) on the left side \(X^{abc}[0]\) of each result represents
+the position of the calculation result.
+Looking at the right side of the calculated value,
+It corresponds to the value of the place just inverted the position bit pattern.
+As a result, when we use the Cooley-Tukey algorithm
+for calculating discrete Fourier transform, bit reversal sorting occurs.
+</p>
+<p>
+If we look at how bit reversal sorting occurs using an example \(X^{011}[0]\),
+it becomes as follows.
+Here, the binary number is represented by adding a suffix of \(b\).
+</p>
+<div style="font-size:120%">
+\[
+X^{011}[0_b] = X^{01}[2\times 0_b+1] = X^{01}[1_b]
+             = X^0[2\times 1_b+1]    = X^{0}[11_b]
+             = X[2\times 11_b]       = X[110_b]
+\]
+</div>
+<p>
+Generally, it becomes as follows.
+</p>
+<div style="font-size:120%">
+\[
+X^{abc}[0] = X^{ab}[c] = X^{a}[cb] = X[cba]
+\]
+</div>
+<p>
+You can understand that the inverse transform of bit reversal sorting is
+bit reversal sorting if you think a little.
+So, if we bit-reversal-sort the processing results above,
+we will get discrete Fourier transform results sorted in natural order.
+</p>
+<p>
+The program of bit reversal sorting is as follows.
+</p>
+<pre style="border:1px solid gray;padding:4px;max-width:900px;overflow:auto">
+#include &lt;complex&gt;
+#include &lt;utility&gt;
+
+typedef std::complex&lt;double&gt; complex_t;
+
+void bit_reverse(int N, complex_t* x) // bit reversal sorting
+// N : sequence length
+// x : input/output sequence
+{
+    for (int i = 0, j = 1; j &lt; N-1; j++) {
+        for (int k = N &gt;&gt; 1; k &gt; (i ^= k); k &gt;&gt;= 1);
+        if (i &lt; j) std::swap(x[i], x[j]); // swap x[i] and x[j]
+    }
+}
+</pre>
+<p>
+If we summarize the above, the FFT program is as follows.
+The inverse Fourier transform can be calculated with
+\(N^{-1}\overline{F_N(\overline{x[p]})}\)
+if we assume that \(\overline{x}\) is the complex conjugate of \(x\).
+</p>
+<div style="text-align:center;max-width:900px">
+    FFT program 1
+</div>
+<pre style="border:1px solid gray;padding:4px;max-width:900px;overflow:auto">
+#include &lt;complex&gt;
+#include &lt;cmath&gt;
+#include &lt;utility&gt;
+
+typedef std::complex&lt;double&gt; complex_t;
+
+void F(int N, int q, complex_t* x)
+// N : sequence length
+// q : block start point (initial value is 0)
+// x : input/output sequence
+{
+    const int m = N/2;
+    const double theta0 = 2*M_PI/N;
+
+    if (N &gt; 1) {
+        for (int p = 0; p &lt; m; p++) {
+            const complex_t wp = complex_t(cos(p*theta0), -sin(p*theta0));
+            const complex_t a = x[q + p + 0];
+            const complex_t b = x[q + p + m];
+            x[q + p + 0] =  a + b;
+            x[q + p + m] = (a - b) * wp;
+        }
+        F(N/2, q + 0, x); // even position components
+        F(N/2, q + m, x); // odd position components
+    }
+}
+
+void bit_reverse(int N, complex_t* x) // bit reversal sorting
+// N : sequence length
+// x : input/output sequence
+{
+    for (int i = 0, j = 1; j &lt; N-1; j++) {
+        for (int k = N &gt;&gt; 1; k &gt; (i ^= k); k &gt;&gt;= 1);
+        if (i &lt; j) std::swap(x[i], x[j]); // swap x[i] and x[j]
+    }
+}
+
+void fft(int N, complex_t* x) // Fourier transform
+// N : sequence length
+// x : input/output sequence
+{
+    F(N, 0, x);
+    bit_reverse(N, x);
+}
+
+void ifft(int N, complex_t* x) // Inverse Fourier transform
+// N : sequence length
+// x : input/output sequence
+{
+    for (int p = 0; p &lt; N; p++) x[p] = conj(x[p]);
+    F(N, 0, x);
+    bit_reverse(N, x);
+    for (int k = 0; k &lt; N; k++) x[k] = conj(x[k])/double(N);
+}
+</pre>
+<p>
+Or if we try to do bit reversal sorting in the function <code>F()</code>,
+the program will be as follows.
+</p>
+<div style="text-align:center;max-width:900px">
+    FFT program 2
+</div>
+<pre style="border:1px solid gray;padding:4px;max-width:900px;overflow:auto">
+#include &lt;complex&gt;
+#include &lt;cmath&gt;
+#include &lt;utility&gt;
+
+typedef std::complex&lt;double&gt; complex_t;
+
+void F(int N, int s, int q, int d, complex_t* x)
+// N : sequence length
+// s : stride
+// q : block start point (initial value is 0)
+// d : bit reversal point of q
+// x : input/output sequence
+{
+    const int m = N/2;
+    const double theta0 = 2*M_PI/N;
+
+    if (N &gt; 1) {
+        for (int p = 0; p &lt; m; p++) {
+            const complex_t wp = complex_t(cos(p*theta0), -sin(p*theta0));
+            const complex_t a = x[q + p + 0];
+            const complex_t b = x[q + p + m];
+            x[q + p + 0] =  a + b;
+            x[q + p + m] = (a - b) * wp;
+        }
+        F(N/2, 2*s, q + 0, d + 0, x); // even position components
+        F(N/2, 2*s, q + m, d + s, x); // odd position components
+    }
+    else if (q &gt; d) std::swap(x[q], x[d]); // bit reversal sorting
+}
+
+void fft(int N, complex_t* x) // Fourier transform
+// N : sequence length
+// x : input/output sequence
+{
+    F(N, 1, 0, 0, x);
+}
+
+void ifft(int N, complex_t* x) // Inverse Fourier transform
+// N : sequence length
+// x : input/output sequence
+{
+    for (int p = 0; p &lt; N; p++) x[p] = conj(x[p]);
+    F(N, 1, 0, 0, x);
+    for (int k = 0; k &lt; N; k++) x[k] = conj(x[k])/double(N);
+}
+</pre>
+<p>
+This page introduced Cooley-Tukey algorithm as the most basic FFT algorithm.
+If you are interested in faster Stockham algorithm, please visit
+<a href="stockham1.html">this page</a>.
+In addition,
+I am developing a high-speed FFT library named OTFFT
+that use the Stockham algorithm.
+If you are interested in OTFFT, please visit
+<a href="index.html">this page</a>.
+</p>
+<hr>
+<b>Reference:</b>&nbsp;
+<a href="sixstepfft.html">Previous Page</a> &nbsp;&nbsp;
+<a href="stockham1.html">Top Page</a> &nbsp;&nbsp;
+<a href="stockham1.html">Introduction to the Stochham FFT</a> &nbsp;&nbsp;
+<a href="index.html">OTFFT -- FFT library using AVX that is faster than FFTW</a>
+</body>
+</html>

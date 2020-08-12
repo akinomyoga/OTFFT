@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="description" content="Kinds of Stockham Algorithms">
+<meta name="keywords" content="stockham">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="stylesheet" HREF="otfft-en.css" type="text/css">
+<link rel="prev" href="stockham2.html">
+<link rel="next" href="stockham4.html">
+
+<!--
+<script async src="ga.js"></script>
+-->
+
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-37705186-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-37705186-1');
+</script>
+
+<title>Kinds of Stockham Algorithms</title>
+</head>
+<body>
+<b>Reference:</b>&nbsp;
+<a HREF="stockham2.html">Previous Page</a>&nbsp;&nbsp;
+<a HREF="stockham1.html">Top Page</a>&nbsp;&nbsp;
+<a HREF="stockham4.html">Next Page</a>&nbsp;&nbsp;
+<a HREF="index.html">OTFFT -- FFT library using AVX that is faster than FFTW</a>
+<hr>
+
+<h1>Kinds of Stockham Algorithms</h1>
+<p>
+In this page, I organized kinds of Stockham algorithms.
+Please refer to <a href="stockham1.html">"Introduction to the Stockham FFT"</a>
+for details.
+</p>
+<div style="text-align:center;max-width:1000px">
+Type-１(DIF)
+</div>
+<pre style="border:1px solid gray;padding:4px;max-width:1000px;overflow:auto">
+#include &lt;complex&gt;
+#include &lt;cmath&gt;
+
+typedef std::complex&lt;double&gt; complex_t;
+
+void fft0(int n, int s, bool eo, complex_t* x, complex_t* y)
+{
+    const int m = n/2;
+    const double theta0 = 2*M_PI/n;
+
+    if (n == 1) { if (eo) for (int q = 0; q &lt; s; q++) y[q] = x[q]; }
+    else {
+        for (int p = 0; p &lt; m; p++) {
+            const complex_t wp = complex_t(cos(p*theta0), -sin(p*theta0));
+            for (int q = 0; q &lt; s; q++) {
+                const complex_t a = x[q + s*(p + 0)];
+                const complex_t b = x[q + s*(p + m)];
+                y[q + s*(2*p + 0)] =  a + b;
+                y[q + s*(2*p + 1)] = (a - b) * wp;
+            }
+        }
+        fft0(n/2, 2*s, !eo, y, x);
+    }
+}
+
+void fft(int n, complex_t* x)
+{
+    complex_t* y = new complex_t[n];
+    fft0(n, 1, 0, x, y);
+    delete[] y;
+    for (int k = 0; k &lt; n; k++) x[k] /= n;
+}
+
+void ifft(int n, complex_t* x)
+{
+    for (int p = 0; p &lt; n; p++) x[p] = conj(x[p]);
+    complex_t* y = new complex_t[n];
+    fft0(n, 1, 0, x, y);
+    delete[] y;
+    for (int k = 0; k &lt; n; k++) x[k] = conj(x[k]);
+}
+</pre>
+
+<br>
+<div style="text-align:center;max-width:1000px">
+Type-１(DIT)
+</div>
+<pre style="border:1px solid gray;padding:4px;max-width:1000px;overflow:auto">
+#include &lt;complex&gt;
+#include &lt;cmath&gt;
+
+typedef std::complex&lt;double&gt; complex_t;
+
+void fft0(int n, int s, bool eo, complex_t* x, complex_t* y)
+{
+    const int m = n/2;
+    const double theta0 = 2*M_PI/n;
+
+    if (n == 1) { if (eo) for (int q = 0; q &lt; s; q++) x[q] = y[q]; }
+    else {
+        fft0(n/2, 2*s, !eo, y, x);
+        for (int p = 0; p &lt; m; p++) {
+            const complex_t wp = complex_t(cos(p*theta0), -sin(p*theta0));
+            for (int q = 0; q &lt; s; q++) {
+                const complex_t a = y[q + s*(2*p + 0)];
+                const complex_t b = y[q + s*(2*p + 1)] * wp;
+                x[q + s*(p + 0)] = a + b;
+                x[q + s*(p + m)] = a - b;
+            }
+        }
+    }
+}
+
+void fft(int n, complex_t* x)
+{
+    complex_t* y = new complex_t[n];
+    fft0(n, 1, 0, x, y);
+    delete[] y;
+    for (int k = 0; k &lt; n; k++) x[k] /= n;
+}
+
+void ifft(int n, complex_t* x)
+{
+    for (int p = 0; p &lt; n; p++) x[p] = conj(x[p]);
+    complex_t* y = new complex_t[n];
+    fft0(n, 1, 0, x, y);
+    delete[] y;
+    for (int k = 0; k &lt; n; k++) x[k] = conj(x[k]);
+}
+</pre>
+
+<br>
+<div style="text-align:center;max-width:1000px">
+Type-2(DIF)
+</div>
+<pre style="border:1px solid gray;padding:4px;max-width:1000px;overflow:auto">
+#include &lt;complex&gt;
+#include &lt;cmath&gt;
+
+typedef std::complex&lt;double&gt; complex_t;
+
+void fft0(int n, int s, bool eo, complex_t* x, complex_t* y)
+{
+    const int m = n/2;
+    const double theta0 = M_PI/s;
+
+    if (n == 1) { if (eo) for (int q = 0; q &lt; s; q++) x[q] = y[q]; }
+    else {
+        fft0(n/2, 2*s, !eo, y, x);
+        for (int p = 0; p &lt; m; p++) {
+            for (int q = 0; q &lt; s; q++) {
+                const complex_t wq = complex_t(cos(q*theta0), -sin(q*theta0));
+                const complex_t a = y[q + s*(2*p + 0)];
+                const complex_t b = y[q + s*(2*p + 1)];
+                x[q + s*(p + 0)] =  a + b;
+                x[q + s*(p + m)] = (a - b)*wq;
+            }
+        }
+    }
+}
+
+void fft(int n, complex_t* x)
+{
+    complex_t* y = new complex_t[n];
+    fft0(n, 1, 0, x, y);
+    delete[] y;
+    for (int k = 0; k &lt; n; k++) x[k] /= n;
+}
+
+void ifft(int n, complex_t* x)
+{
+    for (int p = 0; p &lt; n; p++) x[p] = conj(x[p]);
+    complex_t* y = new complex_t[n];
+    fft0(n, 1, 0, x, y);
+    delete[] y;
+    for (int k = 0; k &lt; n; k++) x[k] = conj(x[k]);
+}
+</pre>
+
+<br>
+<div style="text-align:center;max-width:1000px">
+Type-2(DIT)
+</div>
+<pre style="border:1px solid gray;padding:4px;max-width:1000px;overflow:auto">
+#include &lt;complex&gt;
+#include &lt;cmath&gt;
+
+typedef std::complex&lt;double&gt; complex_t;
+
+void fft0(int n, int s, bool eo, complex_t* x, complex_t* y)
+{
+    const int m = n/2;
+    const double theta0 = M_PI/s;
+
+    if (n == 1) { if (eo) for (int q = 0; q &lt; s; q++) y[q] = x[q]; }
+    else {
+        for (int p = 0; p &lt; m; p++) {
+            for (int q = 0; q &lt; s; q++) {
+                const complex_t wq = complex_t(cos(q*theta0), -sin(q*theta0));
+                const complex_t a = x[q + s*(p + 0)];
+                const complex_t b = x[q + s*(p + m)] * wq;
+                y[q + s*(2*p + 0)] = a + b;
+                y[q + s*(2*p + 1)] = a - b;
+            }
+        }
+        fft0(n/2, 2*s, !eo, y, x);
+    }
+}
+
+void fft(int n, complex_t* x)
+{
+    complex_t* y = new complex_t[n];
+    fft0(n, 1, 0, x, y);
+    delete[] y;
+    for (int k = 0; k &lt; n; k++) x[k] /= n;
+}
+
+void ifft(int n, complex_t* x)
+{
+    for (int p = 0; p &lt; n; p++) x[p] = conj(x[p]);
+    complex_t* y = new complex_t[n];
+    fft0(n, 1, 0, x, y);
+    delete[] y;
+    for (int k = 0; k &lt; n; k++) x[k] = conj(x[k]);
+}
+</pre>
+
+<hr>
+<b>Reference:</b>&nbsp;
+<a HREF="stockham2.html">Previous Page</a>&nbsp;&nbsp;
+<a HREF="stockham1.html">Top Page</a>&nbsp;&nbsp;
+<a HREF="stockham4.html">Next Page</a>&nbsp;&nbsp;
+<a HREF="index.html">OTFFT -- FFT library using AVX that is faster than FFTW</a>
+</body>
+</html>

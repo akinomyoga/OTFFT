@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="description" content="Optimization by AVX of the Stockham FFT">
+<meta name="keywords" content="AVX,Optimization,Stockham FFT">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="stylesheet" href="otfft-en.css" type="text/css">
+<link rel="prev" href="optimization1.html">
+<link rel="next" href="sixstepfft.html">
+
+<!--
+<script async src="ga.js"></script>
+-->
+
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-37705186-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-37705186-1');
+</script>
+
+<title>Optimization by AVX of the Stockham FFT</title>
+</head>
+<body>
+<b>Reference:</b>&nbsp;
+<a href="optimization1.html">Previous Page</a>&nbsp;&nbsp;
+<a href="stockham1.html">Top Page</a>&nbsp;&nbsp;
+<a href="sixstepfft.html">Next Page</a>&nbsp;&nbsp;
+<a href="index.html">OTFFT -- FFT library using AVX that is faster than FFTW</a>&nbsp;&nbsp;
+<a href="../stockham/optimization2.html">Japanese Page</a>
+<hr>
+
+<h1>Optimization by AVX of the Stockham FFT</h1>
+<p>
+In <a href="optimization1.html">previous page</a>,
+I show the <a href="stockham1.html">Stockham algorithm</a>
+that reduce the accesses to an array.
+When we apply Intel AVX to this, we can optimize it further.
+First of all, I show the List-8 again. Based on this algorithm,
+I will rewrite each operation by Intel AVX.
+</p>
+
+<div style="text-align:center;max-width:900px">
+List-8: The Stockham algorithm that reduce the accesses to an array
+</div>
+<pre style="border:1px solid gray;padding:4px;max-width:900px;overflow:auto">
+#include &lt;complex&gt;
+#include &lt;cmath&gt;
+
+typedef std::complex&lt;double&gt; complex_t;
+
+void fft0(int n, int s, bool eo, complex_t* x, complex_t* y)
+// n  : sequence length
+// s  : stride
+// eo : x is output if eo == 0, y is output if eo == 1
+// x  : input sequence(or output sequence if eo == 0)
+// y  : work area(or output sequence if eo == 1)
+{
+    const int m = n/2;
+    const double theta0 = 2*M_PI/n;
+
+    if (n == 2) {
+        complex_t* z = eo ? y : x;
+        for (int q = 0; q &lt; s; q++) {
+            const complex_t a = x[q + s*0];
+            const complex_t b = x[q + s*1];
+            z[q + s*0] = a + b;
+            z[q + s*1] = a - b;
+        }
+    }
+    else if (n &gt;= 4) {
+        for (int p = 0; p &lt; m; p++) {
+            const complex_t wp = complex_t(cos(p*theta0), -sin(p*theta0));
+            for (int q = 0; q &lt; s; q++) {
+                const complex_t a = x[q + s*(p + 0)];
+                const complex_t b = x[q + s*(p + m)];
+                y[q + s*(2*p + 0)] =  a + b;
+                y[q + s*(2*p + 1)] = (a - b) * wp;
+            }
+        }
+        fft0(n/2, 2*s, !eo, y, x);
+    }
+}
+
+void fft(int n, complex_t* x) // Fourier transform
+// n : sequence length
+// x : input/output sequence
+{
+    complex_t* y = new complex_t[n];
+    fft0(n, 1, 0, x, y);
+    delete[] y;
+    for (int k = 0; k &lt; n; k++) x[k] /= n;
+}
+
+void ifft(int n, complex_t* x) // Inverse Fourier transform
+// n : sequence length
+// x : input/output sequence
+{
+    for (int p = 0; p &lt; n; p++) x[p] = conj(x[p]);
+    complex_t* y = new complex_t[n];
+    fft0(n, 1, 0, x, y);
+    delete[] y;
+    for (int k = 0; k &lt; n; k++) x[k] = conj(x[k]);
+}
+</pre>
+
+<p>
+Here, I will rewrite only the portion that can be easily rewritten to AVX.
+Then, the program will be as follows.
+</p>
+
+<div style="text-align:center;max-width:900px">
+List-9: AVXed Stockham Algorithm
+</div>
+<pre style="border:1px solid gray;padding:4px;max-width:900px;overflow:auto">
+#include &lt;complex&gt;
+#include &lt;cmath&gt;
+#include &lt;immintrin.h&gt;
+
+struct complex_t {
+    double Re, Im;
+    complex_t(const double&amp; x, const double&amp; y) : Re(x), Im(y) {}
+};
+
+inline complex_t operator+(const complex_t&amp; x, const complex_t&amp; y)
+{
+    return complex_t(x.Re + y.Re, x.Im + y.Im);
+}
+
+inline complex_t operator-(const complex_t&amp; x, const complex_t&amp; y)
+{
+    return complex_t(x.Re - y.Re, x.Im - y.Im);
+}
+
+inline complex_t operator*(const complex_t&amp; x, const complex_t&amp; y)
+{
+    return complex_t(x.Re*y.Re - x.Im*y.Im, x.Re*y.Im + x.Im*y.Re);
+}
+
+__m256d mulpz2(const __m256d ab, const __m256d xy) // Multiplication of complex numbers
+{
+    const __m256d aa = _mm256_unpacklo_pd(ab, ab);
+    const __m256d bb = _mm256_unpackhi_pd(ab, ab);
+    const __m256d yx = _mm256_shuffle_pd(xy, xy, 5);
+    return _mm256_addsub_pd(_mm256_mul_pd(aa, xy), _mm256_mul_pd(bb, yx));
+}
+
+void fft0(int n, int s, bool eo, complex_t* x, complex_t* y)
+// n  : sequence length
+// s  : stride
+// eo : x is output if eo == 0, y is output if eo == 1
+// x  : input sequence(or output sequence if eo == 0)
+// y  : work area(or output sequence if eo == 1)
+{
+    const int m = n/2;
+    const double theta0 = 2*M_PI/n;
+
+    if (n == 2) {
+        complex_t* z = eo ? y : x;
+        if (s == 1) {
+            double* xd = &amp;x-&gt;Re;
+            double* zd = &amp;z-&gt;Re;
+            const __m128d a = _mm_load_pd(xd + 2*0);
+            const __m128d b = _mm_load_pd(xd + 2*1);
+            _mm_store_pd(zd + 2*0, _mm_add_pd(a, b));
+            _mm_store_pd(zd + 2*1, _mm_sub_pd(a, b));
+        }
+        else {
+            for (int q = 0; q &lt; s; q += 2) {
+                double* xd = &amp;(x + q)-&gt;Re;
+                double* zd = &amp;(z + q)-&gt;Re;
+                const __m256d a = _mm256_load_pd(xd + 2*0);
+                const __m256d b = _mm256_load_pd(xd + 2*s);
+                _mm256_store_pd(zd + 2*0, _mm256_add_pd(a, b));
+                _mm256_store_pd(zd + 2*s, _mm256_sub_pd(a, b));
+            }
+        }
+    }
+    else if (n &gt;= 4) {
+        if (s == 1) {
+            for (int p = 0; p &lt; m; p++) {
+                const complex_t wp = complex_t(cos(p*theta0), -sin(p*theta0));
+                const complex_t a = x[p + 0];
+                const complex_t b = x[p + m];
+                y[2*p + 0] =  a + b;
+                y[2*p + 1] = (a - b) * wp;
+            }
+        }
+        else {
+            for (int p = 0; p &lt; m; p++) {
+                const double cs = cos(p*theta0);
+                const double sn = sin(p*theta0);
+                const __m256d wp = _mm256_setr_pd(cs, -sn, cs, -sn);
+                for (int q = 0; q &lt; s; q += 2) {
+                    double* xd = &amp;(x + q)-&gt;Re;
+                    double* yd = &amp;(y + q)-&gt;Re;
+                    const __m256d a = _mm256_load_pd(xd + 2*s*(p + 0));
+                    const __m256d b = _mm256_load_pd(xd + 2*s*(p + m));
+                    _mm256_store_pd(yd + 2*s*(2*p + 0),            _mm256_add_pd(a, b));
+                    _mm256_store_pd(yd + 2*s*(2*p + 1), mulpz2(wp, _mm256_sub_pd(a, b)));
+                }
+            }
+        }
+        fft0(n/2, 2*s, !eo, y, x);
+    }
+}
+
+void fft(int n, std::complex&lt;double&gt;* x) // Fourier transform
+// n : sequence length
+// x : input/output sequence
+{
+    complex_t* y = (complex_t*) _mm_malloc(n*sizeof(complex_t), 32);
+    complex_t* z = (complex_t*) _mm_malloc(n*sizeof(complex_t), 32);
+    for (int p = 0; p &lt; n; p++) {
+        y[p].Re = x[p].real();
+        y[p].Im = x[p].imag();
+    }
+    fft0(n, 1, 0, y, z);
+    for (int k = 0; k &lt; n; k++)
+        x[k] = std::complex&lt;double&gt;(y[k].Re/n, y[k].Im/n);
+    _mm_free(z);
+    _mm_free(y);
+}
+
+void ifft(int n, std::complex&lt;double&gt;* x) // Inverse Fourier transform
+// n : sequence length
+// x : input/output sequence
+{
+    complex_t* y = (complex_t*) _mm_malloc(n*sizeof(complex_t), 32);
+    complex_t* z = (complex_t*) _mm_malloc(n*sizeof(complex_t), 32);
+    for (int p = 0; p &lt; n; p++) {
+        y[p].Re =  x[p].real();
+        y[p].Im = -x[p].imag();
+    }
+    fft0(n, 1, 0, y, z);
+    for (int k = 0; k &lt; n; k++)
+        x[k] = std::complex&lt;double&gt;(y[k].Re, -y[k].Im);
+    _mm_free(z);
+    _mm_free(y);
+}
+</pre>
+
+<p>
+Next, I show full AVXed version of the Stockham algorithm.
+The program will be as follows.
+</p>
+
+<div style="text-align:center;max-width:900px">
+List-10: Full AVXed Stockham Algorithm
+</div>
+<pre style="border:1px solid gray;padding:4px;max-width:900px;overflow:auto">
+#include &lt;complex&gt;
+#include &lt;cmath&gt;
+#include &lt;immintrin.h&gt;
+
+struct complex_t { double Re, Im; };
+
+__m256d mulpz2(const __m256d ab, const __m256d xy) // Multiplication of complex numbers
+{
+    const __m256d aa = _mm256_unpacklo_pd(ab, ab);
+    const __m256d bb = _mm256_unpackhi_pd(ab, ab);
+    const __m256d yx = _mm256_shuffle_pd(xy, xy, 5);
+    return _mm256_addsub_pd(_mm256_mul_pd(aa, xy), _mm256_mul_pd(bb, yx));
+}
+
+void fft0(int n, int s, bool eo, complex_t* x, complex_t* y)
+// n  : sequence length
+// s  : stride
+// eo : x is output if eo == 0, y is output if eo == 1
+// x  : input sequence(or output sequence if eo == 0)
+// y  : work area(or output sequence if eo == 1)
+{
+    const int m = n/2;
+    const double theta0 = 2*M_PI/n;
+
+    if (n == 2) {
+        complex_t* z = eo ? y : x;
+        if (s == 1) {
+            double* xd = &amp;x-&gt;Re;
+            double* zd = &amp;z-&gt;Re;
+            const __m128d a = _mm_load_pd(xd + 2*0);
+            const __m128d b = _mm_load_pd(xd + 2*1);
+            _mm_store_pd(zd + 2*0, _mm_add_pd(a, b));
+            _mm_store_pd(zd + 2*1, _mm_sub_pd(a, b));
+        }
+        else {
+            for (int q = 0; q &lt; s; q += 2) {
+                double* xd = &amp;(x + q)-&gt;Re;
+                double* zd = &amp;(z + q)-&gt;Re;
+                const __m256d a = _mm256_load_pd(xd + 2*0);
+                const __m256d b = _mm256_load_pd(xd + 2*s);
+                _mm256_store_pd(zd + 2*0, _mm256_add_pd(a, b));
+                _mm256_store_pd(zd + 2*s, _mm256_sub_pd(a, b));
+            }
+        }
+    }
+    else if (n &gt;= 4) {
+        if (s == 1) {
+            for (int p = 0; p &lt; m; p += 2) {
+                const double cs0 = cos((p+0)*theta0);
+                const double sn0 = sin((p+0)*theta0);
+                const double cs1 = cos((p+1)*theta0);
+                const double sn1 = sin((p+1)*theta0);
+                const __m256d wp = _mm256_setr_pd(cs0, -sn0, cs1, -sn1);
+                double* xd = &amp;(x + p)-&gt;Re;
+                double* yd = &amp;(y + 2*p)-&gt;Re;
+                const __m256d a = _mm256_load_pd(xd + 2*0);
+                const __m256d b = _mm256_load_pd(xd + 2*m);
+                const __m256d aA =            _mm256_add_pd(a, b);
+                const __m256d bB = mulpz2(wp, _mm256_sub_pd(a, b));
+                const __m256d ab = _mm256_permute2f128_pd(aA, bB, 0x20);
+                const __m256d AB = _mm256_permute2f128_pd(aA, bB, 0x31);
+                _mm256_store_pd(yd + 2*0, ab);
+                _mm256_store_pd(yd + 2*2, AB);
+            }
+        }
+        else {
+            for (int p = 0; p &lt; m; p++) {
+                const double cs = cos(p*theta0);
+                const double sn = sin(p*theta0);
+                const __m256d wp = _mm256_setr_pd(cs, -sn, cs, -sn);
+                for (int q = 0; q &lt; s; q += 2) {
+                    double* xd = &amp;(x + q)-&gt;Re;
+                    double* yd = &amp;(y + q)-&gt;Re;
+                    const __m256d a = _mm256_load_pd(xd + 2*s*(p + 0));
+                    const __m256d b = _mm256_load_pd(xd + 2*s*(p + m));
+                    _mm256_store_pd(yd + 2*s*(2*p + 0),            _mm256_add_pd(a, b));
+                    _mm256_store_pd(yd + 2*s*(2*p + 1), mulpz2(wp, _mm256_sub_pd(a, b)));
+                }
+            }
+        }
+        fft0(n/2, 2*s, !eo, y, x);
+    }
+}
+
+void fft(int n, std::complex&lt;double&gt;* x) // Fourier transform
+// n : sequence length
+// x : input/output sequence
+{
+    complex_t* y = (complex_t*) _mm_malloc(n*sizeof(complex_t), 32);
+    complex_t* z = (complex_t*) _mm_malloc(n*sizeof(complex_t), 32);
+    for (int p = 0; p &lt; n; p++) {
+        y[p].Re = x[p].real();
+        y[p].Im = x[p].imag();
+    }
+    fft0(n, 1, 0, y, z);
+    for (int k = 0; k &lt; n; k++)
+        x[k] = std::complex&lt;double&gt;(y[k].Re/n, y[k].Im/n);
+    _mm_free(z);
+    _mm_free(y);
+}
+
+void ifft(int n, std::complex&lt;double&gt;* x) // Inverse Fourier transform
+// n : sequence length
+// x : input/output sequence
+{
+    complex_t* y = (complex_t*) _mm_malloc(n*sizeof(complex_t), 32);
+    complex_t* z = (complex_t*) _mm_malloc(n*sizeof(complex_t), 32);
+    for (int p = 0; p &lt; n; p++) {
+        y[p].Re =  x[p].real();
+        y[p].Im = -x[p].imag();
+    }
+    fft0(n, 1, 0, y, z);
+    for (int k = 0; k &lt; n; k++)
+        x[k] = std::complex&lt;double&gt;(y[k].Re, -y[k].Im);
+    _mm_free(z);
+    _mm_free(y);
+}
+</pre>
+<p>
+By the way, I made the FFT library
+using Stockham algorithm and Intel AVX. If you are interested,
+please to <a href="index.html">this page</a>.
+</p>
+
+<hr>
+<b>Reference:</b>&nbsp;
+<a href="optimization1.html">Previous Page</a>&nbsp;&nbsp;
+<a href="stockham1.html">Top Page</a>&nbsp;&nbsp;
+<a href="sixstepfft.html">Next Page</a>&nbsp;&nbsp;
+<a href="index.html">OTFFT -- FFT library using AVX that is faster than FFTW</a>&nbsp;&nbsp;
+<a href="../stockham/optimization2.html">Japanese Page</a>
+</body>
+</html>

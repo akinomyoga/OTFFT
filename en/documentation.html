@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="description" content="Documentation of OTFFT">
+<meta name="keywords" content="Stockham FFT,benchmark">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="stylesheet" href="otfft-en.css" type="text/css">
+<link rel="alternate" hreflang="ja" href="http://wwwa.pikara.ne.jp/okojisan/stockham/otfft2.html">
+<link rel="alternate" hreflang="en" href="http://wwwa.pikara.ne.jp/okojisan/otfft-en/documentation.html">
+
+<!--
+<script async src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+<script async src="ga.js"></script>
+-->
+
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-37705186-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-37705186-1');
+</script>
+
+<style>
+    pre.sample {
+        border: 1px solid gray;
+        padding: 4px;
+        max-width: 800px;
+        overflow: auto
+    }
+</style>
+
+<title>Documentation of OTFFT</title>
+</head>
+<body>
+<b>Reference:</b>&nbsp;
+<a href="download.html">Download</a>&nbsp;&nbsp;
+<a href="index.html">OTFFT -- FFT library using AVX that is faster than FFTW</a>&nbsp;&nbsp;
+<a href="../stockham/otfft2.html">Japanese Page</a>
+<hr>
+
+<h1>Documentation of OTFFT</h1>
+<h3>[What is the OTFFT]</h3>
+<p>
+OTFFT is a high-speed FFT library using the Stockham's algorithm and AVX.
+In addition, C++ template metaprogramming technique is used in OTFFT.
+And OTFFT is a mixed-radix FFT.
+</p>
+
+<h3>[Caution]</h3>
+OTFFT is optimized for the environment used to compile.
+In other words,
+if we compile it on AVX-supported environment,
+it becomes the binary that uses AVX.
+If someone executes this binary on AVX-unsupported environment,
+of course, it crashes by causing the exception.
+For this reason, OTFFT is not suitable for the use
+for distributing the compiled binary to all people.
+It is being assumed that people use OTFFT to compile a program of numerical
+calculation from the source code.
+
+<h3>[Necessary files]</h3>
+
+<p>
+If you expand the "otfft-11.0e.tar.gz", you get several files.
+Something necessary to you is "otfft" folder in these files.
+</p>
+
+
+<h3>[Setup]</h3>
+<p>
+In order to tune up this library, you need to execute the following commands in
+"otfft" folder.
+</p>
+<pre class="sample">
+    make ffttune
+    ./ffttune
+    make otfft.o
+</pre>
+<p>
+For the compilation, it takes a very long time. Please be patient.
+Some of linux will be very slow when it is run on 8 threads.
+In that case, please set the "OMP_NUM_THREADS" environment variable to 7.
+</p>
+
+
+<h3>[How to use]</h3>
+<p>
+After you add the "otfft" folder in the compiler include path, please execute
+the following commands. "hello.cpp" is your program.
+<p>
+<pre class="sample">
+    clang++-mp-4.0 -c -O3 hello.cpp
+    clang++-mp-4.0 hello.o otfft/otfft.o -L/opt/local/lib/libomp -lomp -o hello
+</pre>
+<p>
+Here, I'm assuming that there is a "otfft" folder in the current folder.
+"clang++-mp-4.0" is MacPorts Clang compiler.
+</p>
+
+
+<h3>[Single Thread Mode]</h3>
+<p>
+To use the single thread mode, you need to compile the OTFFT with the condition
+that DO_SINGLE_THREAD macro is defined at "otfft_misc.h". And, please start from
+"make ffttune".
+</p>
+<hr>
+
+<p>
+Following such transforms are provided.
+</p>
+
+<h3>[Complex-to-Complex FFT]</h3>
+<pre class="sample">
+    #include "otfft/otfft.h"
+    using OTFFT::complex_t;
+    using OTFFT::simd_malloc;
+    using OTFFT::simd_free;
+
+    void f(int N)
+    {
+        complex_t* x = (complex_t*) simd_malloc(N*sizeof(complex_t));
+        // do something
+        OTFFT::FFT fft(N); // creation of FFT object. N is sequence length.
+        fft.fwd(x);        // execution of transformation. x is input and output
+        // do something
+        simd_free(x);
+    }
+</pre>
+<p>
+complex_t is defined as follows.
+</p>
+<pre class="sample">
+    struct complex_t
+    {
+        double Re, Im;
+
+        complex_t() : Re(0), Im(0) {}
+        complex_t(const double&amp; x) : Re(x), Im(0) {}
+        complex_t(const double&amp; x, const double&amp; y) : Re(x), Im(y) {}
+        complex_t(const std::complex&lt;double&gt;&amp; z) : Re(z.real()), Im(z.imag()) {}
+        operator std::complex&lt;double&gt;() { return std::complex<double>(Re, Im); }
+
+        // ...
+    };
+</pre>
+<p>
+There are member functions, such as the following.
+<p>
+<pre>
+    fwd(x)  -- DFT(with 1/N normalization)  x:input/output
+    fwd0(x) -- DFT(non normalization)       x:input/output
+    fwdu(x) -- DFT(unitary transformation)  x:input/output
+    fwdn(x) -- DFT(with 1/N normalization)  x:input/output
+
+    inv(x)  -- IDFT(non normalization)      x:input/output
+    inv0(x) -- IDFT(non normalization)      x:input/output
+    invu(x) -- IDFT(unitary transformation) x:input/output
+    invn(x) -- IDFT(with 1/N normalization) x:input/output
+</pre>
+<p>
+To change the FFT size, do the following.
+</p>
+<pre class="sample">
+    fft.setup(2 * N);
+</pre>
+<p>
+To use in a multi-threaded environment, we do as follows.
+</p>
+<pre class="sample">
+    #include "otfft/otfft.h"
+    using OTFFT::complex_t;
+    using OTFFT::simd_malloc;
+    using OTFFT::simd_free;
+
+    void f(int N)
+    {
+        complex_t* x = (complex_t*) simd_malloc(N*sizeof(complex_t));
+        complex_t* y = (complex_t*) simd_malloc(N*sizeof(complex_t));
+        // do someting
+        OTFFT::FFT0 fft(N);
+        fft.fwd(x, y); // x is input/output. y is work area
+        // do something
+        fft.inv(x, y); // x is input/output. y is work area
+        // do someting
+        simd_free(y);
+        simd_free(x);
+    }
+</pre>
+<p>
+Please note that "OTFFT::FFT" was changed to "OTFFT::FFT0".
+</p>
+
+
+<h3>[Real-to-Complex FFT]</h3>
+<pre class="sample">
+    #include "otfft/otfft.h"
+    using OTFFT::complex_t;
+    using OTFFT::simd_malloc;
+    using OTFFT::simd_free;
+
+    void f(int N)
+    {
+        double*    x = (double*)    simd_malloc(N*sizeof(double));
+        complex_t* y = (complex_t*) simd_malloc(N*sizeof(complex_t));
+        // do something
+        OTFFT::RFFT rfft(N);
+        rfft.fwd(x, y); // x is input. y is outout
+        // do something
+        simd_free(y);
+        simd_free(x);
+    }
+</pre>
+<p>
+N must be an even number. There are member functions, such as the following.
+</p>
+<pre>
+    fwd(x, y)  -- DFT(with 1/N normalization)  x:input, y:output
+    fwd0(x, y) -- DFT(non normalization)       x:input, y:output
+    fwdu(x, y) -- DFT(unitary transformation)  x:input, y:output
+    fwdn(x, y) -- DFT(with 1/N normalization)  x:input, y:output
+
+    inv(y, x)  -- IDFT(non normalization)      y:input, x:output
+    inv0(y, x) -- IDFT(non normalization)      y:input, x:output
+    invu(y, x) -- IDFT(unitary transformation) y:input, x:output
+    invn(y, x) -- IDFT(with 1/N normalization) y:input, x:output
+</pre>
+<p>
+inv,inv0,invu,invn will destroy the input.
+</p>
+
+
+<h3>[Discrete Cosine Transformation(DCT-II)]</h3>
+<p>
+This transformation, orthogonalization is not executed.
+</p>
+<pre class="sample">
+    #include "otfft/otfft.h"
+    using OTFFT::complex_t;
+    using OTFFT::simd_malloc;
+    using OTFFT::simd_free;
+
+    void f(int N)
+    {
+        double* x = (double*) simd_malloc(N*sizeof(double));
+        // do something
+        OTFFT::DCT dct(N);
+        dct.fwd(x); // execution of DCT. x is input and output
+        // do something
+        simd_free(x);
+    }
+</pre>
+<p>
+N must be an even number. There are member functions, such as the following.
+</p>
+<pre>
+    fwd(x)  -- DCT(with 1/N normalization) x:input/output
+    fwd0(x) -- DCT(non normalization)      x:input/output
+    fwdn(x) -- DCT(with 1/N normalization) x:input/output
+
+    inv(x)  -- IDCT(non normalization)     x:input/output
+    inv0(x) -- IDCT(non normalization)     x:input/output
+    invn(x) -- IDCT(with 1/N nomalization) x:input/output
+</pre>
+<p>
+To use in a multi-threaded environment, we do as follows.
+</p>
+<pre class="sample">
+    #include "otfft/otfft.h"
+    using OTFFT::complex_t;
+    using OTFFT::simd_malloc;
+    using OTFFT::simd_free;
+
+    void f(int N)
+    {
+        double*    x = (double*)    simd_malloc(N*sizeof(double));
+        double*    y = (double*)    simd_malloc(N*sizeof(double));
+        complex_t* z = (complex_t*) simd_malloc(N*sizeof(complex_t));
+        // do something
+        OTFFT::DCT0 dct(N);
+        dct.fwd(x, y, z); // x is input/output. y,z are work area
+        // do something
+        dct.inv(x, y, z); // x is input/output. y,z are work area
+        // do somthing
+        simd_free(z);
+        simd_free(y);
+        simd_free(x);
+    }
+</pre>
+<p>
+Please note that "OTFFT::DCT" was changed to "OTFFT::DCT0".
+</p>
+
+
+<h3>[Bluestein's FFT]</h3>
+<p>
+Bluestein's FFT is the FFT of any sequence length. Even if the sequence length
+is a big prime number, the order of complexity is O(N log N).
+</p>
+<pre class="sample">
+    #include "otfft/otfft.h"
+    using OTFFT::complex_t;
+    using OTFFT::simd_malloc;
+    using OTFFT::simd_free;
+
+    void f(int N)
+    {
+        complex_t* x = (complex_t*) simd_malloc(N*sizeof(complex_t));
+        // do something
+        OTFFT::Bluestein bst(N);
+        bst.fwd(x); // execution of Bluestein's FFT. x is input and output
+        // do something
+        simd_free(x);
+    }
+</pre>
+<p>
+There are member functions, such as the following.
+</p>
+<pre>
+    fwd(x)  -- DFT(with 1/N normalization)  x:input/output
+    fwd0(x) -- DFT(non normalization)       x:input/output
+    fwdu(x) -- DFT(unitary transformation)  x:input/output
+    fwdn(x) -- DFT(with 1/N normalization)  x:input/output
+
+    inv(x)  -- IDFT(non normalization)      x:input/output
+    inv0(x) -- IDFT(non normalization)      x:input/output
+    invu(x) -- IDFT(unitary transformation) x:input/output
+    invn(x) -- IDFT(with 1/N normalization) x:input/output
+</pre>
+<p>
+To use in a multi-threaded environmrnt,
+we need to create objects of the same number as the number of threads.
+</p>
+<hr>
+
+
+<h3>[Benchmark]</h3>
+<p>
+Benchmark programs are bundled with OTFFT. These benchmarks require FFTW and
+OOURA's FFT Package. Please refer to the following URL for OOURA's FFT Package.
+</p>
+<pre>
+    <a href="http://www.kurims.kyoto-u.ac.jp/~ooura/fft.html">http://www.kurims.kyoto-u.ac.jp/~ooura/fft.html</a>
+</pre>
+<p>
+Please install the FFTW and place OOURA's "fftsg.c" file into "otfft-11.0e"
+folder. Then, execute the following command.
+</p>
+<pre class="sample">
+    make fftbench1
+</pre>
+<p>
+And, execute the following command to execute the benchmark.
+</p>
+<pre class="sample">
+    ./fftbench1
+</pre>
+
+<hr>
+<b>Reference:</b>&nbsp;
+<a href="download.html">Download</a>&nbsp;&nbsp;
+<a href="index.html">OTFFT -- FFT library using AVX that is faster than FFTW</a>&nbsp;&nbsp;
+<a href="../stockham/otfft2.html">Japanese Page</a>
+</body>
+</html>

@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="description" content="Stockham FFT 入門">
+<meta name="keywords" content="Stockham FFT,FFT,C++">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="stylesheet" href="stockham.css" type="text/css">
+<link rel="up" href="index.html">
+<link rel="next" href="stockham2.html">
+<link rel="alternate" hreflang="ja" href="http://wwwa.pikara.ne.jp/okojisan/stockham/stockham1.html">
+<link rel="alternate" hreflang="en" href="http://wwwa.pikara.ne.jp/okojisan/otfft-en/stockham1.html">
+
+<!--
+<script async src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+<script async src="ga.js"></script>
+-->
+
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-37705186-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-37705186-1');
+</script>
+
+<title>Stockham FFT 入門</title>
+</head>
+<body>
+<b>Top:</b> <a href="../index.html">トップページ</a>
+<b>Up:</b> <a href="index.html">メニュー</a>
+<b>Next:</b> <a href="stockham2.html">繰り返しによる Stockham FFT</a>
+<b>Reference:</b> <a href="../otfft-en/stockham1.html">English Page</a>&nbsp;
+<b>おすすめ：</b> <a href="../infinity/index.html">実数とは何か？無限とは？</a>
+<hr>
+
+<h3>目次</h3>
+<ol>
+    <li><a href="#stockham-intro">Stockham FFT 入門</a></li>
+    <li><a href="stockham2.html">繰り返しによる Stockham FFT</a></li>
+    <li><a href="stockham3.html">4基底の Stockham FFT</a></li>
+    <li><a href="optimization1.html">配列へのアクセスを減らす最適化</a></li>
+    <li><a href="optimization2.html">Stockham FFT の AVX による最適化</a></li>
+    <li><a href="sixstepfft.html">Six-Step FFT と Eight-Step FFT</a></li>
+    <li><a href="otfft1.html">OTFFT -- FFTW より速い FFT ライブラリ</a></li>
+    <li><a href="otfft2.html">OTFFT の使い方</a></li>
+    <li><a href="otfftdl.html">OTFFT のダウンロード</a></li>
+    <li><a href="oktinymp1.html">OpenMP を用いない OTFFT</a></li>
+    <li><a href="recurrence.html">付録：Stockham FFT の漸化式の解</a></li>
+    <li><a href="cooley-tukey.html">付録：高速フーリエ変換入門 -- Cooley-Tukey のアルゴリズム</a></li>
+</ol>
+<hr>
+
+<h1><a name="stockham-intro"></a>
+Stockham FFT 入門
+</h1>
+<p>
+　このホームページはFFT(高速フーリエ変換)のアルゴリズムの１つである Stockham
+のアルゴリズムについて解説するホームページです。
+Cooley-Tukey のアルゴリズムは理解できたけど、Stockham のアルゴリズムは、
+何故あの <a href="recurrence.html">漸化式</a>
+が出てくるのか分からないという人に向けて書きました。
+みなさんは Stockham のアルゴリズムが実は Cooley-Tukey
+のアルゴリズムの単純な変形であることをご存知でしょうか？
+天下り式に与えられるあの漸化式も Cooley-Tukey
+のバタフライ演算から簡単に得られます。このホームページを見れば、
+あなたもきっと Stockham のアルゴリズムに納得がいくことでしょう。
+</p>
+<p>
+　まず、Cooley-Tukey のアルゴリズムは理解していることを前提に話を進めます。
+Cooley-Tukey のアルゴリズムって何？そもそも FFT って何？という人は
+<a href="cooley-tukey.html">こちらのページ</a> をご覧ください。
+</p>
+<p>
+　それでは、Cooley-Tukey のアルゴリズムを実装したコードを示しておきましょう。
+Cooley-Tukey アルゴリズムを再帰呼び出しを使って実装すると以下のようになります。
+</p>
+<a name="list:cooley-tukey"></a>
+<div style="text-align:center;max-width:900px">
+リスト１：Cooley-Tukey アルゴリズム
+</div>
+<pre style="border:1px solid gray;padding:4px;max-width:900px;overflow:auto">
+#include &lt;complex&gt;
+#include &lt;cmath&gt;
+#include &lt;utility&gt;
+
+typedef std::complex&lt;double&gt; complex_t;
+
+void butterfly(int n, int q, complex_t* x) // バタフライ演算
+// n : 系列長
+// q : ブロックの開始位置
+// x : バタフライ演算する系列(入出力)
+{
+    const int m = n/2;
+    const double theta0 = 2*M_PI/n;
+
+    if (n &gt; 1) {
+        for (int p = 0; p &lt; m; p++) {
+            const complex_t wp = complex_t(cos(p*theta0), -sin(p*theta0));
+            const complex_t a = x[q + p + 0];
+            const complex_t b = x[q + p + m];
+            x[q + p + 0] =  a + b;
+            x[q + p + m] = (a - b) * wp;
+        }
+        butterfly(n/2, q + 0, x);
+        butterfly(n/2, q + m, x);
+    }
+}
+
+void bit_reverse(int N, complex_t* x) // ビット反転並べ替え
+// N : 系列長
+// x : ビット反転並べ替えする系列(入出力)
+{
+    for (int i = 0, j = 1; j &lt; N-1; j++) {
+        for (int k = N &gt;&gt; 1; k &gt; (i ^= k); k &gt;&gt;= 1);
+        if (i &lt; j) std::swap(x[i], x[j]); // x[i]とx[j]を交換する
+    }
+}
+
+void fft(int N, complex_t* x) // フーリエ変換
+// N : 系列長
+// x : フーリエ変換する系列(入出力)
+{
+    butterfly(N, 0, x);
+    bit_reverse(N, x);
+    for (int k = 0; k &lt; N; k++) x[k] /= N;
+}
+
+void ifft(int N, complex_t* x) // 逆フーリエ変換
+// N : 系列長
+// x : 逆フーリエ変換する系列(入出力)
+{
+    for (int p = 0; p &lt; N; p++) x[p] = conj(x[p]);
+    butterfly(N, 0, x);
+    bit_reverse(N, x);
+    for (int k = 0; k &lt; N; k++) x[k] = conj(x[k]);
+}
+</pre>
+<p>
+　係数 \(\frac{1}{N}\) はフーリエ変換の側に付けてあります(\(N\) は系列長)。
+普通の流儀では逆フーリエ変換の方に付けるようです。しかし、
+物理的な意味を考えるなら \(\frac{1}{N}\)
+はフーリエ変換の方に付けるのが自然です。
+普通の流儀になれている人は読み替えてください。
+</p>
+<p>
+　Cooley-Tukey アルゴリズムの特徴は、<a href="#list:cooley-tukey">リスト１</a>
+の中の <code>bit_reverse()</code> 関数です。
+このアルゴリズムは Cooley-Tukey
+のアルゴリズムの中でも周波数間引き(DIF)と言われるアルゴリズムですが、
+この場合変換の最後に出力の順序を自然なフーリエ変換の順序にするために、
+ビット反転並べ替えという並べ替えを行ってやる必要があります。
+ここが Stockham のアルゴリズムとの違いで、
+Stockham のアルゴリズムではビット反転並べ替えを行わなくとも<!--
+-->自然な順序でフーリエ変換の結果が出力されます。
+すなわち、<code>bit_reverse()</code> を省略できるようになるわけです。
+</p>
+<p>
+　しかし、出力を自然な順序にしたいだけなら、
+<code>bit_reverse()</code> を用いなくとも、
+Cooley-Tukey のアルゴリズムを使ってできないことはありません。
+以下のようにしてやれば出力は自然な順序で並びます。
+</p>
+<a name="list:cooley-tukey2"></a>
+<div style="text-align:center;max-width:900px">
+リスト２：自然な順序で並ぶ Cooley-Tukey アルゴリズム
+</div>
+<pre style="border:1px solid gray;padding:4px;max-width:900px;overflow:auto">
+#include &lt;complex&gt;
+#include &lt;cmath&gt;
+
+typedef std::complex&lt;double&gt; complex_t;
+
+void fft0(int n, int q, complex_t* x, complex_t* y)
+// n : 系列長
+// q : ブロック開始位置
+// x : フーリエ変換する系列(入出力)
+// y : 並べ替え用作業配列
+{
+    const int m = n/2;
+    const double theta0 = 2*M_PI/n;
+
+    if (n &gt; 1) {
+        for (int p = 0; p &lt; m; p++) { // バタフライ演算
+            const complex_t wp = complex_t(cos(p*theta0), -sin(p*theta0));
+            const complex_t a = x[q + p + 0];
+            const complex_t b = x[q + p + m];
+            y[q + p + 0] =  a + b;
+            y[q + p + m] = (a - b) * wp;
+        }
+        fft0(n/2, q + 0, y, x);
+        fft0(n/2, q + m, y, x);
+        for (int p = 0; p &lt; m; p++) { // 偶数成分と奇数成分の合成
+            x[q + 2*p + 0] = y[q + p + 0]; // 偶数成分
+            x[q + 2*p + 1] = y[q + p + m]; // 奇数成分
+        }
+    }
+}
+
+void fft(int N, complex_t* x) // フーリエ変換
+// N : 系列長
+// x : フーリエ変換する系列(入出力)
+{
+    complex_t* y = new complex_t[N]; // 並べ替え用作業配列の確保
+    fft0(N, 0, x, y);
+    delete[] y;
+    for (int k = 0; k &lt; N; k++) x[k] /= N;
+}
+
+void ifft(int N, complex_t* x) // 逆フーリエ変換
+// N : 系列長
+// x : 逆フーリエ変換する系列(入出力)
+{
+    for (int p = 0; p &lt; N; p++) x[p] = conj(x[p]);
+    complex_t* y = new complex_t[N]; // 並べ替え用作業配列の確保
+    fft0(N, 0, x, y);
+    delete[] y;
+    for (int k = 0; k &lt; N; k++) x[k] = conj(x[k]);
+}
+</pre>
+<p>
+　サイズが \(N = 2^L\) のフーリエ変換を \(F_N\) とし(\(L\) は 0 以上の整数)、
+入力系列を
+\(x_p~(p = 0,1,\ldots,N-1)\)、フーリエ変換した結果を
+\(X_k~(k = 0,1,\ldots,N-1)\) とすると、フーリエ変換は
+\(X_k = F_N(x_p) = \frac{1}{N}\sum_{p=0}^{N-1}x_p W_N^{kp},~
+W_N = \exp\left(-j\frac{2\pi}{N}\right),~j = \sqrt{-1}\)
+と書けます。今 \(N \ge 2\) と仮定し、これを FFT するために再帰で分解してやると、
+周波数間引きでは以下のような関係が成り立つことはご存知ですね。
+</p>
+<div style="font-size:141%;">
+\[
+\begin{eqnarray*}
+    2X_{2k}   & = & F_{\frac{N}{2}}(x_p + x_{p+\frac{N}{2}}) \\
+    2X_{2k+1} & = & F_{\frac{N}{2}}\left((x_p - x_{p+\frac{N}{2}}) W_N^p\right) \\
+    p         & = & 0,1,\ldots,\frac{N}{2}-1 \\
+    k         & = & 0,1,\ldots,\frac{N}{2}-1 \\
+\end{eqnarray*}
+\]
+</div>
+<p>
+　このように、フーリエ変換を再帰で分解してやると再帰の各段階で \(X_{2k}\) と
+\(X_{2k+1}\) という偶数成分と奇数成分が得られます。
+ビット反転並べ替えが起こるのは、
+この偶数成分と奇数成分をさらに偶数成分の偶数成分、
+偶数成分の奇数成分というふうに分割していくからです。少し考えれば、
+最終的にはビット反転順になることが分かるでしょう。
+</p>
+<p>
+　ならば出力を自然な順序にするには、各再帰の最後で偶数成分と奇数成分を合成して
+\(X_k\) にしてやれば良いことになります。それを行ったのが
+<a href="#list:cooley-tukey2">リスト２</a> です。しかし、このコードは遅いです。
+そこで Stockham のアルゴリズムの出番ということになるのです。
+</p>
+<p>
+　Stockham のアルゴリズムを得るのに、先の自然な順序で出力が並ぶ Cooley-Tukey
+のアルゴリズムから無駄を省くことから始めてみましょう。
+まず気がつくのは配列の読み書きが２ヶ所に分かれていることです。
+一つはバタフライ演算を行っている所、
+もう一つは偶数成分と奇数成分の合成を行っている所です。
+バタフライ演算の所でせっかく配列から読み出しているのですから、
+そのまま書き戻すのではなく、
+同時に偶数成分と奇数成分の合成も行ってやったら良いのではないでしょうか。
+</p>
+<p>
+　しかし、バタフライ演算の所で偶数成分と奇数成分の合成を行うためには、
+再帰呼び出ししているフーリエ変換をまたいで、
+合成の操作を移動してやる必要があります。
+当然フーリエ変換がそのままではうまくいきません。では、どうしたら良いか。
+それは、偶数位置だけを取り出して変換するフーリエ変換と<!--
+-->奇数位置だけを取り出して変換するフーリエ変換に変更してやれば良いのです。
+</p>
+<p>
+　再帰の段数が進むと偶数位置の偶数位置、
+奇数位置の偶数位置などをフーリエ変換してやる必要が出てきます。
+それを実現するには結局のところ配列を \(s\) 間隔
+(\(s = 2^h~(h = 0,1,\ldots,L - 1)\))
+でアクセスして変換するフーリエ変換が必要になります。
+この \(s\) をストライドと呼ぶことにして
+<a href="#list:cooley-tukey2">リスト２</a>
+を書き換えてやると以下のようになります。
+</p>
+<a name="list:selfsort1"></a>
+<div style="text-align:center;max-width:900px">
+リスト３：再帰版 Stockham のアルゴリズム
+</div>
+<pre style="border:1px solid gray;padding:4px;max-width:900px;overflow:auto">
+#include &lt;complex&gt;
+#include &lt;cmath&gt;
+
+typedef std::complex&lt;double&gt; complex_t;
+
+void fft1(int n, int s, int q, complex_t* x, complex_t* y);
+
+void fft0(int n, int s, int q, complex_t* x, complex_t* y)
+// n : 系列長
+// s : ストライド
+// q : 偶数位置奇数位置の切り替え引数
+// x : フーリエ変換する系列(入出力)
+// y : 作業用配列
+{
+    const int m = n/2;
+    const double theta0 = 2*M_PI/n;
+
+    if (n == 1) {}
+    else {
+        for (int p = 0; p &lt; m; p++) { // バタフライして偶数成分と奇数成分を合成
+            const complex_t wp = complex_t(cos(p*theta0), -sin(p*theta0));
+            const complex_t a = x[q + s*(p + 0)];
+            const complex_t b = x[q + s*(p + m)];
+            y[q + s*(2*p + 0)] =  a + b;
+            y[q + s*(2*p + 1)] = (a - b) * wp;
+        }
+        fft1(n/2, 2*s, q + 0, y, x); // 偶数位置のフーリエ変換(y が入力 x が出力)
+        fft1(n/2, 2*s, q + s, y, x); // 奇数位置のフーリエ変換(y が入力 x が出力)
+    }
+}
+
+void fft1(int n, int s, int q, complex_t* x, complex_t* y)
+// n : 系列長
+// s : ストライド
+// q : 偶数位置奇数位置の切り替え引数
+// x : フーリエ変換する系列(入力)
+// y : 作業用配列兼出力配列(出力)
+{
+    const int m = n/2;
+    const double theta0 = 2*M_PI/n;
+
+    if (n == 1) { y[q] = x[q]; }
+    else {
+        for (int p = 0; p &lt; m; p++) { // バタフライして偶数成分と奇数成分を合成
+            const complex_t wp = complex_t(cos(p*theta0), -sin(p*theta0));
+            const complex_t a = x[q + s*(p + 0)];
+            const complex_t b = x[q + s*(p + m)];
+            y[q + s*(2*p + 0)] =  a + b;
+            y[q + s*(2*p + 1)] = (a - b) * wp;
+        }
+        fft0(n/2, 2*s, q + 0, y, x); // 偶数位置のフーリエ変換(y が入力で同時に出力)
+        fft0(n/2, 2*s, q + s, y, x); // 奇数位置のフーリエ変換(y が入力で同時に出力)
+    }
+}
+
+void fft(int N, complex_t* x) // フーリエ変換
+// N : 系列長
+// x : フーリエ変換する系列(入出力)
+{
+    complex_t* y = new complex_t[N]; // 並べ替え用作業配列の確保
+    fft0(N, 1, 0, x, y);
+    delete[] y;
+    for (int k = 0; k &lt; N; k++) x[k] /= N;
+}
+
+void ifft(int N, complex_t* x) // 逆フーリエ変換
+// N : 系列長
+// x : 逆フーリエ変換する系列(入出力)
+{
+    for (int p = 0; p &lt; N; p++) x[p] = conj(x[p]);
+    complex_t* y = new complex_t[N]; // 並べ替え用作業配列の確保
+    fft0(N, 1, 0, x, y);
+    delete[] y;
+    for (int k = 0; k &lt; N; k++) x[k] = conj(x[k]);
+}
+</pre>
+<p>
+　いきなり相互再帰が登場していますが、
+これは配列の書き換えを効率的に行うためです。Stockham
+のアルゴリズムでは並べ替えのための作業領域 <code>y</code> が必要です。
+並べ替えた結果を一旦作業領域に保存します。保存した結果をすぐに
+<code>x</code> に書き戻してやれば相互再帰にならずに済みますが、
+それではバタフライ演算と偶数成分奇数成分の合成を一緒にして、
+配列の読み書きを減らした意味がなくなります。<code>x</code> と <code>y</code>
+を交互に書き換えれば余分な読み書きは最小限にできます。
+そのため相互再帰になっています。
+</p>
+<p>
+　簡単に相互再帰の <code>fft0</code>, <code>fft1</code>
+について説明しておきましょう。<code>fft0(n, s, q, x, y)</code> はサイズ
+<code>n</code> のフーリエ変換で、入力 <code>x</code>
+を受け取りストライド <code>s</code> でフーリエ変換した結果を再び
+<code>x</code> に書き戻します。<code>y</code> は作業領域として使われます。
+<code>q</code> は偶数位置と奇数位置を切り替えるために使われます。
+</p>
+<p>
+　<code>fft1(n, s, q, x, y)</code> はサイズ <code>n</code> のフーリエ変換で、
+入力 <code>x</code> を受け取りストライド <code>s</code>
+でフーリエ変換した結果を <code>y</code> に書き込みます。
+<code>q</code> は偶数位置と奇数位置を切り替えるために使われます。
+出力変数が <code>y</code> になっていることに注意してください。
+これで <code>x</code> と <code>y</code> を交互に書き換え出来るようになります。
+</p>
+<p>
+　さて、今までの書き換えは理解できたでしょうか。
+実はこれで Stockham のアルゴリズムになっています。
+めったにお目にかかれないと言うか、
+このサイト以外では見られないかもしれない再帰版の Stockham のアルゴリズムです。
+試しに \(n=2^{L-h}\),\(~m=2^{-1}n\),\(~s=2^h\),\(~x_h(q,p)=x_h[q+sp]\)
+とおいてバタフライ演算を <a href="recurrence.html">漸化式</a>
+に書き換えてみてください。
+以下のようになるはずです。\(x_h[~]\) は計算 \(h\) 段目の配列です。
+入力系列 \(x_0[~]\) から始めて \(x_L[~]\)
+を求めるとフーリエ変換出来ます(係数 \(\frac{1}{N}\) をかける必要があります)。
+</p>
+<div style="font-size:141%;">
+\[
+\begin{eqnarray*}
+    x_{h+1}(q,p)     & = & x_h(q,p) + x_h(q,p + m) \\
+    x_{h+1}(q + s,p) & = & \left(x_h(q,p) - x_h(q,p + m)\right)W_N^{sp} \\
+    q                & = & 0,1,\ldots,s-1 \\
+    p                & = & 0,1,\ldots,m-1 \\
+\end{eqnarray*}
+\]
+</div>
+<p>
+<code>fft0(n,s,q,x,y)</code> あるいは <code>fft1(n,s,q,x,y)</code>
+の呼ばれ方に注目して、<code>s=1,2,4,8,...</code> の時、
+<code>q</code> の取る値の範囲を考えると、
+以下のようになることに注意してください。
+</p>
+<pre>
+    再帰０段目 s=1:q=0
+    再帰１段目 s=2:q=0,      1
+    再帰２段目 s=4:q=0,  2,  1,  3
+    再帰３段目 s=8:q=0,4,2,6,1,5,3,7
+    ...
+</pre>
+<p>
+　え？何？Stockham のアルゴリズムにならない？う〜ん、そうかもしれませんね。
+私もこの変形を最初に思いついたときはそう思いました。「やべぇ！俺、
+フーリエ変換なんていう基本的な分野で新しいアルゴリズムを思いついちゃったよ。
+俺って天才？うひ！」とそれはもう興奮したもんです。いやマジで。しかし、
+よくよく調べてみるとこれは周波数間引き(DIF)の Stockham
+のアルゴリズムというやつだったんですね。残念！このアルゴリズムが Stockham
+のアルゴリズムにならないと思った人はたぶん、
+時間間引き(DIT)の Stockham のアルゴリズムを想定していたんでしょう。
+ベースとなる Cooley-Tukey のアルゴリズムが DIT の場合、
+DIT 版の Stockham になります。実際に書いてみると以下のようになります。
+</p>
+<a name="list:selfsort-dit1"></a>
+<div style="text-align:center;max-width:900px">
+リスト４：時間間引き Stockham のアルゴリズム
+</div>
+<pre style="border:1px solid gray;padding:4px;max-width:900px;overflow:auto">
+#include &lt;complex&gt;
+#include &lt;cmath&gt;
+
+typedef std::complex&lt;double&gt; complex_t;
+
+void fft1(int n, int s, int q, complex_t* x, complex_t* y);
+
+void fft0(int n, int s, int q, complex_t* x, complex_t* y)
+// n : 系列長
+// s : ストライド
+// q : 偶数位置奇数位置の切り替え引数
+// x : フーリエ変換する系列(入出力)
+// y : 作業用配列
+{
+    const int m = n/2;
+    const double theta0 = 2*M_PI/n;
+
+    if (n == 1) {}
+    else {
+        fft1(n/2, 2*s, q + 0, y, x); // 偶数位置のフーリエ変換(x が入力 y が出力)
+        fft1(n/2, 2*s, q + s, y, x); // 奇数位置のフーリエ変換(x が入力 y が出力)
+        for (int p = 0; p &lt; m; p++) {
+            const complex_t wp = complex_t(cos(p*theta0), -sin(p*theta0));
+            const complex_t a = y[q + s*(2*p + 0)];
+            const complex_t b = y[q + s*(2*p + 1)] * wp;
+            x[q + s*(p + 0)] = a + b;
+            x[q + s*(p + m)] = a - b;
+        }
+    }
+}
+
+void fft1(int n, int s, int q, complex_t* x, complex_t* y)
+// n : 系列長
+// s : ストライド
+// q : 偶数位置奇数位置の切り替え引数
+// x : 作業用配列兼出力配列(出力)
+// y : フーリエ変換する系列(入力)
+{
+    const int m = n/2;
+    const double theta0 = 2*M_PI/n;
+
+    if (n == 1) { x[q] = y[q]; }
+    else {
+        fft0(n/2, 2*s, q + 0, y, x); // 偶数位置のフーリエ変換(y が入力で同時に出力)
+        fft0(n/2, 2*s, q + s, y, x); // 奇数位置のフーリエ変換(y が入力で同時に出力)
+        for (int p = 0; p &lt; m; p++) {
+            const complex_t wp = complex_t(cos(p*theta0), -sin(p*theta0));
+            const complex_t a = y[q + s*(2*p + 0)];
+            const complex_t b = y[q + s*(2*p + 1)] * wp;
+            x[q + s*(p + 0)] = a + b;
+            x[q + s*(p + m)] = a - b;
+        }
+    }
+}
+
+void fft(int N, complex_t* x) // フーリエ変換
+// N : 系列長
+// x : フーリエ変換する系列(入出力)
+{
+    complex_t* y = new complex_t[N]; // 並べ替え用作業配列の確保
+    fft0(N, 1, 0, x, y);
+    delete[] y;
+    for (int k = 0; k &lt; N; k++) x[k] /= N;
+}
+
+void ifft(int N, complex_t* x) // 逆フーリエ変換
+// N : 系列長
+// x : 逆フーリエ変換する系列(入出力)
+{
+    for (int p = 0; p &lt; N; p++) x[p] = conj(x[p]);
+    complex_t* y = new complex_t[N]; // 並べ替え用作業配列の確保
+    fft0(N, 1, 0, x, y);
+    delete[] y;
+    for (int k = 0; k &lt; N; k++) x[k] = conj(x[k]);
+}
+</pre>
+<p>
+　どうでしょう。<a href="recurrence.html">漸化式</a>
+は Stockham のアルゴリズムになりましたね。おっと、
+時間間引きの場合 \(m=2^h\),\(~t=2^{L-h}\),\(~s=2^{-1}t\),\(~x_h(q,p)=x_h[q+tp]\)
+とおくのを忘れないでください。
+</p>
+<div style="font-size:141%;">
+\[
+\begin{eqnarray*}
+    x_{h+1}(q,p)     & = & x_h(q,p) + x_h(q + s,p)W_N^{sp} \\
+    x_{h+1}(q,p + m) & = & x_h(q,p) - x_h(q + s,p)W_N^{sp} \\
+    q                & = & 0,1,\ldots,s-1 \\
+    p                & = & 0,1,\ldots,m-1 \\
+\end{eqnarray*}
+\]
+</div>
+<p>
+　何？まだ Stockham のアルゴリズムにならない？そうですね。実はその後の調査で、
+ここで示した方法とは違った Stockham
+のアルゴリズムがあるらしいことが分かりました。
+申し訳ありませんが私も詳しいことは分かっていません。
+もう一つの Stockham のアルゴリズムを想定していた人にはごめんなさい。
+とりあえず、Stockham のアルゴリズムの種類に関して
+<a href="stockham4.html#kindsofstockham">こちら</a>
+でまとめてあります。
+</p>
+<p>
+　さて、これで一応 Stockham のアルゴリズムが求まりました。
+これでめでたしめでたしとなればいいんですが、実はそんなに甘くありません。
+このアルゴリズムは Stockham のアルゴリズムが Cooley-Tukey
+のアルゴリズムからの単純な変形だと説明するのには有効ですが、
+依然として遅いままです。
+ようするにこのままでは Stockham のアルゴリズムを用いる意味がないのです。
+次章、
+<a href="stockham2.html#stockham-speedup">セクション2</a>
+では、さらなる書き換えを行って高速なStockham のアルゴリズムを導きます。
+</p>
+
+<hr>
+<b>Top:</b> <a href="../index.html">トップページ</a>
+<b>Up:</b> <a href="index.html">メニュー</a>
+<b>Next:</b> <a href="stockham2.html">繰り返しによる Stockham FFT</a>
+<b>Reference:</b> <a href="../otfft-en/stockham1.html">English Page</a>&nbsp;
+<b>おすすめ：</b> <a href="../infinity/index.html">実数とは何か？無限とは？</a>
+</body>
+</html>

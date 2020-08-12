@@ -1,0 +1,11 @@
+@charset "UTF-8";
+@import url(http://fonts.googleapis.com/css?family=Inconsolata);
+html {
+    font-size: 1.05em; line-height: 1.50em;
+    font-family: "Times New Roman", "Hiragino Mincho Pro", "Meiryo", sans-serif;
+}
+code,pre {
+    font-size: 1.05em; line-height: 1.20em;
+    font-family: "Inconsolata", "Hiragino Sans", "Meiryo", monospace;
+}
+body { background-image: url(b007.gif); }

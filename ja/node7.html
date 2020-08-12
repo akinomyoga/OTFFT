@@ -1,0 +1,183 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="ja">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<meta http-equiv="Content-Script-Type" content="text/javascript">
+<meta name="description" content="OTFFT のダウンロード">
+<meta name="keywords" content="Stockham FFT">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="stylesheet" href="stockham.css" type="text/css">
+<link rel="next" href="node8.html">
+<link rel="prev" href="node6.html">
+<link rel="up" href="stockham.html">
+
+<script type="text/javascript" src="ga.js"></script>
+
+<title>OTFFT のダウンロード</title>
+</head>
+<body>
+<b>Next:</b> <a href="node8.html">Stockham のアルゴリズムの種類</a>
+<b>Up:</b> <a href="stockham.html">トップページ</a>
+<b>Previous:</b> <a href="node6.html">OpenMP を用いない OTFFT</a>
+<b>Reference:</b> <a href="http://www.moon.sannet.ne.jp/okahisa/otfft-en/">English Page</a>
+<hr>
+
+<h1><a name="download"></a>
+OTFFT のダウンロード
+</h1>
+<p style="color:red">
+　このサイトは、もうしばらくすると閉鎖されます。
+使っているプロバイダが、私の在住する地域でのサービスを終了するからです。
+新しいプロバイダで、ホームページを開設する方法とかまだ不明なので、
+このサイトはしばらくネットから姿を消すと思います。
+また、この際、
+今まで SEO 対策を考えて変更できなかった部分をメンテナンスしようと思うので、
+復活にはしばらく時間がかかると思います。
+</p>
+<p style="color:red">
+　なので、OTFFT を使わないと死んじゃうー！って人がもしもいるなら、
+ダウンロードはお早めにw
+</p>
+<p>
+　Stockham のアルゴリズムと AVX/AVX2 を使った高速な FFT ライブラリ OTFFT
+は以下のリンクからダウンロードできます。OTFFT は MIT ライセンスです。
+</p>
+<ul>
+    <li> OktinyMP 版 OTFFT -
+    <a href="oktinympdl.html">こちらのページへどうぞ</a>
+    </li>
+    <li>OTFFT (Mac/Linux/Cygwin 用) -
+    <a href="otfft-9.5.tar.gz">otfft-9.5.tar.gz</a>
+    <span style="color:black">(2016/10/16)</span>
+    </li>
+    <li>OTFFT (Visual Studio 2015 nmake 用) -
+    <a href="otfft-9.5v.zip">otfft-9.5v.zip</a>
+    <span style="color:black">(2016/10/22)</span>
+    </li>
+    <li>OTFFT (Mac/Linux/Cygwin 用) -
+    <a href="otfft-8.6.tar.gz">otfft-8.6.tar.gz</a>
+    <span style="color:black">(2016/9/25)</span>
+    </li>
+    <li>OTFFT (Visual Studio nmake 用) -
+    <a href="otfft-8.6v.zip">otfft-8.6v.zip</a>
+    <span style="color:black">(2016/9/25)</span>
+    </li>
+</ul>
+<p>
+　コンパイルするには非常に長い時間がかかります。辛抱強くお待ちください。
+使い方は <a href="node5.html#otfft-usage">セクション5</a> を参照してください。
+</p>
+<hr>
+<p>
+　バージョン 9.5 では、実質的な変更点はありません。
+ベンチマーク用の simple_fft.h のコードを整理しました。
+その代わり、OktinyMP という並列処理ライブラリを作って、
+OpenMP の代わりにそれを用いて OTFFT を書き換えたバージョンをリリースしました。
+</p>
+<p>
+　バージョン 9.4 では、
+fwdn, inv0 メンバ関数がリンクできなかったバグを修正しました。
+やっぱテストをサボるとダメですね。orz
+</p>
+<p>
+　バージョン 9.3 では、OTFFT のユーザーからのフィードバックで complex_t
+のインターフェイスのバグを修正しました。えっ？ OTFFT にユーザーっていたの？
+ええ、いるんですよ。えっへん！合わせてバージョン 8.6 もリリースしました。
+古いコンパイラ用のコードを残したバージョンです。繰り返しますが、
+決して古いコンパイラでの動作を保証するものではありません。
+余談ながら、Mac では、とうとう GCC でコンパイルすると
+warning が出るようになってしまいました。
+これまで Clang をアセンブラとして使うことで誤魔化してきたんですが、
+Clang 側も OpenMP 対応を果たし、
+もう GCC のアセンブラを務める必要は無くなったと思ったのかもしれません。
+今後、GCC との非互換性が拡大したら困るなぁ。
+</p>
+<p>
+　バージョン 9.2 では、Mac のデフォルトの Makefile のコンパイラを GCC から
+Clang に変更し、ベンチマークも Clang で行いました。なぜかって？
+Clang でコンパイルすると FFTW のパフォーマンスが劇的に低下して、
+相対的に OTFFT の成績が向上するからです！(おいー)
+と、思ったら、FFTW が バージョン 3.3.5 で遅くなったみたいですね。う〜ん。
+変更の本当の理由は、
+Mac で AVX と OpenMP を使おうとすると MacPorts の Clang が最も簡単だからです。
+私以外の人がベンチマークするとき、簡単な方が良いでしょ？
+</p>
+<p>
+　バージョン 8.5, 9.1 では、Visual Studio での重大なバグを修正しました。
+noexcept を使っているコードがうまくコンパイル出来ませんでした。
+私が確認しているベンチマークプログラムでは、
+うまい具合にバグをよけていて、問題なくコンパイル出来ていたので発見が遅れました。
+8.5 は、古いコンパイラ用のコードを残しているバージョンです。
+</p>
+<p>
+　バージョン 9.0 では、
+場当たり的に対応してきた古いコンパイラのサポートを廃止し、
+ごちゃごちゃとした汚いコードを削除しました。
+そもそも古いコンパイラでコンパイルして確認してはおらず、
+実際に動くかどうか分からない状態でした。
+そんなわけで、あまり意味がないと判断しました。
+一応、バージョン 8.4 も残しておきますが、
+決して古いコンパイラでの動作を保証するものではありません。
+</p>
+<p>
+　バージョン 8.4 では、Visual Studio で、
+AVX2 がうまく使えていなかったのを修正しました。
+</p>
+<p>
+　バージョン 8.3 では、Mac の Xcode 付属の clang++ で、
+コンパイル時に warning が出ないように修正しました。
+</p>
+<p>
+　バージョン 8.2 では、実行環境に合わせてチューンニングするコマンドを調整して、
+より適切なヘッダーファイルを生成するようにしました。以前より、ffttune に、
+ちょっと時間がかかるようになりますが、大きなサイズで効果があります。
+</p>
+<p>
+　バージョン 8.1 では、OTFFT が混合基数 FFT になりました。また、
+扱うメモリがアラインされていなくても動作する、
+アンアラインモードを用意しました。
+</p>
+<p>
+　バージョン 7.0 では、OS X/Linux/Cygwin 用で、
+OTFFT を C99 と Fortran 2003 から呼び出すインターフェイスを用意しました。
+Visual Studio nmake 版ではサポートされません。
+</p>
+<p>
+　バージョン 6.5 では、
+シングルスレッドモードのバグを修正しました。
+初期化がシングルスレッドで実行されていませんでした<code>(^^;</code>
+初期化の時間を含まないベンチマークには影響ありません。
+</p>
+<p>
+　バージョン 6.4 では、シングルスレッドモードをサポートしました。
+また、Amazon EC2 で 32 並列のベンチマークを行い、
+メニーコアに対するパラメータ調整を行いました。
+</p>
+<p>
+　バージョン 6.3 では、C++11 と C++98 の切り替えを
+__cplusplus マクロで自動判定するようにしました。
+</p>
+<p>
+　バージョン 6.2 では、四捨五入まわりのコードを整理しました。
+6.1 と実質的な違いはありません。
+</p>
+<p>
+　バージョン 6.1 では Makefile のバグを修正しています。その他、
+sleep 系関数を C++11 の sleep_for で実装しました。これで、
+C++11 以降の標準以外の関数は SSE2/AVX/AVX2 のイントリンシックのみとなりました。
+個人的には、かな〜り気持ちいいですね。
+</p>
+<p>
+　バージョン 6.0 から
+OTFFT 自身のコンパイルには C++11 を使うようになりました。
+時間計測に chrono を用いています。リンクするプログラムは C++03 でも OK です。
+</p>
+<hr>
+<b>Next:</b> <a href="node8.html">Stockham のアルゴリズムの種類</a>
+<b>Up:</b> <a href="stockham.html">トップページ</a>
+<b>Previous:</b> <a href="node6.html">OpenMP を用いない OTFFT</a>
+<b>Reference:</b> <a href="http://www.moon.sannet.ne.jp/okahisa/otfft-en/">English Page</a>
+</body>
+</html>

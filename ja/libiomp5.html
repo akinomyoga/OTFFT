@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="description" content="macOS への GCC と Intel OpenMP Runtime の導入">
+<meta name="keywords" content="AVX,Intel OpenMP,MacPorts,GCC">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,noarchive">
+
+<link rel="stylesheet" href="stockham.css" type="text/css">
+<link rel="up" href="otfft1.html">
+
+<!--
+<script async src="ga.js"></script>
+-->
+
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-37705186-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-37705186-1');
+</script>
+
+<title>macOS への GCC と Intel OpenMP Runtime の導入</title>
+</head>
+<body>
+関連リンク：<a href="otfft1.html">OTFFT -- FFTW より速い FFT ライブラリ</a>
+<hr>
+
+<h1>macOS への GCC と Intel OpenMP Runtime の導入</h1>
+<p style="color:red">
+　このページの情報は既に古くなっており、現状を反映していません。
+参考のために残してあるページです。
+</p>
+<p>
+　私は普段 Mac で <a href="otfft1.html">OTFFT</a> の開発等を行っています。
+Mac は MacPorts などを使えば簡単に最新の GCC を導入できたりして便利なのですが、
+AVX や AVX2 を使おうとするとそのままではエラーになってしまいます。
+また、GCC の OpenMP はどうやら Linux に最適化されているようで、
+macOS で GCC デフォルトの libgomp を使うと Linux ほど性能が出ません。
+</p>
+<p>
+　そこで、このページでは macOS の GCC で AVX/AVX2 を使うための設定や、
+macOS で libgomp より性能が上がる
+<a href="https://www.openmprtl.org/download#stable-releases">Intel OpenMP Runtime</a>
+の導入方について説明します。
+</p>
+
+<h2>【macOS の GCC で AVX/AVX2 を使う】</h2>
+<p>
+　macOS での GCC の導入自身は MacPorts を使えば説明するまでもなく簡単にできます。
+問題は、コンパイルオプションに -march=native や -mtune=native をつけて、
+AVX や AVX2 が使える CPU に対して最適化しようとするとエラーになることです。
+これを回避するには以下の設定を行います。
+</p>
+<!--
+<pre>
+    cd /opt/local/bin
+    sudo ln -s /Library/Developer/CommandLineTools/usr/bin/clang
+</pre>
+-->
+<pre>
+    cd /opt/local/bin
+    sudo ln -s /usr/bin/clang
+</pre>
+<p>
+　この設定をしてから g++ 等でコンパイルするとき
+-Wa,-q オプションをつければエラーは出なくなります。
+具体的には以下のようにします。
+</p>
+<pre>
+    g++-mp-6 -Ofast -Wa,-q -march=native hello.cpp -o hello
+</pre>
+<!--
+<p>
+　以前は、clang へのリンクは /usr/bin/clang でも大丈夫でしたが、
+バージョン 8.0.0 から warning が出るようになってしまいました。
+/Library/Developer/CommandLineTools/usr/bin/clang はバージョンが古く、
+そのおかげで GCC との互換性が保たれているようです。
+ひょっとすると、将来的には GCC との互換性が完全に失われるかもしれません。
+そうすると、gfortran で AVX が使えなくなるかもしれません。
+C++ は clang++ があるから何とかなるんですけどね。
+</p>
+-->
+
+<h2>【macOS で Intel OpenMP Runtime  を使う】</h2>
+<p>
+　まずは、
+<a href="https://www.openmprtl.org/download#stable-releases">こちらのページ</a>
+から Intel OpenMP Runtime をダウンロードしておきましょう。
+</p>
+<p>
+　次に、Intel OpenMP Runtime をビルドするために cmake をインストールします。
+MacPorts にありますのでインストールしてください。続いて、
+先ほどダウンロードした Intel OpenMP Runtime を展開したフォルダに移動して、
+以下のコマンドを実行します。
+</p>
+<pre>
+    cmake CMakeLists.txt
+    make
+</pre>
+<p>
+　たぶん正式には、この後 make install 等を行ってインストールするのでしょうが、
+私は Mac のデフォルト環境をできるだけ汚したくないのでやりませんでした。
+そこで、
+手動で自分が開発のために準備したフォルダに必要なファイルを配置しました。
+</p>
+<p>
+　ビルドされたライブラリ libiomp5.dylib は、
+Intel OpenMP Runtime を展開したフォルダが $iomp5 だとすれば、
+$iomp5/exports/mac_32e/lib.thin フォルダに入っています。
+mac_32e の部分はアーキテクチャによって変化するようです。
+その他、$iomp5/src にも入っています。
+これを自分の使うフォルダへコピーしておきましょう。
+私は $HOME/lib フォルダに配置しました。
+このフォルダは魔法のフォルダです。
+詳しくは man dyld の DYLD_FALLBACK_LIBRARY_PATH の説明を参照してください。
+</p>
+<p>
+　OpenMP のヘッダファイルは、$iomp5/exports/common/include
+に入っています。これも自分の使うフォルダへコピーしておきましょう。
+これで GCC で libgomp の代わりに libiomp5 を使う準備が整いました。
+</p>
+<p>
+　最後にコンパイル方についてですが、以下のように２段階でコンパイルします。
+$iomp5include は Intel OpenMP Runtime のヘッダファイルを配置したフォルダです。
+</p>
+<pre>
+    g++-mp-6 -Ofast -Wa,-q -fopenmp -I$iomp5include -c hello.cpp
+    g++-mp-6 hello.o -L$HOME/lib -liomp5 -o hello
+</pre>
+<p>
+　余談ですが、Intel OpenMP Runtime は macOS の場合、
+デフォルトでは clang でビルドされます。GCC でビルドしたい場合は、
+cmake コマンドを実行するとき以下のようにします。
+</p>
+<pre>
+    cmake -DCMAKE_C_COMPILER=gcc-mp-6 -DCMAKE_CXX_COMPILER=g++-mp-6 CMakeLists.txt
+</pre>
+<p>
+　また、コンパイルオプションを変更したい場合などは ccmake コマンドを使います。
+以下のようにします。
+</p>
+<pre>
+    ccmake .
+</pre>
+
+<hr>
+関連リンク：<a href="otfft1.html">OTFFT -- FFTW より速い FFT ライブラリ</a>
+</body>
+</html>

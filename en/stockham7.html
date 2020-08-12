@@ -1,0 +1,285 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<meta http-equiv="Content-Script-Type" content="text/javascript">
+<meta name="description" content="Optimization using the Six-Step FFT and Eight-Step FFT">
+<meta name="keywords" content="Six-Step FFT,FFT,C++">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="stylesheet" href="otfft-en.css" type="text/css">
+<link rel="prev" href="stockham6.html">
+<link rel="alternate" hreflang="en" href="http://www.moon.sannet.ne.jp/okahisa/otfft-en/stockham7.html">
+<link rel="alternate" hreflang="ja" href="http://www.moon.sannet.ne.jp/okahisa/stockham/node11.html">
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+<script type="text/javascript" src="ga.js"></script>
+
+<title>Optimization using the Six-Step FFT and Eight-Step FFT</title>
+</head>
+<body>
+<b>Reference:</b>&nbsp;
+<a href="stockham6.html">Previous Page</a>&nbsp;&nbsp;
+<a href="stockham1.html">Top Page</a>&nbsp;&nbsp;
+<a href="http://www.moon.sannet.ne.jp/okahisa/stockham/node11.html">Japanese Page</a>
+<hr>
+
+<h1>Optimization using the Six-Step FFT and Eight-Step FFT</h1>
+<p>
+In this page, I explain a optimization of FFT using the Six-Step FFT algorithm.
+</p>
+<p>
+First, we will define discrete Fourier transform (DFT).
+DFT \(F_N\) is defined as follows
+when we assume that \(x_p\) is an input sequence
+and assume that \(X_k\) is an output sequence
+and assume that the size is \(N = 2^L\), \(L=0,1,2,3,\ldots\)
+</p>
+\[
+X_k = F_N(x_p) = \frac{1}{N}\sum_{p=0}^{N-1}x_p W_N^{kp},~W_N = \exp\left(-j\frac{2\pi}{N}\right),~j = \sqrt{-1} \\
+k = 0,1,2,3,\ldots,N-1
+\]
+<p>
+Now, we express \(x_p\) with the array \(x[p]\),
+and if \(N\) can be factored like \(N = nm\),
+it can two-dimensionaly be expressed by using \(p_1\) and \(p_2\) as follows.
+</p>
+\[
+x_p = x[p_1 + p_2n],~p = p_1 + p_2n
+\]
+<p>
+Here, \(p_1 = 0,1,\ldots,n-1\) and \(p_2 = 0,1,\ldots,m-1\).
+</p>
+<p>
+Similarly, when we express \(X_k\) with the array \(X[k]\),
+it can two-dimensionaly be expressed by using \(k_1\) and \(k_2\) as follows.
+</p>
+\[
+X_k = X[k_1 + k_2m],~k = k_1 + k_2m
+\]
+<p>
+Here, \(k_1 = 0,1,\ldots,m-1\) and \(k_2 = 0,1,\ldots,n-1\).
+</p>
+<p>
+Now, if we transform \(F_N\) by using the following relations,
+</p>
+\[
+kp = (k_1 + k_2m)(p_1 + p_2n) = k_1p_1 + k_1p_2n + k_2p_1m + k_2p_2N \\
+W_N^{k_1p_2n} = W_m^{k_1p_2},~W_N^{k_2p_1m} = W_n^{k_2p_1},~W_N^{k_2p_2N} = 1
+\]
+<p>
+\(F_N\) can be transformed into
+a dual discrete Fourier transform \(G_N\) as follows.
+</p>
+\[
+X[k_1 + k_2m] = G_N(x[p_1 + p_2n]) = \frac{1}{n}\sum_{p_1=0}^{n-1}\left(\left(\frac{1}{m}\sum_{p_2=0}^{m-1}x[p_1 + p_2n]W_m^{k_1p_2}\right)W_N^{k_1p_1}\right)W_n^{k_2p_1}
+\]
+<p>
+Next, let's define a few terms.
+If we fix the \(p_2\) of \(x[p_1 + p_2n]\) to \(p_2 = q\),
+\(x\) is regarded as the array that has only the index \(p_1\).
+We call this array the \(q\)-line of \(x\). In addition,
+\(y\) which satisfies the next relation: \(x[p_1 + p_2n] = y[p_2 + p_1m]\)
+is called the transposed array of \(x\).
+And, to get \(y\) is called "transpose \(x\)".
+\(G_N\) is calculated with the following steps if we use these terms.
+</p>
+<table style="padding-left:1em">
+<tr><td>STEP-1: </td><td>transpose \(x\)</td><td>\(x[p_1 + p_2n] \longrightarrow a[p_2 + p_1m]\)</td></tr>
+<tr><td>STEP-2: </td><td>FFT all \(p_1\)-line of \(a\) by \(F_m\)&nbsp;</td><td>\(a[p_2 + p_1m] \longrightarrow b[k_1 + p_1m]\)</td></tr>
+<tr><td>STEP-3: </td><td>multiply twiddle factor \(W_N^{k_1p_1}\)&nbsp;</td><td>\(b[k_1 + p_1m] \longrightarrow b[k_1 + p_1m]W_N^{k_1p_1} = c[k_1 + p_1m]\)</td></tr>
+<tr><td>STEP-4: </td><td>transpose \(c\)</td><td>\(c[k_1 + p_1m] \longrightarrow d[p_1 + k_1n]\)</td></tr>
+<tr><td>STEP-2: </td><td>FFT all \(k_1\)-line of \(d\) by \(F_n\)&nbsp;</td><td>\(d[p_1 + k_1n] \longrightarrow e[k_2 + k_1n]\)</td></tr>
+<tr><td>STEP-6: </td><td>transpose \(e\)</td><td>\(e[k_2 + k_1n] \longrightarrow X[k_1 + k_2m]\)</td></tr>
+</table>
+<p>
+The reason why transposition is necessary is
+because we are assuming that the subroutines \(F_n, F_m\) cannot transform
+the input sequence well when its stride is not 1.
+In this way, because we can execute FFT with six steps,
+this algorithm is called the Six-Step FFT.
+Of course, \(F_n\) and \(F_m\) are implemented with FFT.
+</p>
+<p>
+Even if we use the Six-Step FFT, the complexity is not changed from normal FFT.
+Well then, what is the advantage of the Six-Step FFT?
+In the case of normal FFT, the locality of memory access is decreased
+when the sequence length becomes larger.
+However, in the case of the Six-Step FFT,
+the locality of memory access is improved
+because it decomposes a large sequence to small sequences
+and executes each small FFT.
+Therefore, the performance of the Six-Step FFT is improved at large sequence.
+</p>
+<p>
+Implementation of the Six-Step FFT is as follows.
+</p>
+<a name="list:six-step"></a>
+<div style="text-align:center;max-width:1000px">
+List-11: Six-Step FFT
+</div>
+<pre style="border:1px solid gray;padding:4px;max-width:1000px;overflow:auto">
+#include &lt;complex&gt;
+#include &lt;cmath&gt;
+
+typedef std::complex&lt;double&gt; complex_t;
+
+void fft0(int n, int s, bool eo, complex_t* x, complex_t* y)
+// n  : sequence length
+// s  : stride
+// eo : x is output if eo == 0, y is output if eo == 1
+// x  : input sequence(or output sequence if eo == 0)
+// y  : work area(or output sequence if eo == 1)
+{
+    const int m = n/2;
+    const double theta0 = 2*M_PI/n;
+
+    if (n == 2) {
+        complex_t* z = eo ? y : x;
+        for (int q = 0; q &lt; s; q++) {
+            const complex_t a = x[q + 0];
+            const complex_t b = x[q + s];
+            z[q + 0] = a + b;
+            z[q + s] = a - b;
+        }
+    }
+    else if (n &gt;= 4) {
+        for (int p = 0; p &lt; m; p++) {
+            const complex_t wp = complex_t(cos(p*theta0), -sin(p*theta0));
+            for (int q = 0; q &lt; s; q++) {
+                const complex_t a = x[q + s*(p + 0)];
+                const complex_t b = x[q + s*(p + m)];
+                y[q + s*(2*p + 0)] =  a + b;
+                y[q + s*(2*p + 1)] = (a - b) * wp;
+            }
+        }
+        fft0(n/2, 2*s, !eo, y, x);
+    }
+}
+
+void sixstep_fft(int log_n, complex_t* x, complex_t* y)
+// log_n : logarithm of the sequence length(an even number of 2 or more)
+// x     : input/output sequence
+// y     : work area
+{
+    const int N = 1 &lt;&lt; log_n;
+    const int n = 1 &lt;&lt; (log_n/2); // N == n*n
+    for (int k = 0; k &lt; n; k++) { // transpose x
+        for (int p = k+1; p &lt; n; p++) {
+            const complex_t a = x[p+k*n];
+            const complex_t b = x[k+p*n];
+            x[p+k*n] = b;
+            x[k+p*n] = a;
+        }
+    }
+    for (int p = 0; p &lt; n; p++) // FFT all p-line of x
+        fft0(n, 1, 0, x + p*n, y + p*n);
+    for (int p = 0; p &lt; n; p++) { // multiply twiddle factor and transpose x
+        const double theta0 = 2*p*M_PI/N;
+        for (int k = p; k &lt; n; k++) {
+            const double theta = k*theta0;
+            const complex_t wkp = complex_t(cos(theta), -sin(theta));
+            if (k == p)
+                x[p+p*n] *= wkp;
+            else {
+                const complex_t a = x[k+p*n] * wkp;
+                const complex_t b = x[p+k*n] * wkp;
+                x[k+p*n] = b;
+                x[p+k*n] = a;
+            }
+        }
+    }
+    for (int k = 0; k &lt; n; k++) // FFT all k-line of x
+        fft0(n, 1, 0, x + k*n, y + k*n);
+    for (int k = 0; k &lt; n; k++) { // transpose x
+        for (int p = k+1; p &lt; n; p++) {
+            const complex_t a = x[p+k*n];
+            const complex_t b = x[k+p*n];
+            x[p+k*n] = b;
+            x[k+p*n] = a;
+        }
+    }
+}
+
+void eightstep_fft(int log_n, complex_t* x, complex_t* y)
+// log_n : logarithm of the sequence length(an odd number of 3 or more)
+// x     : input/output sequence
+// y     : work area
+{
+    const int n = 1 &lt;&lt; log_n;
+    const int m = n/2;
+    const double theta0 = 2*M_PI/n;
+    for (int p = 0; p &lt; m; p++) {
+        const double theta = p*theta0;
+        const complex_t wp = complex_t(cos(theta), -sin(theta));
+        const complex_t a = x[p+0];
+        const complex_t b = x[p+m];
+        y[p+0] =  a + b;
+        y[p+m] = (a - b) * wp;
+    }
+    sixstep_fft(log_n-1, y + 0, x + 0);
+    sixstep_fft(log_n-1, y + m, x + m);
+    for (int p = 0; p &lt; m; p++) {
+        x[2*p+0] = y[p+0];
+        x[2*p+1] = y[p+m];
+    }
+}
+
+void fft(int n, complex_t* x) // Fourier transform
+// n : sequence length
+// x : input/output sequence
+{
+    int log_n = 0;
+    for (int i = n; i &gt; 1; i &gt;&gt;= 1) log_n++;
+    complex_t* y = new complex_t[n];
+    if (n &lt;= 1) {}
+    else if (n == 2)       fft0(n, 1, 0, x, y);
+    else if (!(log_n &amp; 1)) sixstep_fft(log_n, x, y);
+    else                   eightstep_fft(log_n, x, y);
+    delete[] y;
+    for (int k = 0; k &lt; n; k++) x[k] /= n;
+}
+
+void ifft(int n, complex_t* x) // Inverse Fourier transform
+// n : sequence length
+// x : input/output sequence
+{
+    for (int p = 0; p &lt; n; p++) x[p] = conj(x[p]);
+    int log_n = 0;
+    for (int i = n; i &gt; 1; i &gt;&gt;= 1) log_n++;
+    complex_t* y = new complex_t[n];
+    if (n &lt;= 1) {}
+    else if (n == 2)       fft0(n, 1, 0, x, y);
+    else if (!(log_n &amp; 1)) sixstep_fft(log_n, x, y);
+    else                   eightstep_fft(log_n, x, y);
+    delete[] y;
+    for (int k = 0; k &lt; n; k++) x[k] = conj(x[k]);
+}
+</pre>
+<p>
+Above, sequence length \(N\) is assumed to be factored like \(N = nm\).
+In this condition, when \(n = m\),
+we can execute the transposition extremely effectively.
+Hence, in the subroutine <code>sixstep_fft()</code> of this code,
+we are assuming that \(n = m\).
+</p>
+<p>
+If \(n \neq m\), it can be decomposed by applying the Six-Step FFT algorithm
+under this assumption: \(n = \frac{N}{2}, m = 2\).
+Then, because \(n = uv\) and \(u = v\),
+we can execute \(F_n\) with the subroutine <code>sixstep_fft()</code>.
+I call this algorithm the Eight-Step FFT algorithm.
+</p>
+<p>
+By the way, I made the FFT library using the algorithm which we led here.
+If you are interested, please to <a href="index.html">this page</a>.
+</p>
+
+<hr>
+<b>Reference:</b>&nbsp;
+<a href="stockham6.html">Previous Page</a>&nbsp;&nbsp;
+<a href="stockham1.html">Top Page</a>&nbsp;&nbsp;
+<a href="http://www.moon.sannet.ne.jp/okahisa/stockham/node11.html">Japanese Page</a>
+</body>
+</html>

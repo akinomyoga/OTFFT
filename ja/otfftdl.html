@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="description" content="OTFFT のダウンロード">
+<meta name="keywords" content="Stockham FFT">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="stylesheet" href="stockham.css" type="text/css">
+<link rel="up" href="index.html">
+<link rel="prev" href="otfft2.html">
+<link rel="next" href="oktinymp1.html">
+<link rel="alternate" hreflang="ja" href="http://wwwa.pikara.ne.jp/okojisan/stockham/otfftdl.html">
+<link rel="alternate" hreflang="en" href="http://wwwa.pikara.ne.jp/okojisan/otfft-en/download.html">
+
+<!--
+<script src="ga.js"></script>
+-->
+
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-37705186-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-37705186-1');
+</script>
+
+<title>OTFFT のダウンロード</title>
+</head>
+<body>
+<b>Up:</b> <a href="index.html">メニュー</a>
+<b>Prev:</b> <a href="otfft2.html">OTFFT の使い方</a>
+<b>Next:</b> <a href="oktinymp1.html">OpenMP を用いない OTFFT</a>
+<b>Reference:</b> <a href="../otfft-en/download.html">English Page</a>
+<hr>
+
+<h1><a name="download"></a>
+OTFFT のダウンロード
+</h1>
+<p>
+　Stockham のアルゴリズムと AVX/FMA/AVX-512 を使った高速な FFT ライブラリ OTFFT
+は以下のリンクからダウンロードできます。OTFFT は MIT ライセンスです。
+</p>
+<p>
+　ホームページのディスク使用量節約のため、
+ダウンロードには Dropbox を使っています。
+リンクをクリックした先の
+<span style="color:red">「今は実行せずに表示を続行」</span>
+からダウンロードしてください。
+</p>
+<ul>
+    <li>OTFFT ソースコード (Mac/Linux/Cygwin 用) -
+    <a href="https://www.dropbox.com/s/i7uybgwim3hcj7u/otfft-11.5.tar.gz?dl=0">otfft-11.5.tar.gz</a>
+    <span style="color:black">(2019/9/9)</span>
+    </li>
+    <li>OTFFT ソースコードシングルスレッド版 (Mac/Linux/Cygwin 用) -
+    <a href="https://www.dropbox.com/s/q684k9g5vlmdkcs/otfft-11.5o.tar.gz?dl=0">otfft-11.5o.tar.gz</a>
+    <span style="color:black">(2019/9/24)</span>
+    </li>
+    <li>OTFFT ソースコード (Visual Studio 2019 nmake 用) -
+    <a href="https://www.dropbox.com/s/5ssgtjalp1fil1h/otfft-11.5v.zip?dl=0">otfft-11.5v.zip</a>
+    <span style="color:black">(2019/9/9)</span>
+    </li>
+    <li>OTFFT ソリューション(Visual Studio 2019 用) -
+    <a href="https://www.dropbox.com/s/wfp4mkhrnivqwue/otfft-11.5s.zip?dl=0">otfft-11.5s.zip</a>
+    <span style="color:black">(2019/9/9)</span>
+    </li>
+    <li>OTFFT バイナリ配布 (macOS Mojave/Ubuntu 18.04/Fedora 29 用) -
+    <a href="https://www.dropbox.com/s/aba1v2c5d0k6s6t/libotfft-11.5.tar.gz?dl=0">libotfft-11.5.tar.gz</a>
+    <span style="color:black">(2019/9/9)</span>
+    </li>
+    <li> OktinyMP 版 OTFFT -
+    <a href="oktinympdl.html">こちらのページへどうぞ</a>
+    </li>
+</ul>
+<p>
+　コンパイルするには非常に長い時間がかかります。辛抱強くお待ちください。
+使い方は <a href="otfft2.html#otfft-usage">セクション8</a> を参照してください。
+</p>
+<hr>
+<p>
+　バージョン 11.5o は、
+マルチスレッド機能を取り除いたシングルスレッド版です。
+今までもシングルスレッドモードはありましたが、
+ビルド時にマクロを定義するのが分かりにくいかもしれないので作りました。
+Amazon EC2 ではベンチマークはふるいませんが、
+ノートパソコンだと良い結果が出ます。
+</p>
+<p>
+　バージョン 11.5 では、ffttune コマンドの微修正をしました。
+</p>
+<p>
+　バージョン 11.4s は、Visual Studio 2019 のソリューションです。
+今時コマンドラインで nmake なんて正気の沙汰ではない。
+IDE でなければやってられるか！という人もいるかもしれないので作ってみました。
+でも、パフォーマンスは nmake 版の方がいいんですよ。
+</p>
+<p>
+　バージョン 11.4 では、ファイルの参照関係を整理しました。
+本質的な変更点はありません。
+</p>
+<p>
+　バージョン 11.3 では、初期化ルーチンの改良を行いました。
+</p>
+<p>
+　バージョン 11.2x は、
+OpenMP の代わりに C++11 のスレッド機能で実装されたバージョンです。
+<a href="oktinympdl.html">こちら</a> からダウンロードできます。
+OktinyMP という OK おじさん作の並列処理環境で実装されています。
+OpenMP 版よりちょっとだけ性能が良いです。
+また、macOS や Cygwin の GCC でコンパイルしても
+OpenMP 版のように性能低下したりしません。
+macOS や Cygwin の GCC でコンパイルしても性能低下しないポータブルでメジャーな
+OpenMP 実装はありませんので、
+いろんな環境でハイパフォーマンスな並列処理をしたいなら OktinyMP です！
+</p>
+<p>
+　バージョン 11.2 では、バージョン 11.1 で取り切れなかったバグを修正。
+OTFFT 本体ではなく、比較検証する側に原因がありました。
+そりゃないっすよ～。比較するプログラムをおとなしめのものに変更しました。
+なんか、最近 GCC のバージョンに関するバグばかり修正してる気がする。
+GCC にはより良いコンパイラになって欲しいけど、
+互換性も維持して欲しいなぁ。
+</p>
+<p>
+　バージョン 11.1 では、GCC 8 以降で計算結果がおかしくなるバグを修正しました。
+ただ、Fedora + GCC 8 以降で、
+ダイナミックリンクライブラリがうまく機能しないバグは修正できませんでした。
+</p>
+<p>
+　OTFFT はコードの自動生成等の手順があり、
+利用するのに多少ハードルが高いです。
+そこで、自動生成をスキップして最も無難なアルゴリズムに固定し、対応マシンを
+AVX が使えるマシンに限定したコンパイル済みの共有ライブラリを作ってみました。
+libotfft-11.0.tar.gz です。お手軽に OTFFT を使いたい人はお試しください。
+</p>
+<p>
+　バージョン 11.0 では、AVX-512 への対応を行いました。
+でも、効果のほどは微妙なんですよね。
+中程度のサイズの FFT では AVX-512 を使うと反って遅くなります。うーん。
+ところで、せっかく長いベクトル長に対応するのだから、
+この際、OTFFT のアルゴリズム上の限界のベクトルサイズまで対応しました。
+1024 bit ベクトルや 2048 bit ベクトルで計算します。
+ハードウェアのサポートがないのにソフトウェア的に長くしても無意味では？
+とおもわれるかもしれませんが、
+ベクトル長を長くするとループアンロール最適化が効いて速くなることがあるんです。
+遅くなることもありますけどね。
+とにかく、アルゴリズム的に大改革を行ったのでメジャーバージョン上げました。
+乾いた雑巾をしぼる程度ではありますけれど、それなりに速くなってます。
+</p>
+<p>
+　バージョン 10.2 では、gcc8 でコンパイルすると、
+計算結果がおかしくなるバグを修正しました。
+</p>
+<p>
+　バージョン 10.1 では、Six-Step FFT のコードを整理しました。
+その他、コードの実行順序を色々いじって最適化したつもり…。効果あるかな？
+って感じ(^^; 余談ながら、今回、gcc7 のバグに苦しめられました。
+clang や gcc6 では問題ないコードが gcc7 でコンパイルすると、
+おかしな計算結果になります。問題の部分は突き止めたのですが、
+バグが再現する最小のコードを切り出そうとしても再現しないという。
+多分、gcc7 は最適化周りにバグがあります。他の人のプログラムでも、
+知らないうちにおかしな結果になってるものがあるんじゃないかな。
+コンパイラのバグって恐ろしいですね。
+</p>
+<p>
+　バージョン 10.0 では、1024 以上の系列長でのメモリ消費量を削減しました。
+メモリ消費量が従来の 5/8 程度になりました。ただし、
+混合基数 FFT は従来のままです。 また、OpenMP を用いないバージョンで、
+実数 FFT や DCT で stop メンバ関数が実装されていないかったバグを修正しました。
+</p>
+<p>
+　バージョン 9.5 では、実質的な変更点はありません。
+ベンチマーク用の simple_fft.h のコードを整理しました。
+その代わり、OktinyMP という並列処理ライブラリを作って、
+OpenMP の代わりにそれを用いて OTFFT を書き換えたバージョンをリリースしました。
+</p>
+<p>
+　バージョン 9.4 では、
+fwdn, inv0 メンバ関数がリンクできなかったバグを修正しました。
+やっぱテストをサボるとダメですね。orz
+</p>
+<p>
+　バージョン 9.3 では、OTFFT のユーザーからのフィードバックで complex_t
+のインターフェイスのバグを修正しました。えっ？ OTFFT にユーザーっていたの？
+ええ、いるんですよ。えっへん！
+<!--
+合わせてバージョン 8.6 もリリースしました。
+古いコンパイラ用のコードを残したバージョンです。繰り返しますが、
+決して古いコンパイラでの動作を保証するものではありません。
+-->
+<!--
+余談ながら、Mac では、とうとう GCC でコンパイルすると
+warning が出るようになってしまいました。
+これまで Clang をアセンブラとして使うことで誤魔化してきたんですが、
+Clang 側も OpenMP 対応を果たし、
+もう GCC のアセンブラを務める必要は無くなったと思ったのかもしれません。
+今後、GCC との非互換性が拡大したら困るなぁ。
+-->
+</p>
+<p>
+　バージョン 9.2 では、Mac のデフォルトの Makefile のコンパイラを GCC から
+Clang に変更し、ベンチマークも Clang で行いました。なぜかって？
+Clang でコンパイルすると FFTW のパフォーマンスが劇的に低下して、
+相対的に OTFFT の成績が向上するからです！(おいー)
+と、思ったら、FFTW が バージョン 3.3.5 で遅くなったみたいですね。う〜ん。
+変更の本当の理由は、
+Mac で AVX と OpenMP を使おうとすると MacPorts の Clang が最も簡単だからです。
+私以外の人がベンチマークするとき、簡単な方が良いでしょ？
+</p>
+<p>
+　バージョン <!--8.5, -->9.1 では、Visual Studio での重大なバグを修正しました。
+noexcept を使っているコードがうまくコンパイル出来ませんでした。
+私が確認しているベンチマークプログラムでは、
+うまい具合にバグをよけていて、問題なくコンパイル出来ていたので発見が遅れました。
+<!--
+8.5 は、古いコンパイラ用のコードを残しているバージョンです。
+-->
+</p>
+<p>
+　バージョン 9.0 では、
+場当たり的に対応してきた古いコンパイラのサポートを廃止し、
+ごちゃごちゃとした汚いコードを削除しました。
+そもそも古いコンパイラでコンパイルして確認してはおらず、
+実際に動くかどうか分からない状態でした。
+そんなわけで、あまり意味がないと判断しました。
+<!--
+一応、バージョン 8.4 も残しておきますが、
+決して古いコンパイラでの動作を保証するものではありません。
+-->
+</p>
+<p>
+　バージョン 8.4 では、Visual Studio で、
+AVX2 がうまく使えていなかったのを修正しました。
+</p>
+<p>
+　バージョン 8.3 では、Mac の Xcode 付属の clang++ で、
+コンパイル時に warning が出ないように修正しました。
+</p>
+<p>
+　バージョン 8.2 では、実行環境に合わせてチューンニングするコマンドを調整して、
+より適切なヘッダーファイルを生成するようにしました。以前より、ffttune に、
+ちょっと時間がかかるようになりますが、大きなサイズで効果があります。
+</p>
+<p>
+　バージョン 8.1 では、OTFFT が混合基数 FFT になりました。また、
+扱うメモリがアラインされていなくても動作する、
+アンアラインモードを用意しました。
+</p>
+<p>
+　バージョン 7.0 では、OS X/Linux/Cygwin 用で、
+OTFFT を C99 と Fortran 2003 から呼び出すインターフェイスを用意しました。
+Visual Studio nmake 版ではサポートされません。
+</p>
+<p>
+　バージョン 6.5 では、
+シングルスレッドモードのバグを修正しました。
+初期化がシングルスレッドで実行されていませんでした<code>(^^;</code>
+初期化の時間を含まないベンチマークには影響ありません。
+</p>
+<p>
+　バージョン 6.4 では、シングルスレッドモードをサポートしました。
+また、Amazon EC2 で 32 並列のベンチマークを行い、
+メニーコアに対するパラメータ調整を行いました。
+</p>
+<p>
+　バージョン 6.3 では、C++11 と C++98 の切り替えを
+__cplusplus マクロで自動判定するようにしました。
+</p>
+<p>
+　バージョン 6.2 では、四捨五入まわりのコードを整理しました。
+6.1 と実質的な違いはありません。
+</p>
+<p>
+　バージョン 6.1 では Makefile のバグを修正しています。その他、
+sleep 系関数を C++11 の sleep_for で実装しました。これで、
+C++11 以降の標準以外の関数は SSE2/AVX/AVX2 のイントリンシックのみとなりました。
+個人的には、かな〜り気持ちいいですね。
+</p>
+<p>
+　バージョン 6.0 から
+OTFFT 自身のコンパイルには C++11 を使うようになりました。
+時間計測に chrono を用いています。リンクするプログラムは C++03 でも OK です。
+</p>
+
+<hr>
+<b>Up:</b> <a href="index.html">メニュー</a>
+<b>Prev:</b> <a href="otfft2.html">OTFFT の使い方</a>
+<b>Next:</b> <a href="oktinymp1.html">OpenMP を用いない OTFFT</a>
+<b>Reference:</b> <a href="../otfft-en/download.html">English Page</a>
+</body>
+</html>

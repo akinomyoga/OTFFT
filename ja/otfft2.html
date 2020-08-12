@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="description" content="OTFFT の使い方">
+<meta name="keywords" content="stockham">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="stylesheet" href="stockham.css" type="text/css">
+<link rel="prev" href="otfft1.html">
+<link rel="up" href="index.html">
+<link rel="next" href="otfftdl.html">
+<link rel="alternate" hreflang="ja" href="http://wwwa.pikara.ne.jp/okojisan/stockham/otfft2.html">
+<link rel="alternate" hreflang="en" href="http://wwwa.pikara.ne.jp/okojisan/otfft-en/documentation.html">
+
+<!--
+<script async src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+<script async src="ga.js"></script>
+-->
+
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-37705186-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-37705186-1');
+</script>
+
+<title>OTFFT の使い方</title>
+</head>
+<body>
+<b>Up:</b> <a href="index.html">メニュー</a>
+<b>Prev:</b> <a href="otfft1.html">OTFFT -- FFTW より速い FFT ライブラリ</a>
+<b>Next:</b> <a href="otfftdl.html">OTFFT のダウンロード</a>
+<b>Reference:</b> <a href="../otfft-en/documentation.html">English Page</a>
+<hr>
+
+<h1><a name="otfft-usage"></a>
+OTFFT の使い方
+</h1>
+<p>
+　さて、いったい何人の方が使ってくださるか分かりませんが、
+筆者 OK おじさんの提案する OTFFT の使い方について説明しておきましょう。
+</p>
+<h3>【OTFFT とは】</h3>
+<p>
+　OTFFT とは、Stockham FFT のアルゴリズムと SSE2/AVX/AVX2
+などを組み合わせた高速な FFT ライブラリです。
+C++ の template によるメタプログラミング技法も用いています。
+OTFFT は、OK おじさん Template FFT の略です。
+OK おじさんは、OTFFT の開発者のニックネームです。
+</p>
+<h3>【使用上の注意】</h3>
+<p>
+　OTFFT は、Clang でコンパイルする場合、コンパイルする環境に最適化されます。
+つまり、AVX が有効な環境でコンパイルすれば、AVX を使うようになります。
+このバイナリを AVX をサポートしない環境で動かせば、
+当然、例外を起こして落ちます。そのため、コンパイルしたバイナリを、
+広く一般に配布するような利用形態には、OTFFT は向きません。OTFFT は、
+数値計算のプログラムをソースからコンパイルするような利用形態を想定しています。
+</p>
+<h3>【必要なファイル】</h3>
+<p>
+　<a href="otfftdl.html#download">ダウンロードのページ</a>
+から otfft-11.4.tar.gz(もしくは otfft-11.4v.zip)
+をダウンロードし展開すると、いくつかのファイルができますが、
+OTFFT を使うのに必要なファイルはその中の otfft フォルダとその中身です。
+このうち、
+</p>
+<pre>
+    otfft_gen_new.h
+    otfft_gen_setup.h
+    otfft_gen_fwd.h
+    otfft_gen_fwd0.h
+    otfft_gen_fwdu.h
+    otfft_gen_inv.h
+    otfft_gen_invu.h
+    otfft_gen_invn.h
+    otfft_gen_delete.h
+</pre>
+<p>
+は自動生成されるファイルで、自分の環境で最大の効果を発揮したければ
+ffttune を使って生成し直してやる必要があります。
+バージョン 10.2 までは名前に <code>_gen_</code> が付きません。
+Clang でコンパイルする場合、otfft フォルダで以下のように実行し、
+ffttune コマンドを作ります。
+Makefile は自分の環境に合わせていじってください。
+</p>
+<pre>
+    make ffttune
+</pre>
+<p>
+Mac の場合、デフォルトの Makefile は、
+MacPorts の clang-3.8 以上がインストールされていると想定しています。
+Visual Studio の場合、otfft フォルダで以下のように実行します。
+</p>
+<pre>
+    nmake ffttune
+</pre>
+<p>
+C++ の template によるメタプログラミング技法を用いているので、
+コンパイルにはかなりの時間がかかります。次に
+</p>
+<pre>
+    ./ffttune
+</pre>
+<p>
+あるいは Windows の場合、
+</p>
+<pre>
+    ffttune
+</pre>
+<p>
+と ffttune コマンドを実行します。
+すると先に示したファイルの自動生成が始まります。
+しばらく時間がかかるのでお待ちください。
+このとき、Core i7(4 コア 8 スレッド)
+の環境の場合、環境変数 OMP_NUM_THREADS を 7 に設定する必要があるかもしれません。
+一部の Linux では、8 スレッドで動かすと謎の速度低下を起こします。
+</p>
+<p>
+　OTFFT は内部で幾つかのアルゴリズムを使い分けていますが、
+どのアルゴリズムがどのサイズで一番速いか、実際に計測して決定します。
+しかし、パソコンは FFT だけを黙々と実行しているわけではなく、
+裏で色々なプロセスが動いています。計測には常に突発的なゆれが混入します。
+そのため、１回の計測で最適な組み合わせが求まるとは限りません。
+納得いかない場合は何度か ffttune を実行し直してください。
+</p>
+<p>
+　自動生成が終わったら、次は otfft.o あるいは otfft.obj ファイルを生成します。
+Clang の場合は、otfft フォルダで次のコマンドを実行します。
+</p>
+<pre>
+    make otfft.o
+</pre>
+<p>
+Visual Studio の場合は、otfft フォルダで次のコマンドを実行します。
+</p>
+<pre>
+    nmake otfft.obj
+</pre>
+<p>
+　C++ の template によるメタプログラミング技法を用いているので、
+コンパイルには非常に長い時間がかかります。辛抱強くお待ちください。
+れで準備は終わりです。
+</p>
+<h3>【ご自分のバイナリのコンパイル方法】</h3>
+<p>
+　otfft.o あるいは otfft.obj の生成が終われば、
+あとは otfft/otfft.h をインクルードし、
+コンパイラのインクルードパスに otfft フォルダのあるフォルダを加えて、
+otfft.o あるいは otfft.obj ファイルを目的のバイナリにリンクしてやれば
+OTFFT は使えます。
+</p>
+<p>
+　Clang でコンパイルするには、
+-lomp や -liomp5 など OpenMP のランタイムをリンクする必要があります。
+例えば Mac の場合、カレントフォルダに
+otfft フォルダがあるなら以下のようにコンパイルします。
+</p>
+<pre>
+    clang++-mp-8.0 -c -O3 hello.cpp
+    clang++-mp-8.0 hello.o otfft/otfft.o -L/opt/local/lib/libomp -lomp -o hello
+</pre>
+<p>
+　clang++-mp-8.0 は MacPorts の clang++ コンパイラです。
+Visual C++ の場合、
+AVX を使うには、/arch:AVX を指定してください。
+AVX2 も使う場合は /arch:AVX2 も指定してください。
+AVX-512 も使う場合は /arch:AVX512 も指定してください。
+OpenMP も使うには /openmp を指定してください。
+お分かりとは思いますが、otfft.obj のコンパイル時点で、
+これらのオプションを付けておかないと有効にはなりません。
+必要なら OTFFT の Makefile に記載してください
+(OTFFT のコンパイルが終われば、これらのオプションは必要ないかもしれません)。
+Visual Studio 用のデフォルトの Makefile は、
+AVX2 と OpenMP を使うよう指定されています。
+</p>
+<h3>【シングルスレッドモード】</h3>
+<p>
+　OTFFT はデフォルトでは OpenMP によるマルチスレッドで動作します。しかし、
+中にはマルチスレッドの実装は、自前の仕組みを使いたい人もいるかもしれません。
+そこで、シングルスレッドで動作するモードも用意しました。
+OTFFT は DO_SINGLE_THREAD マクロを定義してコンパイルすると、
+シングルスレッドモードになります。シングルスレッドモードにしたい場合は、
+otfft/otfft_misc.h で定義して、ffttune コマンドの生成から始めてください。
+</p>
+<h3>【アンアラインモード】</h3>
+<p>
+　OTFFT はデフォルトでは、変換する系列を保存するメモリにアラインされたメモリを
+要求します。しかし、既存のプログラムに OTFFT を組み込もうとすると、
+この制限のせいで大幅な書き換えが必要になることもあるでしょう。そこで、
+アラインされていないメモリでも動くモードを用意しました。OTFFT は、
+USE_UNALIGNED_MEMORY マクロを定義してコンパイルすると、
+アンアラインモードになります。もちろん、
+アラインモードに比べると速度は低下します。アンアラインモードにしたい場合は、
+otfft/otfft_misc.h で定義して、ffttune コマンドの生成から始めてください。
+</p>
+
+<hr>
+<p>
+　以下で、サポートされる変換を説明します。変換する系列長 <code>N</code> は 2^30
+より小さい必要がありますが、2^30 より小さくても、
+計算機のメモリが足りなくなれば変換できません。
+</p>
+
+<h3>【複素離散フーリエ変換】</h3>
+<p>
+　系列長 <code>N</code> の複素離散フーリエ変換を実行するには、
+</p>
+<pre>
+    #include "otfft/otfft.h"
+    using OTFFT::complex_t;
+    using OTFFT::simd_malloc;
+    using OTFFT::simd_free;
+
+    void f(int N)
+    {
+        complex_t* x = (complex_t*) simd_malloc(N*sizeof(complex_t));
+        // 何かする...
+        OTFFT::FFT fft(N); // FFT オブジェクトの作成
+        fft.fwd(x);        // 複素離散フーリエ変換を実行。x が入力かつ出力
+        // 何かする...
+        simd_free(x);
+    }
+</pre>
+<p>
+のようにします。ただし、
+<code>N</code> の素因数が小さな素数にならない場合は、
+計算量が <code>O(N^2)</code> になります。
+</p>
+<p>
+<code>complex_t</code> は
+</p>
+<pre>
+    struct complex_t
+    {
+        double Re, Im;
+
+        complex_t() : Re(0), Im(0) {}
+        complex_t(const double&amp; x) : Re(x), Im(0) {}
+        complex_t(const double&amp; x, const double&amp; y) : Re(x), Im(y) {}
+        complex_t(const std::complex<double>&amp; z) : Re(z.real()), Im(z.imag()) {}
+        operator std::complex<double>() { return std::complex<double>(Re, Im); }
+
+        // その他のメンバ関数...
+    };
+</pre>
+<p>
+のように定義されています。
+</p>
+<p>
+　フーリエ変換(<code>fwd</code>)には係数 <code>1/N</code> が掛かっています。
+もしそれが不都合なら係数の掛かっていない(<code>fwd0</code>)もあります。
+以下のようなメンバ関数が用意されています。
+<pre>
+    fwd(x)  離散フーリエ変換(1/N による正規化付き)
+    fwd0(x) 離散フーリエ変換(正規化無し)
+    fwdu(x) 離散フーリエ変換(ユニタリ変換。つまり sqrt(1/N) で正規化)
+    fwdn(x) 離散フーリエ変換(1/N による正規化付き)
+
+    inv(x)  逆離散フーリエ変換(正規化無し)
+    inv0(x) 逆離散フーリエ変換(正規化無し)
+    invu(x) 逆離散フーリエ変換(ユニタリ変換)
+    invn(x) 逆離散フーリエ変換(1/N による正規化付き)
+</pre>
+<p>
+FFT の系列長を変更したい場合は、
+</p>
+<pre>
+    fft.setup(2 * N);
+</pre>
+<p>
+のようにします。
+</p>
+<p>
+　OTFFT は Stockham のアルゴリズムを使っていますので、実行には入力系列と
+同じ系列長の作業領域が必要です。普通は内部でその領域を確保しますが、
+マルチスレッドのプログラムを組む場合など、それだと都合が悪い場合があります。
+そんな時は外部から作業領域を渡すバージョンもあります。次のように使います。
+</p>
+<pre>
+    #include "otfft/otfft.h"
+    using OTFFT::complex_t;
+    using OTFFT::simd_malloc;
+    using OTFFT::simd_free;
+
+    void f(int N)
+    {
+        complex_t* x = (complex_t*) simd_malloc(N*sizeof(complex_t));
+        complex_t* y = (complex_t*) simd_malloc(N*sizeof(complex_t));
+        // 何かする...
+        OTFFT::FFT0 fft(N);
+        fft.fwd(x, y); // x が入力かつ出力、y が作業領域
+        // 何かする...
+        fft.inv(x, y); // x が入力かつ出力、y が作業領域
+        // 何かする...
+        simd_free(y);
+        simd_free(x);
+    }
+</pre>
+<p>
+　<code>OTFFT::FFT</code> だったところが <code>OTFFT::FFT0</code>
+になっていることに注意してください。
+
+<h3>【実離散フーリエ変換】</h3>
+<p>
+　実離散フーリエ変換では、系列長 <code>N</code> は偶数である必要があります。
+系列長 <code>N</code> の実離散フーリエ変換を実行するには以下のようにします。
+</p>
+<pre>
+    #include "otfft/otfft.h"
+    using OTFFT::complex_t;
+    using OTFFT::simd_malloc;
+    using OTFFT::simd_free;
+
+    void f(int N)
+    {
+        double*    x = (double*)    simd_malloc(N*sizeof(double));
+        complex_t* y = (complex_t*) simd_malloc(N*sizeof(complex_t));
+        // 何かする...
+        OTFFT::RFFT rfft(N);
+        rfft.fwd(x, y); // 実離散フーリエ変換を実行。x が入力、y が出力
+        // 何かする...
+        simd_free(y);
+        simd_free(x);
+    }
+</pre>
+<p>
+ただし、<code>N</code> の素因数が小さな素数にならない場合は、
+計算量が <code>O(N^2)</code> になります。
+</p>
+<p>
+　実離散フーリエ変換には以下のようなメンバ関数が用意されています。
+</p>
+<pre>
+    fwd(x, y)  実離散フーリエ変換(1/N による正規化付き) x:入力、y:出力
+    fwd0(x, y) 実離散フーリエ変換(正規化無し)           x:入力、y:出力
+    fwdu(x, y) 実離散フーリエ変換(ユニタリ変換)         x:入力、y:出力
+    fwdn(x, y) 実離散フーリエ変換(1/N による正規化付き) x:入力、y:出力
+
+    inv(y, x)  逆実離散フーリエ変換(正規化無し)           y:入力、x:出力
+    inv0(y, x) 逆実離散フーリエ変換(正規化無し)           y:入力、x:出力
+    invu(y, x) 逆実離散フーリエ変換(ユニタリ変換)         y:入力、x:出力
+    invn(y, x) 逆実離散フーリエ変換(1/N による正規化付き) y:入力、x:出力
+</pre>
+<p>
+　逆実離散フーリエ変換は複素系列 <code>y</code> を受け取って、
+実系列 <code>x</code> を返します。<code>y</code>
+が <code>y[N-k] == conj(y[k])</code> でないと正しい結果を返しません。
+また、逆実離散フーリエ変換は入力 <code>y</code> を破壊します。
+保存しておきたい場合は、コピーを取っておく必要があります。
+内部的には系列長 <code>N/2</code> の複素離散フーリエ変換で実装されています。
+</p>
+<p>
+　実離散フーリエ変換は、作業領域として出力系列を使います。
+そして逆実離散フーリエ変換は、作業領域として入力系列を使います。
+マルチスレッドでプログラムする場合も、
+それぞれのスレッド専用の入力と出力を与えてやれば OK です。
+</p>
+
+<h3>【離散コサイン変換(DCT-II)】</h3>
+<p>
+　離散コサイン変換では、系列長 <code>N</code> は偶数である必要があります。
+系列長 <code>N</code>
+の離散コサイン変換(DCT-II)を実行するには以下のようにします。
+</p>
+<pre>
+    #include "otfft/otfft.h"
+    using OTFFT::complex_t;
+    using OTFFT::simd_malloc;
+    using OTFFT::simd_free;
+
+    void f(int N)
+    {
+        double* x = (double*) simd_malloc(N*sizeof(double));
+        // 何かする...
+        OTFFT::DCT dct(N);
+        dct.fwd(x); // DCT-II を実行する。x が入力かつ出力
+        // 何かする...
+        simd_free(x);
+    }
+</pre>
+<p>
+　ただし、<code>N</code> の素因数が小さな素数にならない場合は、
+計算量が <code>O(N^2)</code> になります。
+</p>
+<p>
+　離散コサイン変換には以下のようなメンバ関数が用意されています。
+</p>
+<pre>
+    fwd(x)  離散コサイン変換(1/N による正規化付き)
+    fwd0(x) 離散コサイン変換(正規化無し)
+    fwdn(x) 離散コサイン変換(1/N による正規化付き)
+
+    inv(x)  逆離散コサイン変換(正規化無し)
+    inv0(x) 逆離散コサイン変換(正規化無し)
+    invn(x) 逆離散コサイン変換(1/N による正規化付き)
+</pre>
+<p>
+　離散コサイン変換は DCT-II を採用しています。ただし、直交化はしていません。
+内部的には系列長 <code>N/2</code> の複素離散フーリエ変換で実装されています。
+マルチスレッドで使う場合、作業領域を外部から与えるバージョンもあります。
+以下のように使います。
+</p>
+<pre>
+    #include "otfft/otfft.h"
+    using OTFFT::complex_t;
+    using OTFFT::simd_malloc;
+    using OTFFT::simd_free;
+
+    void f(int N)
+    {
+        double*    x = (double*)    simd_malloc(N*sizeof(double));
+        double*    y = (double*)    simd_malloc(N*sizeof(double));
+        complex_t* z = (complex_t*) simd_malloc(N*sizeof(complex_t));
+        // 何かする...
+        OTFFT::DCT0 dct(N);
+        dct.fwd(x, y, z); // DCT を実行する。x が入力かつ出力、y,z が作業領域
+        // 何かする...
+        dct.inv(x, y, z); // 逆DCT を実行する。x が入力かつ出力、y,z が作業領域
+        // 何かする...
+        simd_free(z);
+        simd_free(y);
+        simd_free(x);
+    }
+</pre>
+<p>
+　<code>OTFFT::DCT</code> だったところが <code>OTFFT::DCT0</code>
+になっていることに注意してください。
+</p>
+
+<h3>【Bluestein's FFT】</h3>
+<p>
+　系列長 <code>N</code> の Bluestein's FFT(任意の系列長の FFT)
+を実行するには以下のようにします。
+</p>
+<pre>
+    #include "otfft/otfft.h"
+    using OTFFT::complex_t;
+    using OTFFT::simd_malloc;
+    using OTFFT::simd_free;
+
+    void f(int N)
+    {
+        complex_t* x = (complex_t*) simd_malloc(N*sizeof(complex_t));
+        // 何かする...
+        OTFFT::Bluestein bst(N); // N は 2^28 以下の任意の自然数。
+        bst.fwd(x); // Bluestein's FFT を実行する。x が入力かつ出力
+        // 何かする...
+        simd_free(x);
+    }
+</pre>
+<p>
+　Bluestein's FFT では、
+離散フーリエ変換の系列長が小さな素因数に分解できる必要はありません。
+例えば系列長が大きな素数でも計算量は <code>O(N log N)</code> になります。
+他の変換では、<code>N</code> が小さな素因数に分解できない場合は計算量が
+<code>O(N^2)</code> になります。指定出来る系列長の上限は 2^28 です。
+もちろん、メモリが足りなくなれば、それより小さい系列長でも変換できません。
+マルチスレッド用のメンバ関数は用意されていません。
+どうしてもマルチスレッドで使いたい場合は、動作確認はしていませんが、
+スレッドの数だけ Bluestein オブジェクトを生成し、
+各スレッドでそれらを使い分ければ大丈夫と思います。当然、
+メモリをゴージャスに使ってしまいます。
+</p>
+<p>
+　Bluestein's FFT には以下のようなメンバ関数が用意されています。
+</p>
+<pre>
+    fwd(x)  離散フーリエ変換(1/N による正規化付き)
+    fwd0(x) 離散フーリエ変換(正規化無し)
+    fwdu(x) 離散フーリエ変換(ユニタリ変換)
+    fwdn(x) 離散フーリエ変換(1/N による正規化付き)
+
+    inv(x)  逆離散フーリエ変換(正規化無し)
+    inv0(x) 逆離散フーリエ変換(正規化無し)
+    invu(x) 逆離散フーリエ変換(ユニタリ変換)
+    invn(x) 逆離散フーリエ変換(1/N による正規化付き)
+</pre>
+
+<hr>
+<h3>【ベンチマーク】</h3>
+<p>
+　最後に、OTFFT にはベンチマークプログラムが付属しています。しかし、
+このベンチマークには FFTW3 と大浦さんのプログラムを用いているため、
+単独では動作しません。まずは FFTW3 をインストールし、
+<a href="http://www.kurims.kyoto-u.ac.jp/~ooura/fft-j.html">
+大浦さんのページ
+</a>
+から大浦さんの FFT ライブラリをダウンロードしてください。
+そしてその中の fftsg.c というファイルを
+fftbench1.cpp と同じフォルダに入れてください。
+その上で以下のように fftbench1 コマンドと fftbench2 コマンドを make します。
+</p>
+<pre>
+    make fftbench1 fftbench2
+</pre>
+<p>
+Visual Studio の場合 nmake します。
+</p>
+<pre>
+    nmake fftbench1 fftbench2
+</pre>
+<p>
+fftbench1 が計測時間に FFT オブジェクトの初期化を含まないベンチマーク、
+fftbench2 が初期化を含むベンチマークです。以下のように実行してください。
+</p>
+<pre>
+    ./fftbench1
+    ./fftbench2
+</pre>
+<p>
+あるいは Windows の場合、
+</p>
+<pre>
+    fftbench1
+    fftbench2
+</pre>
+<p>
+とします。
+</p>
+<hr>
+<b>Up:</b> <a href="index.html">メニュー</a>
+<b>Prev:</b> <a href="otfft1.html">OTFFT -- FFTW より速い FFT ライブラリ</a>
+<b>Next:</b> <a href="otfftdl.html">OTFFT のダウンロード</a>
+<b>Reference:</b> <a href="../otfft-en/documentation.html">English Page</a>
+</body>
+</html>
