@@ -16,7 +16,7 @@ namespace otfft{
   /**@class otfft_buffer
    * 適切に align された作業用メモリスペースを提供します。
    */
-  class otfft_buffer{
+  class otfft_buffer {
     simd_array<char> data;
     std::size_t m_size;
 
@@ -25,19 +25,19 @@ namespace otfft{
      * 既定のコンストラクタです。
      * otfft_buffer::resize(std::size_t) で領域を確保してから使用する必要があります。
      */
-    otfft_buffer():m_size(0){}
+    otfft_buffer(): m_size(0) {}
 
     /**@fn void* otfft_buffer::get() const;
      * 確保した領域へのポインタを取得します。
      */
-    void* get() const{
+    void* get() const {
       return &this->data;
     }
     /**@fn std::size_t otfft_buffer::size() const;
      * 確保した領域の大きさをバイト単位で取得します。
      * @return 確保済の領域のサイズを返します。
      */
-    std::size_t size() const{return this->m_size;}
+    std::size_t size() const { return this->m_size; }
     /**@fn void* otfft_buffer::ensure(std::size_t size);
      * 確保する領域の最小サイズを指定します。
      * 確保済の領域が指定サイズより小さい場合には領域を確保し直します。
@@ -45,17 +45,17 @@ namespace otfft{
      * 既に指定したサイズ以上の領域が確保されている場合は何もしません。
      * @param[in] size 最小確保サイズをバイト単位で指定します。
      */
-    void ensure(std::size_t size){
-      if(this->m_size<size)
+    void ensure(std::size_t size) {
+      if(this->m_size < size)
         this->resize(size);
     }
     /**@fn void* otfft_buffer::ensure(std::size_t size);
      * 領域を指定サイズで確保し直します。データのコピーは実行されません。
      * @param[in] size 新しく確保する領域のサイズをバイト単位で指定します。
      */
-    void resize(std::size_t size){
+    void resize(std::size_t size) {
       this->data.setup(size);
-      this->m_size=size;
+      this->m_size = size;
     }
 
     /**@fn void* otfft_buffer::get<T>() const;
@@ -63,7 +63,7 @@ namespace otfft{
      * @tparam T 確保した領域に配置する要素の型を指定します。
      */
     template<typename T>
-    T* get() const{
+    T* get() const {
       return reinterpret_cast<T*>(get());
     }
     /**@fn std::size_t otfft_buffer::size<T>() const;
@@ -72,8 +72,8 @@ namespace otfft{
      * @return 確保済の領域のサイズを要素の個数単位で返します。
      */
     template<typename T>
-    std::size_t size() const{
-      return this->m_size/sizeof(T);
+    std::size_t size() const {
+      return this->m_size / sizeof(T);
     }
     /**@fn void* otfft_buffer::ensure<T>(std::size_t size);
      * 確保する領域の最小サイズを指定します。
@@ -84,8 +84,8 @@ namespace otfft{
      * @param[in] size 最小確保サイズを要素の個数単位で指定します。
      */
     template<typename T>
-    void ensure(std::size_t size){
-      this->ensure(sizeof(T)*size);
+    void ensure(std::size_t size) {
+      this->ensure(sizeof(T) * size);
     }
     /**@fn void* otfft_buffer::ensure<T>(std::size_t size);
      * 領域を指定サイズで確保し直します。データのコピーは実行されません。
@@ -93,12 +93,12 @@ namespace otfft{
      * @param[in] size 新しく確保する領域のサイズを要素の個数単位で指定します。
      */
     template<typename T>
-    void resize(std::size_t size){
-      this->resize(sizeof(T)*size);
+    void resize(std::size_t size) {
+      this->resize(sizeof(T) * size);
     }
   };
 
-  enum dft_flags{
+  enum dft_flags {
     _normalization_mask = 0x0F,
 
     normalization_none  = 0x00,
@@ -135,7 +135,7 @@ namespace otfft{
   // 現在の実装における仮定
   //   requirement: n は 2 の累乗である。
   //   complex<double> と complex_t は binary compatible である。
-  class otfft_real{
+  class otfft_real {
     std::size_t size;
     OTFFT::FFT0 instance;
     simd_array<complex_t> psi_fwd;
@@ -146,12 +146,12 @@ namespace otfft{
      *   既定コンストラクタ。後で otfft_real::resize(n) を用いて
      *   離散フーリエ変換の大きさを指定してから使用する必要があります。
      */
-    otfft_real():size(0){}
+    otfft_real():size(0) {}
     /**@fn otfft_real::otfft_real(std::size_t n);
      *   離散フーリエ変換の大きさを指定して初期化を行います。
      * @param[in] n 変換の大きさを指定します。
      */
-    otfft_real(std::size_t n){
+    otfft_real(std::size_t n) {
       this->resize(n);
     }
 
@@ -164,13 +164,13 @@ namespace otfft{
   private:
     void initialize_psi();
 
-    void c2r_encode_half(complex_vector half,const_complex_vector src,const_complex_vector psi,dft_flags type) const;
-    void r2c_decode_half(const_complex_vector half,complex_vector dst,const_complex_vector psi,dft_flags type) const;
+    void c2r_encode_half(complex_vector half, const_complex_vector src, const_complex_vector psi, dft_flags type) const;
+    void r2c_decode_half(const_complex_vector half, complex_vector dst, const_complex_vector psi, dft_flags type) const;
 
-    void r2c_extend_complex(complex_vector dst){
-      int const Nh=this->size/2;
-      for(std::size_t p=Nh+1;p<size;p++)
-        dst[p]=conj(dst[size-p]);
+    void r2c_extend_complex(complex_vector dst) {
+      int const Nh = this->size / 2;
+      for (std::size_t p = Nh + 1; p < size; p++)
+        dst[p] = conj(dst[size - p]);
     }
 
   public:
@@ -184,7 +184,7 @@ namespace otfft{
      * @param[out] work 作業用バッファを指定します。
      * @param[in]  isFullComplex フーリエ変換後の複素係数の後半も計算するかどうかを指定します。
      */
-    void r2c_fwd(double const* src,std::complex<double>* _dst,otfft_buffer& work,dft_flags type=rfft_compact_complex);
+    void r2c_fwd(double const* src, std::complex<double>* _dst, otfft_buffer& work, dft_flags type = rfft_compact_complex);
 
     /**@fn r2c_inv
      *   exp(+i*k/N) による実数から複素数への変換、規格化なし。
@@ -196,7 +196,7 @@ namespace otfft{
      * @param[out] work 作業用バッファを指定します。
      * @param[in]  isFullComplex フーリエ変換後の複素係数の後半も計算するかどうかを指定します。
      */
-    void r2c_inv(double const* src,std::complex<double>* _dst,otfft_buffer& work,dft_flags type=rfft_compact_complex);
+    void r2c_inv(double const* src, std::complex<double>* _dst, otfft_buffer& work, dft_flags type = rfft_compact_complex);
 
     /**@fn c2r_fwd
      *   \f$\exp(-2\pi i jk/N)\f$ による複素数から実数への変換、規格化なし。
@@ -207,7 +207,7 @@ namespace otfft{
      * @param[out] dst 変換結果を格納する実数配列を指定します。
      * @param[out] work 作業用バッファを指定します。
      */
-    void c2r_fwd(std::complex<double> const* src,double* dst,otfft_buffer& work,dft_flags type=rfft_compact_complex) const;
+    void c2r_fwd(std::complex<double> const* src, double* dst, otfft_buffer& work, dft_flags type = rfft_compact_complex) const;
 
     /**@fn c2r_fwd
      *   \f$\exp(+2\pi i jk/N)\f$ による複素数から実数への変換、規格化なし。
@@ -218,7 +218,7 @@ namespace otfft{
      * @param[out] dst 変換結果を格納する実数配列を指定します。
      * @param[out] work 作業用バッファを指定します。
      */
-    void c2r_inv(std::complex<double> const* src,double* dst,otfft_buffer& work,dft_flags type=rfft_compact_complex) const;
+    void c2r_inv(std::complex<double> const* src, double* dst, otfft_buffer& work, dft_flags type = rfft_compact_complex) const;
 
   };
 
