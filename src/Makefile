@@ -78,7 +78,9 @@ $(OUTDIR)/ffttune_default: $(OUTDIR)/ffttune_default.o
 	$(CXX) $^ $(LDFLAGS) $(ffttune_LIBS) -o $@
 $(OUTINC)/.otfft.stamp: $(OUTDIR)/ffttune_default | $(OUTINC)
 	cd $(OUTINC) && ../ffttune_default
-$(HEADERS2): $(OUTINC)/.otfft.stamp
+	for h in $(HEADERS2); do if diff -q "$$h" "$$h.part"; then rm "$$h.part"; else mv -f "$$h.part" "$$h"; fi; done
+	@touch $@
+$(HEADERS2): | $(OUTINC)/.otfft.stamp
 	@touch $@
 
 # tune してから headers を生成
@@ -115,7 +117,7 @@ $(OUTDIR)/otfft_shared.o: otfft.cpp $(HEADERS1) otfft/otfft.h $(HEADERS2)
 libotfft_object+=$(OUTDIR)/util.o
 -include $(OUTDIR)/util.d
 $(OUTDIR)/util.o: util.cpp otfft/otfft.h
-	$(CXX) $(CXXFLAGS) -fPIC -I $(OUTINC) -I . -c -o $@ -MD -MF $(OUTDIR)/util.d $<
+	$(CXX) $(CXXFLAGS) -fPIC -I $(OUTINC) -I . -c -o $@ -MD -MP -MF $(OUTDIR)/util.d $<
 
 $(OUTDIR)/$(libotfft_FullName): $(libotfft_object) | $(OUTDIR)
 	$(CXX) $(LDFLAGS) $(libotfft_shared_LIBS) -o $@ $^

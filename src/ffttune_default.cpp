@@ -18,16 +18,16 @@
 #define FACTOR 3
 #endif
 
-int main(){
+int main() {
     using namespace std;
     static const int n_min  = 1;
     static const int n_max  = N_MAX;
 
-    ofstream fs1("otfft_setup.h");
-    ofstream fs2("otfft_fwd.h");
-    ofstream fs3("otfft_inv.h");
-    ofstream fs4("otfft_fwd0.h");
-    ofstream fs5("otfft_invn.h");
+    ofstream fs1("otfft_setup.h.part");
+    ofstream fs2("otfft_fwd.h.part");
+    ofstream fs3("otfft_inv.h.part");
+    ofstream fs4("otfft_fwd0.h.part");
+    ofstream fs5("otfft_invn.h.part");
     fs1 << "switch (log_N) {\ncase  0: break;\n";
     fs2 << "switch (log_N) {\ncase  0: break;\n";
     fs3 << "switch (log_N) {\ncase  0: break;\n";
@@ -35,7 +35,7 @@ int main(){
     fs5 << "switch (log_N) {\ncase  0: break;\n";
 
     // hankel single thread 1-22
-    int optimal_engines[]={
+    int optimal_engines[] = {
       0, 6, 7, 7, 2, 4, 3, 7,
       2, 3, 1, 6, 4, 4, 4, 4,
       4, 4, 4, 6, 4, 4, 4, };
