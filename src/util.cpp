@@ -34,19 +34,19 @@ namespace otfft {
     // src[0], src[n/2]
     {
       // because: psi[0] = (1+i)/2, src[0] and src[Nh]: real.
-      double const& realPartAtMiddle = (type & _rfft_complex_mask) == rfft_compact_complex ? src[0].Im : src[Nh].Re;
-      half[0].Re = src[0].Re + realPartAtMiddle;
-      half[0].Im = src[0].Re - realPartAtMiddle;
+      double const reM = (type & _rfft_complex_mask) == rfft_compact_complex ? src[0].Im : src[Nh].Re;
+      half[0].Re = src[0].Re + reM;
+      half[0].Im = src[0].Re - reM;
     }
 
     // normalization
     double factor = 2.0;
     if ((type & _normalization_mask) != normalization_none) {
       double const scale = (type & _normalization_mask) == normalization_sqrt ? std::sqrt(1.0 / this->size) : 1.0 / this->size;
-      half[0].Re *= scale;
-      half[0].Im *= scale;
-      factor     *= scale;
+      half[0] *= scale;
+      factor  *= scale;
     }
+
 #ifdef otfft_misc_h
     using namespace OTFFT_MISC;
     xmm const xfactor = cmplx(factor, factor);
@@ -71,13 +71,8 @@ namespace otfft {
 
     // src[n/4]
     if (Nh % 2 == 0) {
-      half[Nq].Re = src[Nq].Re;
-      if (psi == &psi_fwd)
-        half[Nq].Im = -src[Nq].Im;
-      else
-        half[Nq].Im =  src[Nq].Im;
-      half[Nq].Re *= factor;
-      half[Nq].Im *= factor;
+      half[Nq].Re = factor * src[Nq].Re;
+      half[Nq].Im = factor * (psi == &psi_fwd ? -src[Nq].Im : src[Nq].Im);
     }
   }
 
@@ -87,16 +82,17 @@ namespace otfft {
 
     // normalization
     if ((type & _normalization_mask) == normalization_none) {
-
+      double const re0 = half[0].Re + half[0].Im;
+      double const reM = half[0].Re - half[0].Im;
       if ((type & _rfft_complex_mask) == rfft_compact_complex) {
         // rfft_compact_complex の場合は、
         // dst[0].Re に係数 0 の実部を格納し、
         // dst[0].Im に係数 Nh の実部を格納する。
-        dst[0].Re = half[0].Re + half[0].Im;
-        dst[0].Im = half[0].Re - half[0].Im;
+        dst[0].Re = re0;
+        dst[0].Im = reM;
       } else {
-        dst[0 ] = half[0].Re + half[0].Im;
-        dst[Nh] = half[0].Re - half[0].Im;
+        dst[0 ] = re0;
+        dst[Nh] = reM;
       }
 
       for (int p = 1; p < Nq; p++) {
@@ -117,11 +113,10 @@ namespace otfft {
       }
 
       if (Nh % 2 == 0) {
-        dst[Nq].Re = half[Nq].Re;
+        if (half != dst)
+          dst[Nq] = half[Nq];
         if (psi == &psi_fwd)
-          dst[Nq].Im = -half[Nq].Im;
-        else
-          dst[Nq].Im =  half[Nq].Im;
+          dst[Nq].Im = -dst[Nq].Im;
       }
     } else {
       double const scale = 1.0 / ((type & _normalization_mask) == normalization_sqrt ? std::sqrt(this->size) : this->size);
@@ -130,15 +125,17 @@ namespace otfft {
       xmm const xscale = cmplx(scale, scale);
 #endif
 
+      double const re0 = scale * (half[0].Re + half[0].Im);
+      double const reM = scale * (half[0].Re - half[0].Im);
       if ((type & _rfft_complex_mask) == rfft_compact_complex) {
         // rfft_compact_complex の場合は、
         // dst[0].Re に係数 0 の実部を格納し、
         // dst[0].Im に係数 Nh の実部を格納する。
-        dst[0].Re = scale * (half[0].Re + half[0].Im);
-        dst[0].Im = scale * (half[0].Re - half[0].Im);
+        dst[0].Re = re0;
+        dst[0].Im = reM;
       } else {
-        dst[0 ]   = scale * (half[0].Re + half[0].Im);
-        dst[Nh]   = scale * (half[0].Re - half[0].Im);
+        dst[0 ] = re0;
+        dst[Nh] = reM;
       }
 
       for (int p = 1; p < Nq; p++) {
@@ -159,14 +156,8 @@ namespace otfft {
       }
 
       if (Nh % 2 == 0) {
-        dst[Nq].Re = half[Nq].Re;
-        if (psi == &psi_fwd)
-          dst[Nq].Im = -half[Nq].Im;
-        else
-          dst[Nq].Im =  half[Nq].Im;
-
-        dst[Nq].Re *= scale;
-        dst[Nq].Im *= scale;
+        dst[Nq].Re = scale * half[Nq].Re;
+        dst[Nq].Im = scale * (psi == &psi_fwd ? -half[Nq].Im : half[Nq].Im);
       }
     }
   }
@@ -177,9 +168,9 @@ namespace otfft {
     std::copy(src, src + this->size, work.get<double>());
 
     complex_vector const half = work.get<complex_t>();
-    instance.fwd0(half, dst);
-    r2c_decode_half(half, dst, &psi_fwd, type);
+    instance.fwd0(half, dst); // half -> half (第2引数は作業領域)
 
+    r2c_decode_half(half, dst, &psi_fwd, type); // half -> dst
     if ((type & _rfft_complex_mask) == rfft_full_complex)
       this->r2c_extend_complex(dst);
   }
@@ -190,28 +181,28 @@ namespace otfft {
     std::copy(src, src + this->size, work.get<double>());
 
     complex_vector const half = work.get<complex_t>();
-    instance.inv0(half, dst);
-    r2c_decode_half(half, dst, &psi_inv, type);
+    instance.inv0(half, dst); // work -> work (第2引数は作業領域)
 
+    r2c_decode_half(half, dst, &psi_inv, type); // half -> dst
     if ((type & _rfft_complex_mask) == rfft_full_complex)
       this->r2c_extend_complex(dst);
   }
 
   void otfft_real::c2r_fwd(std::complex<double> const* src, double* dst, otfft_buffer& work, dft_flags type) const {
     complex_vector const half = reinterpret_cast<complex_vector>(dst);
-    this->c2r_encode_half(half, reinterpret_cast<const_complex_vector>(src), &psi_inv, type);
+    this->c2r_encode_half(half, reinterpret_cast<const_complex_vector>(src), &psi_inv, type); // src -> dst
 
     int const Nh = this->size / 2;
     work.ensure<complex_t>(Nh);
-    instance.fwd0(half, work.get<complex_t>());
+    instance.fwd0(half, work.get<complex_t>()); // dst -> dst (第2引数は作業領域)
   }
 
   void otfft_real::c2r_inv(std::complex<double> const* src, double* dst, otfft_buffer& work, dft_flags type) const {
     complex_vector const half = reinterpret_cast<complex_vector>(dst);
-    this->c2r_encode_half(half, reinterpret_cast<const_complex_vector>(src), &psi_fwd, type);
+    this->c2r_encode_half(half, reinterpret_cast<const_complex_vector>(src), &psi_fwd, type); // src -> dst
 
     int const Nh = this->size / 2;
     work.ensure<complex_t>(Nh);
-    instance.inv0(half, work.get<complex_t>());
+    instance.inv0(half, work.get<complex_t>()); // dst -> dst (第2引数は作業領域)
   }
 }
