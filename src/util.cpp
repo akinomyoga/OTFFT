@@ -5,7 +5,8 @@
 namespace otfft {
 
   inline void otfft_real::initialize_psi() {
-    int const Nq = this->size / 4;
+    int const Nh = this->size / 2;
+    int const Nq = (Nh + 1) / 2;
     this->psi_fwd.setup(Nq);
     this->psi_inv.setup(Nq);
 
@@ -28,7 +29,7 @@ namespace otfft {
 
   inline void otfft_real::c2r_encode_half(complex_vector half, const_complex_vector src, const_complex_vector psi, dft_flags type) const {
     int const Nh = this->size / 2;
-    int const Nq = this->size / 4;
+    int const Nq = (Nh + 1) / 2;
 
     // src[0], src[n/2]
     {
@@ -82,7 +83,7 @@ namespace otfft {
 
   inline void otfft_real::r2c_decode_half(const_complex_vector half, complex_vector dst, const_complex_vector psi, dft_flags type) const {
     int const Nh = this->size / 2;
-    int const Nq = this->size / 4;
+    int const Nq = (Nh + 1) / 2;
 
     // normalization
     if ((type & _normalization_mask) == normalization_none) {
